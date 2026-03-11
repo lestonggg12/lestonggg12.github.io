@@ -7,16 +7,20 @@
  * - This device's alerts are specific to this browser and machine.
  *
  * HOW IT WORKS:
- *   Device saves settings 
+ *   Device saves settings
  *     → settings.js appends to changeHistory, saves to local storage
  *   Notifications refresh (every 5 min, or on bell click)
  *     → refreshNotifications() reads latest from local storage
  *     → badge and dropdown update automatically
  *
- * OTHER FIXES:
- * - Mobile view fills full screen correctly (no clipped list, no scroll jump)
- * - ALERTS bell appears to the RIGHT of SETTINGS button
- * - Bell button colors blend correctly in dark mode
+ * FIXES APPLIED:
+ * - Waits for DB.init() before first refresh (was firing too early → 0 products)
+ * - Retries bell injection until #btnSettings exists in DOM
+ * - Loads settings via DB.getSettings() not just cached_settings
+ * - Uses lowStockLimit and profitMargin from actual settings (not hardcoded)
+ * - Mobile view fills full screen correctly
+ * - Bell appears to the RIGHT of SETTINGS button
+ * - Bell colors blend correctly in dark mode
  */
 
 console.log('🔔 Loading enhanced notifications module...');
@@ -35,44 +39,39 @@ let notificationData = {
 };
 
 // =============================================================================
-//  CSRF HELPER
-// =============================================================================
-
-function getCsrfToken() {
-    return document.cookie
-        .split('; ')
-        .find(row => row.startsWith('csrftoken='))
-        ?.split('=')[1];
-}
-
-// =============================================================================
 //  INITIALIZATION
+// ✅ FIX: Wait for DB to be ready AND for #btnSettings to exist before running.
 // =============================================================================
-
-/**
- * PATCH: Replace these two sections in your notifications.js
- *
- * FIX 1: DOMContentLoaded — wait for DB.init() before refreshing
- * FIX 2: refreshNotifications — load settings from DB first, not just cached_settings
- */
-
-// ─────────────────────────────────────────────────────────────────────────────
-// REPLACE your existing DOMContentLoaded block with this:
-// ─────────────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async function () {
     console.log('🔔 Initializing enhanced notification system...');
 
-    injectNotificationBell();
+    // ── Step 1: Retry injecting the bell until #btnSettings exists ────────────
+    // Hard refresh (Ctrl+Shift+R) can cause DOMContentLoaded to fire before
+    // nav buttons are rendered, so injectNotificationBell() would fail silently.
+    let injectAttempts = 0;
+    const tryInjectBell = setInterval(() => {
+        injectAttempts++;
+        const settingsBtn = document.getElementById('btnSettings');
+        if (settingsBtn && !document.getElementById('btnNotifications')) {
+            clearInterval(tryInjectBell);
+            injectNotificationBell();
+            console.log(`✅ Bell injected after ${injectAttempts} attempt(s)`);
+        } else if (document.getElementById('btnNotifications')) {
+            clearInterval(tryInjectBell);
+        } else if (injectAttempts > 50) {
+            clearInterval(tryInjectBell);
+            console.error('❌ Could not find #btnSettings after 5s — bell not injected');
+        }
+    }, 100);
 
-    // ✅ FIX: Wait for DB to be ready before first refresh.
-    // dashboard.js calls DB.init() — we poll until it's done (max 3s).
-    let attempts = 0;
+    // ── Step 2: Wait for DB to be ready before first notification refresh ─────
+    // dashboard.js calls DB.init() — we poll until getProducts() works.
+    let dbAttempts = 0;
     const waitForDB = setInterval(async () => {
-        attempts++;
+        dbAttempts++;
         const products = await DB.getProducts().catch(() => null);
-        // DB is ready once getProducts() returns an array (even empty)
-        if (Array.isArray(products) || attempts > 30) {
+        if (Array.isArray(products) || dbAttempts > 30) {
             clearInterval(waitForDB);
             await refreshNotifications();
         }
@@ -84,17 +83,59 @@ document.addEventListener('DOMContentLoaded', async function () {
     console.log('✅ Enhanced notification system initialized');
 });
 
+// =============================================================================
+//  INJECT NOTIFICATION BELL
+// =============================================================================
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REPLACE your existing refreshNotifications() function with this:
-// ─────────────────────────────────────────────────────────────────────────────
+function injectNotificationBell() {
+    const settingsBtn = document.getElementById('btnSettings');
+
+    if (!settingsBtn || !settingsBtn.parentElement) {
+        console.error('❌ Could not find settings button');
+        return;
+    }
+
+    const bellBtn = document.createElement('button');
+    bellBtn.id    = 'btnNotifications';
+    bellBtn.className = 'nav-button notification-bell-btn';
+    bellBtn.innerHTML = `
+        <span class="nav-icon">🔔</span>
+        <span class="nav-label">ALERTS</span>
+        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+    `;
+
+    // Insert AFTER settings button
+    settingsBtn.parentElement.insertBefore(bellBtn, settingsBtn.nextSibling);
+
+    injectNotificationStyles();
+
+    bellBtn.addEventListener('click', toggleNotificationDropdown);
+
+    document.addEventListener('click', function (e) {
+        const dropdown = document.getElementById('notificationDropdown');
+        const bell     = document.getElementById('btnNotifications');
+        if (dropdown && bell &&
+            !dropdown.contains(e.target) &&
+            !bell.contains(e.target)) {
+            closeNotificationDropdown();
+        }
+    });
+
+    console.log('✅ Notification bell injected after settings button');
+}
+
+// =============================================================================
+//  REFRESH NOTIFICATIONS
+//  ✅ FIX: Load settings via DB.getSettings() first (not just cached_settings).
+//  ✅ FIX: Use lowStockLimit and profitMargin from settings (not hardcoded).
+// =============================================================================
 
 async function refreshNotifications() {
     console.log('🔄 Refreshing notifications...');
 
     try {
-        // ✅ FIX 1: Load settings from DB first (source of truth),
-        //           then fall back to cached_settings, then defaults.
+        // ── Load settings ──────────────────────────────────────────────────────
+        // Try DB first (source of truth), fall back to cached_settings in localStorage.
         let freshSettings = null;
         try {
             freshSettings = await DB.getSettings();
@@ -115,20 +156,22 @@ async function refreshNotifications() {
             console.log('💾 Settings loaded:', window.storeSettings);
         }
 
-        // ✅ FIX 2: Use the correct lowStockLimit (from settings, not hardcoded).
-        //           DB defaultSettings uses 5; notifications was hardcoding 10.
-        const products      = await DB.getProducts();
+        // ── Load products ──────────────────────────────────────────────────────
+        const products = await DB.getProducts();
+
+        // ✅ Use settings values — never hardcode thresholds
         const lowStockLimit = (window.storeSettings?.lowStockLimit) ?? 5;
+        const minMargin     = (window.storeSettings?.profitMargin)  ?? 20;
 
-        console.log(`📦 Loaded ${products.length} products, lowStockLimit=${lowStockLimit}`);
+        console.log(`📦 ${products.length} products | lowStock < ${lowStockLimit} | margin < ${minMargin}%`);
 
-        // ── Out of Stock ──────────────────────────────────────────────────────
+        // ── Out of Stock ───────────────────────────────────────────────────────
         notificationData.outOfStock = products.filter(p => {
             const qty = parseFloat(p.quantity ?? p.stock ?? 0);
             return qty === 0;
         });
 
-        // ── Low Stock ─────────────────────────────────────────────────────────
+        // ── Low Stock ──────────────────────────────────────────────────────────
         notificationData.lowStock = products.filter(p => {
             const qty = parseFloat(p.quantity ?? p.stock ?? 0);
             return qty > 0 && qty < lowStockLimit;
@@ -136,10 +179,7 @@ async function refreshNotifications() {
             parseFloat(a.quantity ?? a.stock ?? 0) - parseFloat(b.quantity ?? b.stock ?? 0)
         );
 
-        // ── Low Margin ────────────────────────────────────────────────────────
-        // ✅ FIX 3: Use profitMargin from settings (default 20%), not hardcoded.
-        const minMargin = (window.storeSettings?.profitMargin) ?? 20;
-
+        // ── Low Margin ─────────────────────────────────────────────────────────
         notificationData.lowMargin = products.filter(p => {
             const cost  = parseFloat(p.cost  ?? p.cost_price    ?? 0);
             const price = parseFloat(p.price ?? p.selling_price ?? 0);
@@ -148,14 +188,14 @@ async function refreshNotifications() {
             return margin < minMargin;
         }).sort((a, b) => {
             const marginOf = p => {
-                const c = parseFloat(p.cost ?? p.cost_price ?? 0);
+                const c  = parseFloat(p.cost  ?? p.cost_price    ?? 0);
                 const pr = parseFloat(p.price ?? p.selling_price ?? 0);
                 return c > 0 ? ((pr - c) / c) * 100 : 0;
             };
             return marginOf(a) - marginOf(b);
         });
 
-        // ── Settings change history ───────────────────────────────────────────
+        // ── Settings change history ────────────────────────────────────────────
         notificationData.settingsChanges = window.storeSettings?.changeHistory || [];
 
         notificationData.lastUpdated = new Date();
@@ -186,7 +226,11 @@ function updateNotificationBadge() {
     const badge = document.getElementById('notificationBadge');
     if (!badge) return;
 
-    const total = notificationData.lowStock.length + notificationData.lowMargin.length + notificationData.outOfStock.length + notificationData.settingsChanges.length;
+    const total =
+        notificationData.lowStock.length +
+        notificationData.lowMargin.length +
+        notificationData.outOfStock.length +
+        notificationData.settingsChanges.length;
 
     if (total > 0) {
         badge.textContent = total > 99 ? '99+' : total;
@@ -228,7 +272,6 @@ function openNotificationDropdown() {
             max-height: 100vh;
             border-radius: 0;
         `;
-        // FIX: only suppress scroll — no position:fixed which causes scroll-jump
         document.body.style.overflow = 'hidden';
     } else {
         const bellBtn = document.getElementById('btnNotifications');
@@ -253,7 +296,6 @@ function closeNotificationDropdown() {
             if (dropdown.parentElement) dropdown.parentElement.removeChild(dropdown);
         }, 300);
     }
-    // FIX: only restore overflow (no position/width reset → no scroll jump)
     document.body.style.overflow = '';
     notificationDropdownOpen = false;
 }
@@ -274,7 +316,7 @@ function renderNotificationDropdown() {
         <div class="notification-content-wrapper">
     `;
 
-    // Settings Changes (Local Device History)
+    // ── Settings Changes ───────────────────────────────────────────────────────
     if (notificationData.settingsChanges.length > 0) {
         html += `
             <div class="notification-section">
@@ -329,8 +371,7 @@ function renderNotificationDropdown() {
         html += '</div>';
     }
 
-
-    // Out of Stock Alerts
+    // ── Out of Stock ───────────────────────────────────────────────────────────
     html += `
         <div class="notification-section">
             <div class="section-header">
@@ -348,8 +389,8 @@ function renderNotificationDropdown() {
         `;
     } else {
         html += '<div class="notification-list">';
-        notificationData.outOfStock.slice(0, 10).forEach((product) => {
-            const category = window.CATEGORIES?.find(c => c.id === (product.category || product.category_id));
+        notificationData.outOfStock.slice(0, 10).forEach(product => {
+            const category     = window.CATEGORIES?.find(c => c.id === (product.category || product.category_id));
             const categoryIcon = category?.icon || '📦';
             html += `
                 <div class="notification-item critical" data-product-id="${product.id}">
@@ -381,7 +422,7 @@ function renderNotificationDropdown() {
     }
     html += '</div>';
 
-    // Low Stock Alerts
+    // ── Low Stock ──────────────────────────────────────────────────────────────
     html += `
         <div class="notification-section">
             <div class="section-header">
@@ -399,13 +440,13 @@ function renderNotificationDropdown() {
         `;
     } else {
         html += '<div class="notification-list">';
-        notificationData.lowStock.slice(0, 10).forEach((product) => {
-            const qty      = parseFloat(product.quantity || product.stock || 0);
-            const category = window.CATEGORIES?.find(c => c.id === (product.category || product.category_id));
+        notificationData.lowStock.slice(0, 10).forEach(product => {
+            const qty          = parseFloat(product.quantity || product.stock || 0);
+            const category     = window.CATEGORIES?.find(c => c.id === (product.category || product.category_id));
             const categoryIcon = category?.icon || '📦';
             let urgencyClass = 'low', urgencyIcon = '💡';
-            if (qty <= 3) { urgencyClass = 'high';     urgencyIcon = '⚠️'; }
-            else if (qty <= 5) { urgencyClass = 'medium';   urgencyIcon = '⚡'; }
+            if (qty <= 3)      { urgencyClass = 'high';   urgencyIcon = '⚠️'; }
+            else if (qty <= 5) { urgencyClass = 'medium'; urgencyIcon = '⚡'; }
             html += `
                 <div class="notification-item ${urgencyClass}" data-product-id="${product.id}">
                     <div class="item-icon">${categoryIcon}</div>
@@ -436,7 +477,7 @@ function renderNotificationDropdown() {
     }
     html += '</div>';
 
-    // ── Low Margin Alerts ──
+    // ── Low Margin ─────────────────────────────────────────────────────────────
     html += `
         <div class="notification-section">
             <div class="section-header">
@@ -445,7 +486,6 @@ function renderNotificationDropdown() {
                 <span class="section-count">${notificationData.lowMargin.length}</span>
             </div>
     `;
-
     if (notificationData.lowMargin.length === 0) {
         html += `
             <div class="empty-state">
@@ -455,19 +495,16 @@ function renderNotificationDropdown() {
         `;
     } else {
         html += '<div class="notification-list">';
-
-        notificationData.lowMargin.slice(0, 10).forEach((product) => {
-            const cost   = parseFloat(product.cost || product.cost_price || 0);
-            const price  = parseFloat(product.price || product.selling_price || 0);
-            const margin = cost > 0 ? ((price - cost) / cost * 100) : 0;
-            const category = window.CATEGORIES?.find(c => c.id === (product.category || product.category_id));
+        notificationData.lowMargin.slice(0, 10).forEach(product => {
+            const cost         = parseFloat(product.cost  || product.cost_price    || 0);
+            const price        = parseFloat(product.price || product.selling_price || 0);
+            const margin       = cost > 0 ? ((price - cost) / cost * 100) : 0;
+            const category     = window.CATEGORIES?.find(c => c.id === (product.category || product.category_id));
             const categoryIcon = category?.icon || '📦';
-
             let urgencyClass = 'low', urgencyIcon = '💡';
-            if (margin <= 0)       { urgencyClass = 'critical'; urgencyIcon = '🚨'; }
-            else if (margin < 5)   { urgencyClass = 'high';     urgencyIcon = '⚠️'; }
-            else if (margin < 10)  { urgencyClass = 'medium';   urgencyIcon = '⚡'; }
-
+            if (margin <= 0)      { urgencyClass = 'critical'; urgencyIcon = '🚨'; }
+            else if (margin < 5)  { urgencyClass = 'high';     urgencyIcon = '⚠️'; }
+            else if (margin < 10) { urgencyClass = 'medium';   urgencyIcon = '⚡'; }
             html += `
                 <div class="notification-item ${urgencyClass}" data-product-id="${product.id}">
                     <div class="item-icon">${categoryIcon}</div>
@@ -485,9 +522,7 @@ function renderNotificationDropdown() {
                 </div>
             `;
         });
-
         html += '</div>';
-
         if (notificationData.lowMargin.length > 10) {
             html += `
                 <div class="notification-footer">
@@ -532,7 +567,6 @@ function goToProduct(productId, categoryId) {
 }
 
 function highlightAndScrollToProduct(productId) {
-    // Find the element — could be a <tr>, <div> card, or an input
     let productEl = document.querySelector(`tr[data-product-id="${productId}"]`)
                  || document.querySelector(`div[data-product-id="${productId}"]`)
                  || document.querySelector(`[data-product-id="${productId}"]`);
@@ -542,14 +576,11 @@ function highlightAndScrollToProduct(productId) {
     }
 
     const isRow = productEl.tagName === 'TR';
-
     productEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    // Apply highlight
-    productEl.style.transition = 'all 0.3s ease';
-    productEl.style.outline = '3px solid #f59e0b';
+    productEl.style.transition   = 'all 0.3s ease';
+    productEl.style.outline      = '3px solid #f59e0b';
     productEl.style.outlineOffset = '2px';
-    productEl.style.boxShadow = '0 0 20px rgba(245, 158, 11, 0.4)';
+    productEl.style.boxShadow    = '0 0 20px rgba(245, 158, 11, 0.4)';
     if (!isRow) productEl.style.transform = 'scale(1.02)';
 
     let pulseCount = 0;
@@ -557,9 +588,9 @@ function highlightAndScrollToProduct(productId) {
         if (pulseCount >= 5) {
             clearInterval(pulseInterval);
             setTimeout(() => {
-                productEl.style.outline = '';
+                productEl.style.outline      = '';
                 productEl.style.outlineOffset = '';
-                productEl.style.boxShadow = '';
+                productEl.style.boxShadow    = '';
                 if (!isRow) productEl.style.transform = '';
             }, 1500);
             return;
@@ -613,33 +644,19 @@ function goToPrices(categoryId) {
 
 // =============================================================================
 //  SETTINGS CHANGE MANAGEMENT
-//  — all operations write back to the SERVER via /api/save-settings/
-//    so every device sees the update on the next refresh.
 // =============================================================================
 
-/**
- * Called by settings.js immediately after a successful server save.
- * At this point window.storeSettings.changeHistory is already updated,
- * so we just need to refresh the notification UI.
- */
 function onSettingsSaved(latestRecord) {
-    // window.storeSettings.changeHistory is already updated by settings.js
     notificationData.settingsChanges = window.storeSettings?.changeHistory || [];
     updateNotificationBadge();
     if (notificationDropdownOpen) renderNotificationDropdown();
-    console.log('✅ Notification UI refreshed after server save:', latestRecord);
+    console.log('✅ Notification UI refreshed after save:', latestRecord);
 }
 
-/**
- * Remove a single change record from the server-side history.
- */
 async function clearSettingsChange(changeId) {
     if (!window.storeSettings) return;
-
     const updated = (window.storeSettings.changeHistory || []).filter(c => c.id !== changeId);
     window.storeSettings.changeHistory = updated;
-
-    // Persist to server
     await persistHistoryToServer(updated);
     notificationData.settingsChanges = updated;
     updateNotificationBadge();
@@ -647,12 +664,8 @@ async function clearSettingsChange(changeId) {
     console.log('✅ Settings change cleared:', changeId);
 }
 
-/**
- * Remove all change records from the server-side history.
- */
 async function clearAllSettingsChanges() {
     if (!window.storeSettings) return;
-
     window.storeSettings.changeHistory = [];
     await persistHistoryToServer([]);
     notificationData.settingsChanges = [];
@@ -661,18 +674,9 @@ async function clearAllSettingsChanges() {
     console.log('✅ All settings changes cleared');
 }
 
-/**
- * Write the given history array back to the server without changing
- * any other settings fields.
- */
-/**
- * Write the given history array back to storage without changing
- * any other settings fields.
- */
 async function persistHistoryToServer(history) {
     if (!window.storeSettings) return;
     try {
-        // ✅ FIXED: Use offline database
         await DB.saveSettings({
             ...window.storeSettings,
             changeHistory: history
@@ -699,7 +703,11 @@ function getTimeAgo(date) {
 }
 
 function formatSettingName(key) {
-    return { profitMargin: 'Profit Margin', lowStockLimit: 'Low Stock Alert', debtSurcharge: 'Debt Surcharge' }[key] || key;
+    return {
+        profitMargin:  'Profit Margin',
+        lowStockLimit: 'Low Stock Alert',
+        debtSurcharge: 'Debt Surcharge'
+    }[key] || key;
 }
 
 function formatSettingValue(key, value) {
@@ -715,8 +723,8 @@ function injectNotificationStyles() {
     const styleId = 'notification-system-styles';
     if (document.getElementById(styleId)) return;
 
-    const style   = document.createElement('style');
-    style.id      = styleId;
+    const style  = document.createElement('style');
+    style.id     = styleId;
     style.textContent = `
         .notification-bell-btn { position: relative; }
 
@@ -844,9 +852,9 @@ function injectNotificationStyles() {
         }
         .notification-item:hover  { transform: translateX(4px); }
         .notification-item:active { opacity: 0.8; }
-        .notification-item.critical { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1));  border-left: 4px solid #EF4444; }
-        .notification-item.high     { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.1)); border-left: 4px solid #F59E0B; }
-        .notification-item.medium   { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.1));  border-left: 4px solid #3B82F6; }
+        .notification-item.critical { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1));    border-left: 4px solid #EF4444; }
+        .notification-item.high     { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.1));  border-left: 4px solid #F59E0B; }
+        .notification-item.medium   { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.1));   border-left: 4px solid #3B82F6; }
         .notification-item.low      { background: linear-gradient(135deg, rgba(168,201,156,0.15), rgba(203,223,189,0.1)); border-left: 4px solid #a8c99c; }
         .notification-item.settings-change { background: linear-gradient(135deg, rgba(147,197,253,0.15), rgba(59,130,246,0.1)); border-left: 4px solid #3B82F6; }
 
@@ -856,9 +864,9 @@ function injectNotificationStyles() {
         .item-meta { display: flex; gap: 8px; flex-wrap: wrap; }
 
         .urgency-badge, .category-badge, .time-badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
-        .urgency-badge  { background: rgba(0,0,0,0.1);           color: #5D534A; }
-        .category-badge { background: rgba(203,223,189,0.3);     color: #3e5235; }
-        .time-badge     { background: rgba(147,197,253,0.3);     color: #1e40af; }
+        .urgency-badge  { background: rgba(0,0,0,0.1);       color: #5D534A; }
+        .category-badge { background: rgba(203,223,189,0.3); color: #3e5235; }
+        .time-badge     { background: rgba(147,197,253,0.3); color: #1e40af; }
 
         .settings-change-details { margin-top: 8px; font-size: 12px; color: #64748b; }
         .change-item { margin: 4px 0; padding: 4px 8px; background: rgba(255,255,255,0.5); border-radius: 6px; }
@@ -896,32 +904,32 @@ function injectNotificationStyles() {
         .update-time { font-size: 12px; color: #9E9382; }
 
         /* ══ DARK MODE ══ */
-        body.dark-mode .notification-dropdown { background: #1a2a1f; border-color: rgba(203,223,189,0.15); }
-        body.dark-mode .notification-header { background: linear-gradient(135deg, #2d3e2f, #1f2e22); border-bottom-color: rgba(203,223,189,0.15); }
-        body.dark-mode .notification-header h3 { color: #a8c99c; }
-        body.dark-mode .notification-close-btn { background: rgba(203,223,189,0.12); color: #a8c99c; }
-        body.dark-mode .notification-close-btn:hover { background: rgba(203,223,189,0.22); }
-        body.dark-mode .notification-section { border-bottom-color: rgba(255,255,255,0.07); }
-        body.dark-mode .section-title { color: #d1d5db; }
+        body.dark-mode .notification-dropdown         { background: #1a2a1f; border-color: rgba(203,223,189,0.15); }
+        body.dark-mode .notification-header           { background: linear-gradient(135deg, #2d3e2f, #1f2e22); border-bottom-color: rgba(203,223,189,0.15); }
+        body.dark-mode .notification-header h3        { color: #a8c99c; }
+        body.dark-mode .notification-close-btn        { background: rgba(203,223,189,0.12); color: #a8c99c; }
+        body.dark-mode .notification-close-btn:hover  { background: rgba(203,223,189,0.22); }
+        body.dark-mode .notification-section          { border-bottom-color: rgba(255,255,255,0.07); }
+        body.dark-mode .section-title                 { color: #d1d5db; }
         body.dark-mode .notification-list::-webkit-scrollbar-track { background: #1f2e24; }
         body.dark-mode .notification-list::-webkit-scrollbar-thumb { background: #3a5040; }
         body.dark-mode .notification-item.settings-change { background: linear-gradient(135deg, rgba(96,165,250,0.12), rgba(59,130,246,0.08)); }
-        body.dark-mode .item-title     { color: #e8f0e8; }
-        body.dark-mode .urgency-badge  { background: rgba(255,255,255,0.08); color: #c0c8bc; }
-        body.dark-mode .category-badge { background: rgba(203,223,189,0.15); color: #a8c99c; }
-        body.dark-mode .time-badge     { background: rgba(147,197,253,0.15); color: #93c5fd; }
-        body.dark-mode .settings-change-details { color: #8a9fa8; }
-        body.dark-mode .change-item    { background: rgba(255,255,255,0.05); }
-        body.dark-mode .change-item strong { color: #b0c4b8; }
-        body.dark-mode .item-action-btn { background: linear-gradient(135deg, rgba(203,223,189,0.2), rgba(168,201,156,0.15)); color: #a8c99c; border: 1px solid rgba(168,201,156,0.25); }
-        body.dark-mode .item-action-btn:hover { background: linear-gradient(135deg, rgba(203,223,189,0.3), rgba(168,201,156,0.25)); color: #cbdfbd; }
+        body.dark-mode .item-title                    { color: #e8f0e8; }
+        body.dark-mode .urgency-badge                 { background: rgba(255,255,255,0.08); color: #c0c8bc; }
+        body.dark-mode .category-badge                { background: rgba(203,223,189,0.15); color: #a8c99c; }
+        body.dark-mode .time-badge                    { background: rgba(147,197,253,0.15); color: #93c5fd; }
+        body.dark-mode .settings-change-details       { color: #8a9fa8; }
+        body.dark-mode .change-item                   { background: rgba(255,255,255,0.05); }
+        body.dark-mode .change-item strong            { color: #b0c4b8; }
+        body.dark-mode .item-action-btn               { background: linear-gradient(135deg, rgba(203,223,189,0.2), rgba(168,201,156,0.15)); color: #a8c99c; border: 1px solid rgba(168,201,156,0.25); }
+        body.dark-mode .item-action-btn:hover         { background: linear-gradient(135deg, rgba(203,223,189,0.3), rgba(168,201,156,0.25)); color: #cbdfbd; }
         body.dark-mode .item-action-btn.clear-notification { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1)); color: #f87171; border-color: rgba(239,68,68,0.2); }
-        body.dark-mode .empty-state    { color: #5a7060; }
-        body.dark-mode .view-all-btn   { background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); color: #a0b8a0; border: 1px solid rgba(255,255,255,0.08); }
-        body.dark-mode .view-all-btn:hover { background: linear-gradient(135deg, rgba(203,223,189,0.12), rgba(168,201,156,0.08)); color: #cbdfbd; }
-        body.dark-mode .notification-footer { border-top-color: rgba(255,255,255,0.07); }
-        body.dark-mode .notification-footer-info { background: rgba(0,0,0,0.2); border-top-color: rgba(255,255,255,0.07); }
-        body.dark-mode .update-time { color: #5a7060; }
+        body.dark-mode .empty-state                   { color: #5a7060; }
+        body.dark-mode .view-all-btn                  { background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); color: #a0b8a0; border: 1px solid rgba(255,255,255,0.08); }
+        body.dark-mode .view-all-btn:hover            { background: linear-gradient(135deg, rgba(203,223,189,0.12), rgba(168,201,156,0.08)); color: #cbdfbd; }
+        body.dark-mode .notification-footer           { border-top-color: rgba(255,255,255,0.07); }
+        body.dark-mode .notification-footer-info      { background: rgba(0,0,0,0.2); border-top-color: rgba(255,255,255,0.07); }
+        body.dark-mode .update-time                   { color: #5a7060; }
 
         /* ══ MOBILE (≤ 768px) ══ */
         @media (max-width: 768px) {
@@ -937,13 +945,11 @@ function injectNotificationStyles() {
             .notification-header {
                 padding: max(20px, calc(env(safe-area-inset-top) + 10px)) 20px 20px 20px;
             }
-            /* FIX: let wrapper fill remaining height */
             .notification-content-wrapper {
                 flex: 1 1 0;
                 max-height: none;
                 overflow-y: auto;
             }
-            /* FIX: remove fixed 350px cap inside full-screen panel */
             .notification-list {
                 max-height: none;
                 overflow-y: visible;
@@ -972,7 +978,7 @@ window.NotificationSystem = {
     goToProduct:             goToProduct,
     goToPriceProduct:        goToPriceProduct,
     goToPrices:              goToPrices,
-    onSettingsSaved:         onSettingsSaved,          // called by settings.js after save
+    onSettingsSaved:         onSettingsSaved,
     clearSettingsChange:     clearSettingsChange,
     clearAllSettingsChanges: clearAllSettingsChanges
 };
