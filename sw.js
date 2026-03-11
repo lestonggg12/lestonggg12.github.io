@@ -1,9 +1,10 @@
-const CACHE_NAME = "jorams-store-cache-v3";
+const CACHE_NAME = "jorams-store-cache-v4";
 const ASSETS_TO_CACHE = [
+  "./",
+  "./index.html",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./index.html",
   "./css/reset.css",
   "./css/variables.css",
   "./css/badges.css",
