@@ -1,4 +1,4 @@
-const CACHE_NAME = "jorams-store-cache-v2";
+const CACHE_NAME = "jorams-store-cache-v3";
 const ASSETS_TO_CACHE = [
   "./manifest.json",
   "./icons/icon-192.png",
@@ -37,6 +37,7 @@ const ASSETS_TO_CACHE = [
 
 // Install Event
 self.addEventListener("install", (event) => {
+  self.skipWaiting(); // Force the waiting service worker to become the active service worker
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log("Caching all assets");
@@ -48,21 +49,38 @@ self.addEventListener("install", (event) => {
 // Activate Event (Cleanup old caches)
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      );
-    })
+    Promise.all([
+      self.clients.claim(), // Become available to all pages immediately
+      caches.keys().then((keys) => {
+        return Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        );
+      })
+    ])
   );
 });
 
 // Fetch Event (Offline first)
 self.addEventListener("fetch", (event) => {
+  // Handle root requests by serving index.html
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin === location.origin && requestUrl.pathname === "/") {
+    event.respondWith(caches.match("./index.html"));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
+      if (cachedResponse) return cachedResponse;
+      
+      return fetch(event.request).catch(() => {
+        // Fallback for navigation if both cache and network fail
+        if (event.request.mode === 'navigate') {
+          return caches.match("./index.html");
+        }
+      });
     })
   );
 });
