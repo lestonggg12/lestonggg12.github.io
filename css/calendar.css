@@ -1,0 +1,1839 @@
+/* ========================================
+   CALENDAR.CSS — Revenue Calendar Page
+   (Monthly grid with colour-coded daily revenue)
+   ========================================
+
+   LOAD ORDER : 7 of 13
+   USED BY    : dashboard.html (#calendarPage)
+   RENDERED ON: Calendar page only
+   JS MODULES : calendar.js  → fetches daily summaries from the API
+                               and renders the month grid + date
+                               detail modals
+
+   PURPOSE
+   -------
+   Implements a full monthly calendar view where each day cell
+   is colour-coded by that day's revenue:
+   • High revenue  → dark green
+   • Medium        → medium green
+   • Low revenue   → light green / pale
+   • No sales      → default surface colour
+   Tapping a day opens a modal showing the day's detailed sales,
+   total revenue, profit, and individual transactions.
+
+   WHAT IT DESIGNS  →  WHERE IT APPEARS
+   ------------------------------------
+   .calendar-container     → Full-width wrapper for the calendar page
+   .calendar-header        → Neomorphism bar with month title +
+                            prev/next navigation arrows
+   .calendar-nav button    → ◀ / ▶ month navigation buttons
+   .calendar-month-title   → "January 2025" (large centred text)
+   .calendar-grid          → 7-column CSS Grid for the week layout
+   .calendar-day-header    → Sun–Sat column headings
+   .calendar-day           → Individual day cell (neomorphism raised)
+   .calendar-day.today     → Highlighted ring for today's date
+   .calendar-day.has-data  → Day has sales data (shows revenue label)
+   .day-revenue            → Small revenue amount text inside cell
+   .calendar-modal         → Slide-up modal when a day is tapped
+   .modal-header           → Modal title (date) + close button
+   .modal-sale-item        → Individual sale entry inside the modal
+   .modal-totals           → Revenue / profit summary row
+
+   OWN CSS VARIABLES (--cal-*)
+   ---------------------------
+   This file defines its own token set:
+     --cal-bg, --cal-surface, --cal-primary, --cal-text,
+     --cal-border, --cal-shadow-*, --cal-radius, etc.
+   These extend (not override) the global variables.css tokens.
+
+   SECTIONS INSIDE
+   ---------------
+    1. Calendar CSS variables    (--cal-*)
+    2. Calendar container        (.calendar-container)
+    3. Calendar header / nav     (.calendar-header, .calendar-nav)
+    4. Month grid                (.calendar-grid)
+    5. Day cells                 (.calendar-day + states)
+    6. Revenue colour-coding     (inline style + .has-data)
+    7. Date-detail modal         (.calendar-modal)
+    8. Modal contents            (.modal-sale-item, .modal-totals)
+    9. Dark-mode overrides       (body.dark-mode …)
+   10. Responsive breakpoints    (1200px → 992px → 768px → 576px → 480px)
+   ======================================== */
+
+/* ==================== CALENDAR STYLES - NEOMORPHISM UI ==================== */
+
+/* ==================== CSS VARIABLES ==================== */
+:root {
+  --cal-bg: #e8f0e6;
+  --cal-bg-dark: #2d3748;
+  --cal-surface: #e0e8de;
+  --cal-surface-dark: #3d4a5c;
+  --cal-primary: #87B382;
+  --cal-primary-dark: #4a6a45;
+  --cal-text: #3a3a38;
+  --cal-text-dark: #f7fafc;
+  --cal-text-muted: #6a6a65;
+  --cal-text-muted-dark: #a0aec0;
+  --neo-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== CALENDAR CONTAINER ==================== */
+.calendar-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ==================== CALENDAR HEADER - NEOMORPHISM ==================== */
+.calendar-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 24px 28px;
+  background: linear-gradient(145deg, #ecf4ea, #dce5da);
+  border-radius: 24px;
+  box-shadow: 
+    8px 8px 20px rgba(0, 0, 0, 0.1),
+    -8px -8px 20px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .calendar-header {
+  background: linear-gradient(145deg, #343e4a, #2a323c);
+  box-shadow: 
+    8px 8px 20px rgba(0, 0, 0, 0.4),
+    -8px -8px 20px rgba(255, 255, 255, 0.03),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.03);
+}
+
+.calendar-header h2 {
+  color: var(--cal-text);
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .calendar-header h2 {
+  color: var(--cal-text-dark);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.calendar-header p {
+  color: var(--cal-text-muted);
+  font-size: 0.9rem;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+body.dark-mode .calendar-header p {
+  color: var(--cal-text-muted-dark);
+}
+
+/* ==================== MONTH NAVIGATION — FIXED CENTERING ==================== */
+.calendar-nav {
+  display: grid;
+  grid-template-columns: 52px 1fr 52px;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 12px;
+}
+
+.calendar-nav-btn {
+  width: 52px;
+  height: 52px;
+  border: none;
+  background: linear-gradient(145deg, #93c48d, #79a074);
+  color: white;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  font-weight: 700;
+  transition: var(--neo-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.15),
+    -5px -5px 12px rgba(255, 255, 255, 0.4),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.calendar-nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    7px 7px 16px rgba(0, 0, 0, 0.18),
+    -7px -7px 16px rgba(255, 255, 255, 0.5);
+}
+
+.calendar-nav-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 
+    inset 4px 4px 10px rgba(0, 0, 0, 0.2),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .calendar-nav-btn {
+  background: linear-gradient(145deg, #4f7a4a, #3d5f39);
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.5),
+    -5px -5px 12px rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .calendar-nav-btn:hover {
+  box-shadow: 
+    7px 7px 16px rgba(0, 0, 0, 0.55),
+    -7px -7px 16px rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .calendar-nav-btn:active {
+  box-shadow: 
+    inset 4px 4px 10px rgba(0, 0, 0, 0.5),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.03);
+}
+
+/* ── Month title: always centred in the middle grid column ── */
+.calendar-month-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--cal-text);
+  margin: 0;
+  letter-spacing: -0.5px;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+  padding: 14px 20px;
+  background: linear-gradient(145deg, #ecf4ea, #dce5da);
+  border-radius: 16px;
+  box-shadow: 
+    inset 3px 3px 8px rgba(0, 0, 0, 0.06),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.6);
+  text-align: center !important;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.dark-mode .calendar-month-title {
+  color: var(--cal-text-dark);
+  background: linear-gradient(145deg, #343e4a, #2a323c);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    inset 3px 3px 8px rgba(0, 0, 0, 0.4),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.03);
+  text-align: center !important;
+  justify-content: center;
+}
+
+/* ==================== CALENDAR GRID CONTAINER - NEOMORPHISM ==================== */
+.calendar-grid-container {
+  background: linear-gradient(145deg, #ecf4ea, #dce5da);
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 
+    10px 10px 30px rgba(0, 0, 0, 0.1),
+    -10px -10px 30px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .calendar-grid-container {
+  background: linear-gradient(145deg, #343e4a, #2a323c);
+  box-shadow: 
+    10px 10px 30px rgba(0, 0, 0, 0.5),
+    -10px -10px 30px rgba(255, 255, 255, 0.03);
+}
+
+/* ==================== CALENDAR GRID ==================== */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+/* ==================== DAY HEADERS - NEOMORPHISM ==================== */
+.calendar-day-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--cal-text-muted);
+  padding: 12px 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: linear-gradient(145deg, #e4ece2, #d4dcd2);
+  border-radius: 10px;
+  box-shadow: 
+    inset 2px 2px 5px rgba(0, 0, 0, 0.05),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.7);
+}
+
+body.dark-mode .calendar-day-header {
+  color: var(--cal-text-muted-dark);
+  background: linear-gradient(145deg, #3a4450, #2e363f);
+  box-shadow: 
+    inset 2px 2px 5px rgba(0, 0, 0, 0.35),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.03);
+}
+
+/* ==================== DATE CELLS - NEOMORPHISM ==================== */
+.calendar-date-cell {
+  aspect-ratio: 1;
+  background: linear-gradient(145deg, #f0f8ee, #e0e8de);
+  border-radius: 16px;
+  padding: 10px;
+  cursor: pointer;
+  transition: var(--neo-transition);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-height: 85px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.08),
+    -5px -5px 12px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .calendar-date-cell {
+  background: linear-gradient(145deg, #3f4a56, #343d48);
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.45),
+    -5px -5px 12px rgba(255, 255, 255, 0.04);
+}
+
+.calendar-date-cell.empty {
+  background: transparent;
+  cursor: default;
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.calendar-date-cell:not(.empty):hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    8px 8px 20px rgba(0, 0, 0, 0.12),
+    -8px -8px 20px rgba(255, 255, 255, 0.9);
+  z-index: 10;
+}
+
+body.dark-mode .calendar-date-cell:not(.empty):hover {
+  box-shadow: 
+    8px 8px 20px rgba(0, 0, 0, 0.55),
+    -8px -8px 20px rgba(255, 255, 255, 0.06);
+}
+
+.calendar-date-cell:not(.empty):active {
+  transform: translateY(-1px) scale(0.99);
+  box-shadow: 
+    inset 3px 3px 8px rgba(0, 0, 0, 0.1),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.5);
+}
+
+/* ==================== CELLS WITH SALES ==================== */
+.calendar-date-cell.has-sales {
+  background: linear-gradient(145deg, #c8f0c0, #a8e0a0);
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.1),
+    -5px -5px 12px rgba(255, 255, 255, 0.7),
+    inset 1px 1px 3px rgba(255, 255, 255, 0.5);
+}
+
+/* ── Dark mode: muted, desaturated sales cells ── */
+body.dark-mode .calendar-date-cell.has-sales {
+  background: linear-gradient(145deg, #2a3830, #222e28) !important;
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.5),
+    -5px -5px 12px rgba(255, 255, 255, 0.03);
+}
+
+/* Override JS-injected inline background gradients in dark mode */
+body.dark-mode .calendar-date-cell[style*="background"] {
+  background: linear-gradient(145deg, #2a3830, #222e28) !important;
+}
+
+body.dark-mode .calendar-date-cell.sales-low {
+  background: linear-gradient(145deg, #273428, #1e2920) !important;
+}
+
+body.dark-mode .calendar-date-cell.sales-medium {
+  background: linear-gradient(145deg, #2d3e30, #243228) !important;
+}
+
+body.dark-mode .calendar-date-cell.sales-high {
+  background: linear-gradient(145deg, #334538, #28382c) !important;
+}
+
+/* Revenue text — softer green instead of bright emerald */
+body.dark-mode .date-revenue {
+  color: #7aab8a !important;
+  text-shadow: none;
+}
+
+/* Sales count pill — subtler */
+body.dark-mode .date-sales-count {
+  background: linear-gradient(145deg, #2d3830, #242e28) !important;
+  color: #8aab96 !important;
+  box-shadow: none;
+}
+
+/* Today cell — keep the amber ring but darken the fill */
+body.dark-mode .calendar-date-cell.today {
+  background: linear-gradient(145deg, #332e1e, #282415) !important;
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.5),
+    -5px -5px 12px rgba(255, 255, 255, 0.02),
+    0 0 0 3px #b37d20,
+    0 0 12px rgba(180, 120, 20, 0.15) !important;
+}
+
+/* ==================== TODAY CELL ==================== */
+.calendar-date-cell.today {
+  background: linear-gradient(145deg, #fff8e8, #ffefcc);
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.1),
+    -5px -5px 12px rgba(255, 255, 255, 0.7),
+    0 0 0 3px #f59e0b,
+    0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+body.dark-mode .calendar-date-cell.today {
+  background: linear-gradient(145deg, #4a4530, #3d3a28);
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.5),
+    -5px -5px 12px rgba(255, 255, 255, 0.04),
+    0 0 0 3px #f59e0b,
+    0 0 15px rgba(245, 158, 11, 0.15);
+}
+
+.calendar-date-cell.today .date-number {
+  color: #d97706;
+  font-weight: 900;
+}
+
+body.dark-mode .calendar-date-cell.today .date-number {
+  color: #fbbf24;
+}
+
+/* ==================== DATE NUMBER ==================== */
+.date-number {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--cal-text);
+  line-height: 1;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .date-number {
+  color: var(--cal-text-dark);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== DATE REVENUE & SALES COUNT ==================== */
+.date-revenue {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #059669;
+  margin-top: auto;
+  padding-top: 6px;
+  text-align: left;
+  width: 100%;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+body.dark-mode .date-revenue {
+  color: #34d399;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.date-sales-count {
+  font-size: 0.68rem;
+  color: var(--cal-text-muted);
+  margin-top: 2px;
+  font-weight: 600;
+  background: linear-gradient(145deg, #e8f0e6, #d8e0d6);
+  padding: 3px 8px;
+  border-radius: 12px;
+  box-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.06),
+    -2px -2px 4px rgba(255, 255, 255, 0.8);
+}
+
+body.dark-mode .date-sales-count {
+  color: var(--cal-text-muted-dark);
+  background: linear-gradient(145deg, #3a4450, #2e363f);
+  box-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.4),
+    -2px -2px 4px rgba(255, 255, 255, 0.03);
+}
+
+/* ==================== CALENDAR LEGEND - NEOMORPHISM ==================== */
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  background: linear-gradient(145deg, #ecf4ea, #dce5da);
+  border-radius: 18px;
+  box-shadow: 
+    6px 6px 16px rgba(0, 0, 0, 0.08),
+    -6px -6px 16px rgba(255, 255, 255, 0.8);
+}
+
+body.dark-mode .calendar-legend {
+  background: linear-gradient(145deg, #343e4a, #2a323c);
+  box-shadow: 
+    6px 6px 16px rgba(0, 0, 0, 0.4),
+    -6px -6px 16px rgba(255, 255, 255, 0.03);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  box-shadow: 
+    3px 3px 6px rgba(0, 0, 0, 0.1),
+    -3px -3px 6px rgba(255, 255, 255, 0.7);
+}
+
+body.dark-mode .legend-color {
+  box-shadow: 
+    3px 3px 6px rgba(0, 0, 0, 0.4),
+    -3px -3px 6px rgba(255, 255, 255, 0.04);
+}
+
+.legend-item span {
+  font-size: 0.82rem;
+  color: var(--cal-text);
+  font-weight: 600;
+}
+
+body.dark-mode .legend-item span {
+  color: var(--cal-text-muted-dark);
+}
+
+/* ==================== DATE MODAL OVERLAY ==================== */
+.date-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  padding: 16px;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ==================== DATE MODAL BOX - NEOMORPHISM ==================== */
+.date-modal-box {
+  background: linear-gradient(145deg, #f5f8f4, #e8ebe7);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 
+    16px 16px 50px rgba(0, 0, 0, 0.25),
+    -16px -16px 50px rgba(255, 255, 255, 0.5),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes modalSlideUp {
+  from { 
+    transform: translateY(40px) scale(0.92); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0) scale(1); 
+    opacity: 1; 
+  }
+}
+
+body.dark-mode .date-modal-box {
+  background: linear-gradient(145deg, #2a3441, #1e252d);
+  box-shadow: 
+    16px 16px 50px rgba(0, 0, 0, 0.6),
+    -16px -16px 50px rgba(255, 255, 255, 0.03);
+}
+
+/* Custom Scrollbar */
+.date-modal-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.date-modal-box::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 16px 0;
+}
+
+.date-modal-box::-webkit-scrollbar-thumb {
+  background: linear-gradient(145deg, #c5cdc3, #b0b8ae);
+  border-radius: 8px;
+}
+
+body.dark-mode .date-modal-box::-webkit-scrollbar-thumb {
+  background: linear-gradient(145deg, #4a5560, #3a4550);
+}
+
+/* ==================== MODAL CLOSE BUTTON ==================== */
+.modal-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: linear-gradient(145deg, #fff5f5, #fee2e2);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #DC2626;
+  transition: var(--neo-transition);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    4px 4px 10px rgba(0, 0, 0, 0.1),
+    -4px -4px 10px rgba(255, 255, 255, 0.8);
+}
+
+.modal-close-btn:hover {
+  background: linear-gradient(145deg, #f55a5a, #d94545);
+  color: white;
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 
+    5px 5px 12px rgba(239, 68, 68, 0.3),
+    -5px -5px 12px rgba(255, 255, 255, 0.5);
+}
+
+.modal-close-btn:active {
+  transform: rotate(90deg) scale(1);
+  box-shadow: 
+    inset 3px 3px 6px rgba(0, 0, 0, 0.2),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .modal-close-btn {
+  background: linear-gradient(145deg, #4a2c2c, #3a2020);
+  color: #f87171;
+  box-shadow: 
+    4px 4px 10px rgba(0, 0, 0, 0.4),
+    -4px -4px 10px rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .modal-close-btn:hover {
+  background: linear-gradient(145deg, #ef5555, #d54040);
+  color: white;
+}
+
+/* ==================== MODAL HEADER ==================== */
+.modal-header {
+  text-align: center;
+  padding: 32px 36px 24px;
+  background: linear-gradient(145deg, #e8f0e6, #dce5da);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 
+    inset 0 -3px 8px rgba(0, 0, 0, 0.03),
+    inset 0 3px 8px rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .modal-header {
+  background: linear-gradient(145deg, #2f3945, #252c36);
+  box-shadow: 
+    inset 0 -3px 8px rgba(0, 0, 0, 0.2),
+    inset 0 3px 8px rgba(255, 255, 255, 0.02);
+}
+
+.modal-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--cal-text);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.3px;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .modal-title {
+  color: var(--cal-text-dark);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.modal-subtitle {
+  margin: 0;
+}
+
+.transaction-badge {
+  display: inline-block;
+  padding: 9px 20px;
+  background: linear-gradient(145deg, #93c48d, #79a074);
+  color: white;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: 
+    4px 4px 10px rgba(0, 0, 0, 0.12),
+    -4px -4px 10px rgba(255, 255, 255, 0.3),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .transaction-badge {
+  background: linear-gradient(145deg, #4f7a4a, #3d5f39);
+  box-shadow: 
+    4px 4px 10px rgba(0, 0, 0, 0.4),
+    -4px -4px 10px rgba(255, 255, 255, 0.04);
+}
+
+/* ==================== MODAL LOADING STATE ==================== */
+.modal-loading {
+  text-align: center;
+  padding: 60px 36px;
+}
+
+.loading-spinner {
+  font-size: 52px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.modal-loading p {
+  color: var(--cal-text-muted);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+body.dark-mode .modal-loading p {
+  color: var(--cal-text-muted-dark);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== MODAL EMPTY STATE ==================== */
+.empty-state {
+  text-align: center;
+  padding: 50px 24px;
+}
+
+.empty-icon {
+  font-size: 70px;
+  opacity: 0.25;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 1.35rem;
+  color: var(--cal-text);
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.empty-state p {
+  color: var(--cal-text-muted);
+  font-size: 1rem;
+}
+
+body.dark-mode .empty-state h3 {
+  color: var(--cal-text-dark);
+}
+
+body.dark-mode .empty-state p {
+  color: var(--cal-text-muted-dark);
+}
+
+/* ==================== MODAL BODY ==================== */
+.modal-body {
+  padding: 28px;
+}
+
+/* ==================== SUMMARY CARDS - NEOMORPHISM ==================== */
+.modal-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.modal-summary-card {
+  background: linear-gradient(145deg, #f5f8f4, #e8ebe7);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: var(--neo-transition);
+  box-shadow: 
+    5px 5px 14px rgba(0, 0, 0, 0.08),
+    -5px -5px 14px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .modal-summary-card {
+  background: linear-gradient(145deg, #343e4a, #2a323c);
+  box-shadow: 
+    5px 5px 14px rgba(0, 0, 0, 0.45),
+    -5px -5px 14px rgba(255, 255, 255, 0.03);
+}
+
+.modal-summary-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    7px 7px 18px rgba(0, 0, 0, 0.1),
+    -7px -7px 18px rgba(255, 255, 255, 0.9);
+}
+
+body.dark-mode .modal-summary-card:hover {
+  box-shadow: 
+    7px 7px 18px rgba(0, 0, 0, 0.5),
+    -7px -7px 18px rgba(255, 255, 255, 0.04);
+}
+
+.modal-summary-card.revenue {
+  background: linear-gradient(145deg, #e8f8e5, #d0eacc);
+}
+
+body.dark-mode .modal-summary-card.revenue {
+  background: linear-gradient(145deg, #2a4a2a, #1f3a1f);
+}
+
+.modal-summary-card.profit {
+  background: linear-gradient(145deg, #e8f0ff, #d0e0f8);
+}
+
+body.dark-mode .modal-summary-card.profit {
+  background: linear-gradient(145deg, #2a3a5a, #1f2f4a);
+}
+
+.summary-card-icon {
+  font-size: 2.4rem;
+  flex-shrink: 0;
+  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.1));
+}
+
+.summary-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-card-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cal-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+
+body.dark-mode .summary-card-label {
+  color: var(--cal-text-muted-dark);
+}
+
+.summary-card-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--cal-text);
+  letter-spacing: -0.3px;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+  word-break: break-word;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+body.dark-mode .summary-card-value {
+  color: var(--cal-text-dark);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.modal-summary-card.revenue .summary-card-value {
+  color: #059669;
+}
+
+.modal-summary-card.profit .summary-card-value {
+  color: #2563eb;
+}
+
+body.dark-mode .modal-summary-card.revenue .summary-card-value {
+  color: #34d399;
+}
+
+body.dark-mode .modal-summary-card.profit .summary-card-value {
+  color: #60a5fa;
+}
+
+/* ==================== MODAL SECTIONS ==================== */
+.modal-section {
+  margin-bottom: 24px;
+}
+
+.modal-section:last-child {
+  margin-bottom: 0;
+}
+
+.modal-section-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--cal-text);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .modal-section-title {
+  color: var(--cal-text-dark);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 9px;
+  background: linear-gradient(145deg, #93c48d, #79a074);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  box-shadow: 
+    3px 3px 6px rgba(0, 0, 0, 0.12),
+    -3px -3px 6px rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .count-badge {
+  background: linear-gradient(145deg, #4f7a4a, #3d5f39);
+  box-shadow: 
+    3px 3px 6px rgba(0, 0, 0, 0.4),
+    -3px -3px 6px rgba(255, 255, 255, 0.03);
+}
+
+/* ==================== BEST SELLERS - NEOMORPHISM ==================== */
+.best-sellers-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.best-seller-card {
+  background: linear-gradient(145deg, #f5f8f4, #e8ebe7);
+  border-radius: 18px;
+  padding: 18px;
+  text-align: center;
+  transition: var(--neo-transition);
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.08),
+    -5px -5px 12px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .best-seller-card {
+  background: linear-gradient(145deg, #343e4a, #2a323c);
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.45),
+    -5px -5px 12px rgba(255, 255, 255, 0.03);
+}
+
+.best-seller-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    8px 8px 20px rgba(0, 0, 0, 0.1),
+    -8px -8px 20px rgba(255, 255, 255, 0.9);
+}
+
+body.dark-mode .best-seller-card:hover {
+  box-shadow: 
+    8px 8px 20px rgba(0, 0, 0, 0.5),
+    -8px -8px 20px rgba(255, 255, 255, 0.04);
+}
+
+.best-seller-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 
+    inset 2px 2px 4px rgba(0, 0, 0, 0.06),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.5);
+}
+
+.best-seller-badge.quantity {
+  background: linear-gradient(145deg, #fff5d8, #f5e8c0);
+  color: #92400e;
+}
+
+.best-seller-badge.profit {
+  background: linear-gradient(145deg, #e8e8ff, #d8d8f8);
+  color: #4338ca;
+}
+
+body.dark-mode .best-seller-badge.quantity {
+  background: linear-gradient(145deg, #5a5035, #4a4028);
+  color: #fcd34d;
+  box-shadow: 
+    inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .best-seller-badge.profit {
+  background: linear-gradient(145deg, #404080, #353570);
+  color: #a5b4fc;
+  box-shadow: 
+    inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.03);
+}
+
+.best-seller-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--cal-text);
+  margin-bottom: 6px;
+  line-height: 1.3;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+  word-break: break-word;
+}
+
+body.dark-mode .best-seller-name {
+  color: var(--cal-text-dark);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.best-seller-stat {
+  font-size: 0.88rem;
+  color: #059669;
+  font-weight: 700;
+}
+
+body.dark-mode .best-seller-stat {
+  color: #34d399;
+}
+
+/* ==================== PRODUCTS LIST - NEOMORPHISM ==================== */
+.products-list {
+  background: linear-gradient(145deg, #f5f8f4, #e8ebe7);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.08),
+    -5px -5px 12px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .products-list {
+  background: linear-gradient(145deg, #343e4a, #2a323c);
+  box-shadow: 
+    5px 5px 12px rgba(0, 0, 0, 0.45),
+    -5px -5px 12px rgba(255, 255, 255, 0.03);
+}
+
+.product-list-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  gap: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+body.dark-mode .product-list-item {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.product-list-item:last-child {
+  border-bottom: none;
+}
+
+.product-list-item:hover {
+  background: linear-gradient(145deg, #f0f3ef, #e3e6e2);
+}
+
+body.dark-mode .product-list-item:hover {
+  background: linear-gradient(145deg, #3a4450, #2e363f);
+}
+
+.product-rank {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(145deg, #93c48d, #79a074);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 
+    3px 3px 8px rgba(0, 0, 0, 0.12),
+    -3px -3px 8px rgba(255, 255, 255, 0.3),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .product-rank {
+  background: linear-gradient(145deg, #4f7a4a, #3d5f39);
+  box-shadow: 
+    3px 3px 8px rgba(0, 0, 0, 0.4),
+    -3px -3px 8px rgba(255, 255, 255, 0.03);
+}
+
+/* Special styling for top 3 */
+.product-list-item:nth-child(1) .product-rank {
+  background: linear-gradient(145deg, #ffc830, #e5a820);
+  box-shadow: 
+    3px 3px 8px rgba(251, 191, 36, 0.2),
+    -3px -3px 8px rgba(255, 255, 255, 0.4);
+}
+
+.product-list-item:nth-child(2) .product-rank {
+  background: linear-gradient(145deg, #b0b8c0, #9098a0);
+  box-shadow: 
+    3px 3px 8px rgba(156, 163, 175, 0.2),
+    -3px -3px 8px rgba(255, 255, 255, 0.4);
+}
+
+.product-list-item:nth-child(3) .product-rank {
+  background: linear-gradient(145deg, #e88520, #c87010);
+  box-shadow: 
+    3px 3px 8px rgba(217, 119, 6, 0.2),
+    -3px -3px 8px rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .product-list-item:nth-child(1) .product-rank,
+body.dark-mode .product-list-item:nth-child(2) .product-rank,
+body.dark-mode .product-list-item:nth-child(3) .product-rank {
+  box-shadow: 
+    3px 3px 8px rgba(0, 0, 0, 0.4),
+    -3px -3px 8px rgba(255, 255, 255, 0.03);
+}
+
+.product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cal-text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.dark-mode .product-name {
+  color: var(--cal-text-dark);
+}
+
+.product-stats {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.product-quantity,
+.product-profit {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--cal-text-muted);
+}
+
+body.dark-mode .product-quantity,
+body.dark-mode .product-profit {
+  color: var(--cal-text-muted-dark);
+}
+
+.product-profit {
+  color: #059669;
+}
+
+body.dark-mode .product-profit {
+  color: #34d399;
+}
+
+/* ==================== RESPONSIVE DESIGN - TABLETS ==================== */
+@media (max-width: 768px) {
+  .calendar-container {
+    padding: 12px;
+  }
+
+  .calendar-header {
+    padding: 18px 20px;
+    border-radius: 20px;
+    margin-bottom: 18px;
+  }
+
+  .calendar-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .calendar-header p {
+    font-size: 0.82rem;
+    margin-top: 6px;
+  }
+
+  .calendar-nav {
+    margin-bottom: 18px;
+    gap: 10px;
+    grid-template-columns: 46px 1fr 46px;
+  }
+
+  .calendar-nav-btn {
+    width: 46px;
+    height: 46px;
+    font-size: 1.2rem;
+    border-radius: 14px;
+  }
+
+  .calendar-month-title {
+    font-size: 1.25rem;
+    padding: 12px 16px;
+    border-radius: 14px;
+  }
+
+  .calendar-grid-container {
+    padding: 14px;
+    border-radius: 20px;
+    margin-bottom: 18px;
+  }
+
+  .calendar-grid {
+    gap: 8px;
+  }
+
+  .calendar-day-header {
+    font-size: 0.7rem;
+    padding: 10px 4px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .calendar-date-cell {
+    min-height: 65px;
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .date-number {
+    font-size: 1rem;
+  }
+
+  .date-revenue {
+    font-size: 0.68rem;
+    padding-top: 4px;
+  }
+
+  .date-sales-count {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+
+  .calendar-legend {
+    padding: 16px 18px;
+    gap: 14px;
+    border-radius: 16px;
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .legend-color {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+  }
+
+  .legend-item span {
+    font-size: 0.75rem;
+  }
+
+  /* Modal responsive */
+  .date-modal-box {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 24px;
+    margin: 10px;
+  }
+
+  .modal-header {
+    padding: 26px 24px 20px;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .modal-title {
+    font-size: 1.2rem;
+  }
+
+  .transaction-badge {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+
+  .modal-close-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+    top: 14px;
+    right: 14px;
+  }
+
+  .modal-body {
+    padding: 22px;
+  }
+
+  .modal-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .modal-summary-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .summary-card-icon {
+    font-size: 2rem;
+  }
+
+  .summary-card-label {
+    font-size: 0.7rem;
+  }
+
+  .summary-card-value {
+    font-size: 1.3rem;
+  }
+
+  .modal-section-title {
+    font-size: 0.95rem;
+  }
+
+  .best-sellers-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .best-seller-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .best-seller-badge {
+    padding: 5px 12px;
+    font-size: 0.68rem;
+  }
+
+  .best-seller-name {
+    font-size: 0.98rem;
+  }
+
+  .best-seller-stat {
+    font-size: 0.82rem;
+  }
+
+  .products-list {
+    border-radius: 16px;
+  }
+
+  .product-list-item {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .product-rank {
+    width: 32px;
+    height: 32px;
+    font-size: 0.78rem;
+  }
+
+  .product-name {
+    font-size: 0.88rem;
+  }
+
+  .product-stats {
+    gap: 10px;
+  }
+
+  .product-quantity,
+  .product-profit {
+    font-size: 0.78rem;
+  }
+
+  .count-badge {
+    min-width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+  }
+}
+
+/* ==================== RESPONSIVE DESIGN - SMALL PHONES ==================== */
+@media (max-width: 480px) {
+  .calendar-container {
+    padding: 8px;
+  }
+
+  .calendar-header {
+    padding: 14px 16px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+  }
+
+  .calendar-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .calendar-header p {
+    font-size: 0.75rem;
+    margin-top: 5px;
+  }
+
+  .calendar-nav {
+    margin-bottom: 14px;
+    gap: 8px;
+    grid-template-columns: 40px 1fr 40px;
+  }
+
+  .calendar-nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+  }
+
+  .calendar-month-title {
+    font-size: 1.05rem;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .calendar-grid-container {
+    padding: 10px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+  }
+
+  .calendar-grid {
+    gap: 5px;
+  }
+
+  .calendar-day-header {
+    font-size: 0.6rem;
+    padding: 8px 2px;
+    border-radius: 6px;
+    letter-spacing: 0;
+  }
+
+  .calendar-date-cell {
+    min-height: 52px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .date-number {
+    font-size: 0.88rem;
+  }
+
+  .date-revenue {
+    font-size: 0.58rem;
+    padding-top: 3px;
+  }
+
+  .date-sales-count {
+    font-size: 0.52rem;
+    padding: 2px 4px;
+    border-radius: 8px;
+    margin-top: 1px;
+  }
+
+  .calendar-legend {
+    padding: 12px 14px;
+    gap: 8px 14px;
+    border-radius: 14px;
+  }
+
+  .legend-color {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+  }
+
+  .legend-item span {
+    font-size: 0.68rem;
+  }
+
+  /* Modal responsive small */
+  .date-modal-overlay {
+    padding: 10px;
+  }
+
+  .date-modal-box {
+    border-radius: 20px;
+    margin: 0;
+  }
+
+  .modal-header {
+    padding: 22px 18px 16px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .modal-title {
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+  }
+
+  .transaction-badge {
+    padding: 7px 14px;
+    font-size: 0.8rem;
+  }
+
+  .modal-close-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    top: 12px;
+    right: 12px;
+  }
+
+  .modal-body {
+    padding: 18px;
+  }
+
+  .modal-summary-grid {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .modal-summary-card {
+    padding: 14px;
+    border-radius: 14px;
+    gap: 12px;
+  }
+
+  .summary-card-icon {
+    font-size: 1.8rem;
+  }
+
+  .summary-card-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+  }
+
+  .summary-card-value {
+    font-size: 1.15rem;
+  }
+
+  .modal-section {
+    margin-bottom: 18px;
+  }
+
+  .modal-section-title {
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .best-sellers-grid {
+    gap: 10px;
+  }
+
+  .best-seller-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .best-seller-badge {
+    padding: 5px 10px;
+    font-size: 0.65rem;
+    margin-bottom: 10px;
+  }
+
+  .best-seller-name {
+    font-size: 0.92rem;
+    margin-bottom: 5px;
+  }
+
+  .best-seller-stat {
+    font-size: 0.78rem;
+  }
+
+  .products-list {
+    border-radius: 14px;
+  }
+
+  .product-list-item {
+    padding: 11px 12px;
+    gap: 10px;
+  }
+
+  .product-rank {
+    width: 28px;
+    height: 28px;
+    font-size: 0.72rem;
+  }
+
+  .product-name {
+    font-size: 0.82rem;
+    margin-bottom: 3px;
+  }
+
+  .product-stats {
+    gap: 8px;
+  }
+
+  .product-quantity,
+  .product-profit {
+    font-size: 0.72rem;
+  }
+
+  .count-badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 7px;
+    font-size: 0.7rem;
+  }
+
+  .empty-state {
+    padding: 40px 20px;
+  }
+
+  .empty-icon {
+    font-size: 55px;
+    margin-bottom: 12px;
+  }
+
+  .empty-state h3 {
+    font-size: 1.15rem;
+  }
+
+  .empty-state p {
+    font-size: 0.88rem;
+  }
+
+  .modal-loading {
+    padding: 50px 30px;
+  }
+
+  .loading-spinner {
+    font-size: 44px;
+    margin-bottom: 12px;
+  }
+
+  .modal-loading p {
+    font-size: 0.9rem;
+  }
+}
+
+/* ==================== RESPONSIVE DESIGN - EXTRA SMALL PHONES ==================== */
+@media (max-width: 360px) {
+  .calendar-container {
+    padding: 6px;
+  }
+
+  .calendar-header {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .calendar-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .calendar-header p {
+    font-size: 0.7rem;
+  }
+
+  .calendar-nav {
+    grid-template-columns: 36px 1fr 36px;
+    gap: 6px;
+  }
+
+  .calendar-nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
+
+  .calendar-month-title {
+    font-size: 0.95rem;
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .calendar-grid-container {
+    padding: 8px;
+    border-radius: 14px;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+  }
+
+  .calendar-day-header {
+    font-size: 0.55rem;
+    padding: 6px 1px;
+    border-radius: 5px;
+  }
+
+  .calendar-date-cell {
+    min-height: 44px;
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .date-number {
+    font-size: 0.78rem;
+  }
+
+  .date-revenue {
+    font-size: 0.52rem;
+    padding-top: 2px;
+  }
+
+  .date-sales-count {
+    display: none;
+  }
+
+  .calendar-legend {
+    padding: 10px 12px;
+    gap: 6px 10px;
+    border-radius: 12px;
+  }
+
+  .legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+  }
+
+  .legend-item span {
+    font-size: 0.62rem;
+  }
+
+  /* Modal extra small */
+  .date-modal-overlay {
+    padding: 6px;
+  }
+
+  .date-modal-box {
+    border-radius: 18px;
+  }
+
+  .modal-header {
+    padding: 18px 14px 14px;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .modal-title {
+    font-size: 0.95rem;
+  }
+
+  .transaction-badge {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .modal-close-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+    top: 10px;
+    right: 10px;
+  }
+
+  .modal-body {
+    padding: 14px;
+  }
+
+  .modal-summary-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .summary-card-content {
+    width: 100%;
+  }
+
+  .summary-card-icon {
+    font-size: 1.6rem;
+  }
+
+  .summary-card-value {
+    font-size: 1.08rem;
+  }
+
+  .best-seller-card {
+    padding: 12px;
+  }
+
+  .best-seller-badge {
+    padding: 4px 8px;
+    font-size: 0.6rem;
+  }
+
+  .best-seller-name {
+    font-size: 0.85rem;
+  }
+
+  .best-seller-stat {
+    font-size: 0.72rem;
+  }
+
+  .product-list-item {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .product-rank {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+  }
+
+  .product-name {
+    font-size: 0.78rem;
+  }
+
+  .product-quantity,
+  .product-profit {
+    font-size: 0.68rem;
+  }
+
+  .count-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+  }
+}

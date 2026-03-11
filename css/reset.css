@@ -1,0 +1,96 @@
+/* ========================================
+   RESET.CSS — Modern CSS Reset
+   ========================================
+
+   LOAD ORDER : 2 of 13 (right after variables.css)
+   USED BY    : Entire app — applies globally
+   RENDERED ON: Every page
+
+   PURPOSE
+   -------
+   Normalises inconsistent browser defaults so every
+   element starts from the same baseline.  This ensures
+   the neomorphism UI looks identical on Chrome, Firefox,
+   Safari, and mobile browsers.
+
+   WHAT IT RESETS
+   --------------
+   • box-sizing   → border-box on everything (*)
+   • body         → min-height: 100vh, light bg (#f9fafb),
+   •                dark-mode bg (#111827) via body.dark-mode
+   • Lists (ul/ol)→ no bullets
+   • Buttons      → strip border, bg, inherit font
+   • Inputs       → inherit font family & size
+   • Links (a)    → no underline, inherit color
+   • Images       → max-width: 100%, block display
+   • Text render  → antialiased font smoothing
+
+   NOTE: Dark-mode body background is set here so the
+   page never flashes white when dark mode is enabled.
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+/* Prevent <style> tags from rendering as visible text */
+style { display: none !important; }
+
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    background-color: #f9fafb;
+    color: #1f2937;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+body.dark-mode {
+    background-color: #111827;
+    color: #f9fafb;
+}
+
+/* Remove default list styles */
+ul, ol {
+    list-style: none;
+}
+
+/* Remove default button styles */
+button {
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+/* Remove default input styles */
+input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* Remove default link underline */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Image defaults */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Better text rendering */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}

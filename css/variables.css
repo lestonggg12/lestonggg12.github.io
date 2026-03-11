@@ -1,0 +1,411 @@
+/* ========================================
+   VARIABLES.CSS — Design System Foundation
+   ========================================
+
+   LOAD ORDER : 1 of 13 (loaded FIRST in dashboard.html)
+   USED BY    : Every other CSS file in the project
+   RENDERED ON: Every page — this is the global token layer
+
+   PURPOSE
+   -------
+   Defines ALL CSS custom properties (design tokens) that
+   power the entire SariSari Store UI.  Every color, shadow,
+   gradient, spacing value, and transition used anywhere in
+   the app originates here.
+
+   SECTIONS INSIDE
+   ---------------
+   1. Google Fonts Import  — loads the "Inter" typeface
+   2. Color Palette         — primary greens, success, danger,
+                              warning, info, neutral grays
+   3. Gradient Definitions  — header, card, and button gradients
+   4. Shadow System         — sm / md / lg / xl elevations
+   5. Spacing & Radius      — consistent padding & border-radius
+   6. Typography Scale      — font sizes xs → 2xl + weights
+   7. Transition Presets     — base, slow, fast, bounce easings
+   8. Navigation Vars       — nav-bg, nav-text, nav-shadow, etc.
+   9. Cart Variables         — cart-bg, cart-width, cart-shadow
+  10. Dark-Mode Overrides   — body.dark-mode :root re-declarations
+  11. Utility Classes        — .text-center, .mt-1, .hidden, etc.
+
+   HOW OTHER FILES USE IT
+   ----------------------
+   • navigations.css  → var(--nav-bg), var(--nav-shadow-*)
+   • pages.css        → var(--bg-surface), var(--shadow-md)
+   • cards.css        → var(--success), var(--gradient-header)
+   • cart-system.css  → var(--cart-bg), var(--cart-shadow)
+   • calendar.css     → extends with its own --cal-* tokens
+   • darkmode.css     → overrides tokens for dark palette
+   • All files        → var(--transition-base), var(--radius-md), etc.
+
+   NEVER delete this file — it is the foundation!
+   ======================================== */
+
+/* === GOOGLE FONTS IMPORT === */
+/* Using Inter font family for modern, clean look */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    /* ==========================================
+       COLOR SYSTEM
+       Each color has 9 shades from light to dark
+       50 = lightest, 900 = darkest
+       ========================================== */
+    
+    /* === PRIMARY COLORS (Green) === */
+    /* Used for: Success states, profit cards, primary actions */
+    --primary-50: #f0fdf4;   /* Very light green background */
+    --primary-100: #dcfce7;  /* Light green background */
+    --primary-200: #bbf7d0;  /* Soft green */
+    --primary-300: #86efac;  /* Medium-light green */
+    --primary-400: #4ade80;  /* Bright green */
+    --primary-500: #22c55e;  /* Main green (base color) */
+    --primary-600: #16a34a;  /* Dark green */
+    --primary-700: #15803d;  /* Darker green */
+    --primary-800: #166534;  /* Very dark green */
+    --primary-900: #14532d;  /* Almost black green */
+    
+    /* === ACCENT COLORS (Blue) === */
+    /* Used for: Links, info states, secondary actions */
+    --accent-50: #eff6ff;    /* Very light blue */
+    --accent-100: #dbeafe;   /* Light blue background */
+    --accent-200: #bfdbfe;   /* Soft blue */
+    --accent-300: #93c5fd;   /* Medium-light blue */
+    --accent-400: #60a5fa;   /* Bright blue */
+    --accent-500: #3b82f6;   /* Main blue (base color) */
+    --accent-600: #2563eb;   /* Dark blue */
+    --accent-700: #1d4ed8;   /* Darker blue */
+    --accent-800: #1e40af;   /* Very dark blue */
+    --accent-900: #1e3a8a;   /* Almost black blue */
+    
+    /* === WARNING COLORS (Amber/Yellow) === */
+    /* Used for: Warning states, yesterday's sales, caution alerts */
+    --warning-50: #fffbeb;   /* Very light amber */
+    --warning-100: #fef3c7;  /* Light amber background */
+    --warning-200: #fde68a;  /* Soft amber */
+    --warning-300: #fcd34d;  /* Medium-light amber */
+    --warning-400: #fbbf24;  /* Bright amber */
+    --warning-500: #f59e0b;  /* Main amber (base color) */
+    --warning-600: #d97706;  /* Dark amber */
+    --warning-700: #b45309;  /* Darker amber */
+    --warning-800: #92400e;  /* Very dark amber */
+    --warning-900: #78350f;  /* Almost black amber */
+    
+    /* === DANGER COLORS (Red) === */
+    /* Used for: Error states, delete buttons, low stock alerts */
+    --danger-50: #fef2f2;    /* Very light red */
+    --danger-100: #fee2e2;   /* Light red background */
+    --danger-200: #fecaca;   /* Soft red */
+    --danger-300: #fca5a5;   /* Medium-light red */
+    --danger-400: #f87171;   /* Bright red */
+    --danger-500: #ef4444;   /* Main red (base color) */
+    --danger-600: #dc2626;   /* Dark red */
+    --danger-700: #b91c1c;   /* Darker red */
+    --danger-800: #991b1b;   /* Very dark red */
+    --danger-900: #7f1d1d;   /* Almost black red */
+    
+    /* === NEUTRAL COLORS (Gray/Stone) === */
+    /* Used for: Text, borders, backgrounds, disabled states */
+    --neutral-50: #fafaf9;   /* Almost white */
+    --neutral-100: #f5f5f4;  /* Very light gray */
+    --neutral-200: #e7e5e4;  /* Light gray */
+    --neutral-300: #d6d3d1;  /* Medium-light gray */
+    --neutral-400: #a8a29e;  /* Medium gray */
+    --neutral-500: #78716c;  /* Base gray */
+    --neutral-600: #57534e;  /* Dark gray */
+    --neutral-700: #44403c;  /* Darker gray */
+    --neutral-800: #292524;  /* Very dark gray */
+    --neutral-900: #1c1917;  /* Almost black */
+    
+    /* ==========================================
+       BACKGROUND COLORS
+       Used for page backgrounds and surfaces
+       ========================================== */
+    --bg-base: #fafaf9;      /* Main page background */
+    --bg-surface: #ffffff;   /* Cards, panels, elevated surfaces */
+    --bg-elevated: #ffffff;  /* Modals, dropdowns (highest layer) */
+    
+    /* ==========================================
+       TEXT COLORS
+       3 levels of text importance
+       ========================================== */
+    --text-primary: #1c1917;     /* Main headings, important text */
+    --text-secondary: #57534e;   /* Body text, descriptions */
+    --text-tertiary: #a8a29e;    /* Subtle text, placeholders */
+    
+    /* ==========================================
+       BORDER COLORS
+       3 levels of border visibility
+       ========================================== */
+    --border-light: #e7e5e4;   /* Subtle borders */
+    --border-medium: #d6d3d1;  /* Normal borders */
+    --border-dark: #a8a29e;    /* Strong borders */
+    
+    /* ==========================================
+       BOX SHADOWS
+       6 levels from subtle to dramatic
+       ========================================== */
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    
+    /* ==========================================
+       NEOMORPHISM SHADOWS
+       For soft, modern UI with depth
+       ========================================== */
+    --neo-shadow-light: 0 8px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    --neo-shadow-medium: 0 12px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+    --neo-shadow-elevated: 0 16px 32px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.08);
+    
+    /* Inset shadows for pressed/recessed effects */
+    --neo-inset-light: inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.05);
+    --neo-inset-medium: inset 0 2px 6px rgba(255, 255, 255, 0.2), inset 0 -2px 6px rgba(0, 0, 0, 0.1);
+    --neo-inset-dark: inset 0 4px 8px rgba(0, 0, 0, 0.15), inset 0 -4px 8px rgba(255, 255, 255, 0.05);
+    
+    /* Combined shadows for neumorphic effect */
+    --neo-convex: 
+        0 8px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.05);
+    
+    --neo-concave: 
+        inset 0 8px 16px rgba(0, 0, 0, 0.08),
+        inset 0 -2px 4px rgba(255, 255, 255, 0.2);
+    
+    /* ==========================================
+       GRADIENT BACKGROUNDS
+       Pre-defined gradients for cards
+       ========================================== */
+    --gradient-revenue: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);  /* Light green */
+    --gradient-profit: linear-gradient(135deg, #86efac 0%, #4ade80 100%);   /* Medium green */
+    --gradient-warning: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);  /* Amber/yellow */
+    --gradient-info: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);     /* Light blue */
+    
+    /* ==========================================
+       BORDER RADIUS
+       Consistent corner rounding
+       ========================================== */
+    --radius-sm: 8px;      /* Small elements (buttons, badges) */
+    --radius-md: 12px;     /* Medium elements (inputs, small cards) */
+    --radius-lg: 16px;     /* Large elements (cards, panels) */
+    --radius-xl: 20px;     /* Extra large (main cards) */
+    --radius-2xl: 24px;    /* Huge elements (modals) */
+    --radius-full: 9999px; /* Perfect circles (avatars, pills) */
+    
+    /* ==========================================
+       SPACING SYSTEM
+       Consistent spacing throughout the app
+       Based on 0.25rem (4px) increments
+       ========================================== */
+    --space-xs: 0.25rem;   /* 4px - Tiny gaps */
+    --space-sm: 0.5rem;    /* 8px - Small gaps */
+    --space-md: 1rem;      /* 16px - Default spacing */
+    --space-lg: 1.5rem;    /* 24px - Large spacing */
+    --space-xl: 2rem;      /* 32px - Extra large spacing */
+    --space-2xl: 3rem;     /* 48px - Huge spacing */
+    
+    /* ==========================================
+       TYPOGRAPHY
+       Font sizes and family
+       ========================================== */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    
+    /* Font sizes */
+    --font-size-xs: 0.75rem;    /* 12px - Very small text */
+    --font-size-sm: 0.875rem;   /* 14px - Small text */
+    --font-size-base: 1rem;     /* 16px - Body text (default) */
+    --font-size-lg: 1.125rem;   /* 18px - Large text */
+    --font-size-xl: 1.25rem;    /* 20px - Extra large */
+    --font-size-2xl: 1.5rem;    /* 24px - Headings */
+    --font-size-3xl: 1.875rem;  /* 30px - Large headings */
+    --font-size-4xl: 2.25rem;   /* 36px - Hero text */
+    
+    /* ==========================================
+       TRANSITIONS
+       Smooth animation speeds
+       ========================================== */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);   /* Quick interactions */
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);   /* Standard animations */
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);   /* Slow, dramatic */
+    
+    /* ==========================================
+       NAVIGATION/HEADER COLORS
+       For consistent theming across all components
+       ========================================== */
+    --nav-bg: #87B382;
+    --nav-bg-hover: #79a074;
+    --nav-bg-dark: #2d4a3e;
+    
+    /* ==========================================
+       CART & PRODUCT VARIABLES
+       Aliased to primary colors
+       ========================================== */
+    --add-success: var(--primary-600);
+    --remove-danger: var(--danger-500);
+    --accent-highlight: var(--accent-500);
+    
+    /* Additional borders for components */
+    --border-input: var(--border-medium);
+    --border-hover: var(--primary-400);
+    
+    /* Cart system variables (aliased for consistency) */
+    --cart-primary: var(--bg-surface);
+    --cart-primary-dark: var(--bg-elevated);
+    --cart-secondary: var(--neutral-100);
+    --cart-accent: var(--primary-600);
+    --cart-accent-dark: var(--primary-700);
+    --cart-background: var(--bg-base);
+    --cart-surface: var(--bg-surface);
+    --cart-text: var(--text-primary);
+    --cart-text-secondary: var(--text-secondary);
+    --cart-border: var(--border-light);
+    --cart-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --cart-glow: rgba(245, 245, 240, 0.6);
+    
+    /* ==========================================
+       STANDARDISED BUTTON COLOURS
+       All green/red buttons MUST use these tokens
+       ========================================== */
+    --btn-green-bg:    linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    --btn-green-hover: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    --btn-green-text:  #ffffff;
+    --btn-green-shadow:       0 4px 12px rgba(34, 197, 94, 0.30);
+    --btn-green-shadow-hover: 0 6px 18px rgba(34, 197, 94, 0.45);
+
+    --btn-red-bg:    linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --btn-red-hover: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    --btn-red-text:  #ffffff;
+    --btn-red-shadow:       0 4px 12px rgba(239, 68, 68, 0.30);
+    --btn-red-shadow-hover: 0 6px 18px rgba(239, 68, 68, 0.45);
+
+    /* Button gradients */
+    --cart-header-bg: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-base) 100%);
+    --btn-add-bg: var(--btn-green-bg);
+    --btn-remove-bg: var(--btn-red-bg);
+    --btn-checkout-bg: var(--btn-green-bg);
+    
+    /* Floating cart */
+    --floating-cart-bg: var(--bg-surface);
+    --cart-count-bg: linear-gradient(135deg, var(--danger-500) 0%, var(--danger-600) 100%);
+}
+
+/* ==========================================
+   DARK MODE OVERRIDES
+   
+   When body has class "dark-mode", these
+   variables override the light mode values
+   ========================================== */
+body.dark-mode {
+      /* Standardised button colours — dark mode */
+      --btn-green-bg:    linear-gradient(135deg, #15803d 0%, #166534 100%);
+      --btn-green-hover: linear-gradient(135deg, #166534 0%, #14532d 100%);
+      --btn-green-text:  #dcfce7;
+      --btn-green-shadow:       0 4px 12px rgba(21, 128, 61, 0.30);
+      --btn-green-shadow-hover: 0 6px 18px rgba(21, 128, 61, 0.45);
+
+      --btn-red-bg:    linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      --btn-red-hover: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+      --btn-red-text:  #fee2e2;
+      --btn-red-shadow:       0 4px 12px rgba(220, 38, 38, 0.30);
+      --btn-red-shadow-hover: 0 6px 18px rgba(220, 38, 38, 0.45);
+
+      /* Cart system dark mode overrides */
+      --cart-primary: #232323;
+      --cart-primary-dark: #181818;
+      --cart-secondary: #2f2d2a;
+      --cart-accent: #4ade80;
+      --cart-accent-dark: #22c55e;
+      --cart-background: #232323;
+      --cart-surface: #292524;
+      --cart-text: #fafaf9;
+      --cart-text-secondary: #d6d3d1;
+      --cart-border: #44403c;
+      --cart-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      --cart-glow: rgba(74, 222, 128, 0.18);
+      --btn-add-bg: var(--btn-green-bg);
+      --btn-remove-bg: var(--btn-red-bg);
+      --btn-checkout-bg: var(--btn-green-bg);
+      --floating-cart-bg: #232323;
+      --cart-count-bg: var(--btn-red-bg);
+    /* Dark backgrounds */
+    --bg-base: #1c1917;      /* Dark stone color */
+    --bg-surface: #292524;   /* Slightly lighter for cards */
+    --bg-elevated: #44403c;  /* Even lighter for modals */
+    
+    /* Light text (reversed) */
+    --text-primary: #fafaf9;     /* Almost white for headings */
+    --text-secondary: #d6d3d1;   /* Light gray for body */
+    --text-tertiary: #a8a29e;    /* Medium gray for subtle */
+    
+    /* Dark borders */
+    --border-light: #44403c;   /* Dark subtle borders */
+    --border-medium: #57534e;  /* Dark normal borders */
+    --border-dark: #78716c;    /* Dark strong borders */
+    
+    /* Dark gradients (adjusted for dark backgrounds) */
+    --gradient-revenue: linear-gradient(135deg, #14532d 0%, #166534 100%);
+    --gradient-profit: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+    --gradient-warning: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+    --gradient-info: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    
+    /* Navigation colors for dark mode */
+    --nav-bg: #2d4a3e;
+    --nav-bg-hover: #1a2b25;
+    --nav-bg-dark: #0f1b18;
+    --add-success: var(--primary-500);
+    --border-hover: var(--primary-500);
+    
+    /* Cart adjustments for dark mode */
+    --cart-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --cart-header-bg: linear-gradient(135deg, var(--bg-surface) 0%, #1a1a18 100%);
+}
+
+/* ==========================================
+   GLOBAL RESETS
+   Basic cleanup for consistent styling
+   ========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-base);
+    
+    /* Better font rendering on Mac/Windows */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================
+   UTILITY CLASSES
+   Quick-use classes for common patterns
+   ========================================== */
+
+/* Text colors */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+
+/* Backgrounds */
+.bg-surface { background-color: var(--bg-surface); }
+.bg-elevated { background-color: var(--bg-elevated); }
+
+/* Shadows */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+
+/* Border radius */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }

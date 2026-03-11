@@ -1,0 +1,1312 @@
+/* DARK MODE — PRODUCT NAME CELL VISIBILITY (INVENTORY TABLE) */
+body.dark-mode .inventory-table td:first-child {
+  color: #fff !important;
+  font-weight: 900 !important;
+  font-size: 1.15em !important;
+  letter-spacing: 0.02em !important;
+  text-shadow:
+    0 3px 12px #000,
+    0 1px 2px #000,
+    0 0 2px #000,
+    0 0 1px #000;
+  -webkit-text-stroke: 1.5px #111;
+}
+/* GLOBAL DARK MODE NEOMORPHISM OVERRIDES */
+/* Cancel button always red, blends in both modes */
+.mdc-no, .btn-cancel, .neo-btn-cancel, .cancel-btn, .modal-cancel-btn {
+  background: var(--btn-red-bg) !important;
+  color: var(--btn-red-text) !important;
+  border: none !important;
+  font-weight: 900;
+  box-shadow: var(--btn-red-shadow);
+  transition: background 0.18s, border 0.18s;
+}
+.mdc-no:hover, .btn-cancel:hover, .neo-btn-cancel:hover, .cancel-btn:hover, .modal-cancel-btn:hover {
+  background: var(--btn-red-hover) !important;
+  color: var(--btn-red-text) !important;
+  box-shadow: var(--btn-red-shadow-hover);
+}
+/* Debtors/stat cards and info boxes dark mode improvements */
+body.dark-mode .card,
+body.dark-mode .stat-card,
+body.dark-mode .profit-card,
+body.dark-mode .category-card,
+body.dark-mode .debtor-summary-card,
+body.dark-mode .debtor-info-card,
+body.dark-mode .debtor-stats-card {
+  background: linear-gradient(135deg, #232a22 0%, #181d16 100%) !important;
+  border: 1.5px solid #3a4a3a !important;
+  box-shadow: 0 4px 24px 0 #101a1040, 0 1.5px 8px 0 #0008;
+  color: #e6ffe6 !important;
+}
+body.dark-mode .card .card-label,
+body.dark-mode .stat-card .card-label,
+body.dark-mode .profit-card .card-label,
+body.dark-mode .category-card .category-name {
+  color: #b8e994 !important;
+}
+body.dark-mode .card .card-amount,
+body.dark-mode .stat-card .stat-number,
+body.dark-mode .profit-card .profit-amount {
+  color: #fff !important;
+  text-shadow: 0 2px 8px #000a;
+}
+body.dark-mode .card .stat-label,
+body.dark-mode .stat-card .stat-label,
+body.dark-mode .profit-card .stat-label {
+  color: #b0b0b0 !important;
+}
+body.dark-mode .card .icon,
+body.dark-mode .stat-card .icon,
+body.dark-mode .profit-card .icon,
+body.dark-mode .category-card .category-icon {
+  filter: drop-shadow(0 2px 8px #000a) brightness(1.1);
+}
+
+/* ══════════════════════════════════════════════════════
+   ALERTS BUTTON — Amber/Yellow (Light + Dark Mode)
+   ══════════════════════════════════════════════════════ */
+
+/* ── LIGHT MODE ── */
+#btnNotifications,
+.btn-alert, .alert-btn, #alertBtn,
+[data-btn="alert"], .nav-alert, .alert-button {
+    background: linear-gradient(145deg, #fbbf24, #d97706) !important;
+    color: #fff !important;
+    border: none !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 3px rgba(100,50,0,0.4) !important;
+    box-shadow:
+        6px 6px 14px rgba(0,0,0,0.20),
+        -6px -6px 14px rgba(255,210,60,0.35),
+        inset 1px 1px 2px rgba(255,255,255,0.25),
+        inset -1px -1px 2px rgba(0,0,0,0.08) !important;
+    filter: brightness(1.05) !important;
+}
+#btnNotifications:hover,
+.btn-alert:hover, .alert-btn:hover, #alertBtn:hover,
+[data-btn="alert"]:hover, .nav-alert:hover, .alert-button:hover {
+    background: linear-gradient(145deg, #f59e0b, #b45309) !important;
+    transform: translateY(-3px) !important;
+    filter: brightness(1.1) !important;
+}
+
+/* ── DARK MODE — muted olive-amber ── */
+body.dark-mode #btnNotifications,
+body.dark-mode .btn-alert,
+body.dark-mode .alert-btn,
+body.dark-mode #alertBtn,
+body.dark-mode [data-btn="alert"],
+body.dark-mode .nav-alert,
+body.dark-mode .alert-button {
+    background: linear-gradient(145deg, #4a3a10, #3a2c0a) !important;
+    color: #d4a843 !important;
+    border: 1px solid rgba(180,130,30,0.3) !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
+    box-shadow:
+        4px 4px 10px rgba(0,0,0,0.4),
+        -4px -4px 10px rgba(255,255,255,0.04),
+        inset 1px 1px 2px rgba(255,200,50,0.08) !important;
+    filter: none !important;
+}
+body.dark-mode #btnNotifications:hover,
+body.dark-mode .btn-alert:hover,
+body.dark-mode .alert-btn:hover,
+body.dark-mode #alertBtn:hover,
+body.dark-mode [data-btn="alert"]:hover,
+body.dark-mode .nav-alert:hover,
+body.dark-mode .alert-button:hover {
+    background: linear-gradient(145deg, #5c4a18, #4a3a10) !important;
+    color: #f0c060 !important;
+    transform: translateY(-2px) !important;
+    box-shadow:
+        6px 6px 14px rgba(0,0,0,0.5),
+        -6px -6px 14px rgba(255,255,255,0.04) !important;
+}
+
+/* Specific fix for Cash Payment modal */
+body.dark-mode .neo-change-display {
+  background-color: #23272f !important;
+  color: #f7fafc !important;
+  border-color: #2d3748 !important;
+  filter: brightness(0.95) saturate(0.7);
+}
+body.dark-mode .neo-change-label {
+  color: #ffd600 !important;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+}
+body.dark-mode .neo-change-amount-value {
+  color: #f7fafc !important;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+}
+body.dark-mode .neo-change-amount {
+  background-color: #2d3748 !important;
+  color: #f7fafc !important;
+  border-color: #23272f !important;
+  filter: brightness(0.95) saturate(0.8);
+}
+
+body.dark-mode .neo-btn-secondary {
+  background-color: var(--danger-800) !important;
+  color: var(--btn-red-text) !important;
+  border-color: var(--danger-700) !important;
+  filter: brightness(0.95) saturate(0.7);
+  box-shadow: var(--btn-red-shadow);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+body.dark-mode .neo-btn-secondary:hover {
+  background-color: var(--danger-700) !important;
+  color: var(--btn-red-text) !important;
+  filter: brightness(1) saturate(0.8);
+}
+
+body.dark-mode .neo-btn-success {
+  background: var(--btn-green-bg) !important;
+  color: var(--btn-green-text) !important;
+  border: none !important;
+  box-shadow: var(--btn-green-shadow);
+  filter: none;
+  transition: background 0.3s, color 0.3s, border 0.3s;
+}
+body.dark-mode .neo-btn-success[disabled] {
+  background-color: #34495e !important;
+  color: #bfc9d1 !important;
+  border-color: #23272f !important;
+  filter: brightness(0.9) saturate(0.7);
+}
+body.dark-mode .neo-card,
+body.dark-mode .neo-panel,
+body.dark-mode .neo-cart-header,
+body.dark-mode .neo-cart-list,
+body.dark-mode .neo-cart-item,
+body.dark-mode .neo-cart-controls,
+body.dark-mode .neo-checkout-amount,
+body.dark-mode .neo-checkout-buttons {
+  color: #fff !important;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  border: none !important;
+}
+body.dark-mode .neo-btn-primary {
+  color: #fff !important;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  background: var(--btn-green-bg) !important;
+  border: none !important;
+}
+body.dark-mode .neo-btn-success {
+  background: var(--btn-green-bg) !important;
+  color: var(--btn-green-text) !important;
+}
+body.dark-mode .neo-btn-warning {
+  color: #fff !important;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  background: var(--warning-700, #f39c12) !important;
+  border: none !important;
+}
+body.dark-mode .neo-btn-danger,
+body.dark-mode .neo-btn-clear-cart {
+  color: var(--btn-red-text) !important;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  background: var(--btn-red-bg) !important;
+  border: none !important;
+}
+body.dark-mode .neo-btn-checkout {
+  color: var(--btn-green-text) !important;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  background: var(--btn-green-bg) !important;
+  border: none !important;
+}
+/* Modals get a dark neutral background, not green */
+body.dark-mode .neo-modal,
+body.dark-mode .neo-clear-confirm,
+body.dark-mode .neo-modal-smaller,
+body.dark-mode .neo-modal-success,
+body.dark-mode .neo-change-modal {
+  background: #1a1c20 !important;
+  border: 1.5px solid #2e3138 !important;
+  color: #f3f4f6 !important;
+  text-shadow: none;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4);
+}
+body.dark-mode .neo-btn-success {
+  background: var(--btn-green-bg) !important;
+  color: var(--btn-green-text) !important;
+}
+body.dark-mode .neo-btn-warning {
+  background: var(--warning-700, #f39c12) !important;
+}
+body.dark-mode .neo-btn-danger,
+body.dark-mode .neo-btn-clear-cart {
+  background: var(--btn-red-bg) !important;
+}
+body.dark-mode .neo-btn-checkout {
+  background: var(--btn-green-bg) !important;
+}
+body.dark-mode .neo-btn-secondary {
+  color: var(--btn-red-text) !important;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  background: var(--btn-red-bg) !important;
+  border: none !important;
+}
+
+body.dark-mode .neo-cart-item-name,
+body.dark-mode .neo-clear-title,
+body.dark-mode .neo-success-title,
+body.dark-mode .neo-change-label,
+body.dark-mode .neo-subtotal-amount,
+body.dark-mode .neo-success-value,
+body.dark-mode .neo-cart-header,
+body.dark-mode .neo-cart-item-details,
+body.dark-mode .neo-cart-item-price,
+body.dark-mode .neo-cart-subtotal,
+body.dark-mode .neo-checkout-amount span,
+body.dark-mode .neo-checkout-buttons span {
+  color: #fff !important;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+}
+
+body.dark-mode .neo-danger,
+body.dark-mode .neo-btn-danger {
+  color: #ff6b6b !important;
+}
+
+body.dark-mode .neo-success-value,
+body.dark-mode .neo-success-value {
+  color: #27ae60 !important;
+}
+
+body.dark-mode .neo-btn-warning {
+  color: #ffd600 !important;
+}
+
+body.dark-mode .neo-modal-overlay {
+  background: rgba(20, 22, 30, 0.85) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* ========================================
+   DARKMODE.CSS — Dark-Mode Toggle Button
+   & Theme-Wide Shadow Overrides
+   ========================================= */
+
+.dark-mode-toggle {
+  position: fixed !important;
+  top: 20px !important;
+  left: 20px !important;
+  width: 50px !important;
+  height: 50px !important;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 26px !important;
+  cursor: pointer !important;
+  z-index: 10002 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: all !important;
+}
+
+.dark-mode-toggle:hover {
+  transform: scale(1.1) rotate(10deg) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.dark-mode-toggle:active {
+  transform: scale(0.95) rotate(0deg) !important;
+}
+
+body.dark-mode .dark-mode-toggle {
+  background: linear-gradient(135deg, #1e293b, #334155) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* SMOOTH TRANSITIONS */
+body.dark-mode-transitioning,
+body.dark-mode-transitioning *,
+body.dark-mode-transitioning *::before,
+body.dark-mode-transitioning *::after {
+  transition: 
+    background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+}
+
+.dark-mode-toggle {
+  transition: 
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body:not(.dark-mode-transitioning) * {
+  transition: none !important;
+}
+
+button:hover,
+.btn-add:hover,
+.btn-delete:hover,
+.btn-pay:hover,
+.btn-remove:hover,
+.top-nav button:hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+/* ==========================================
+   DARK MODE NEOMORPHISM ADJUSTMENTS
+   ========================================== */
+body.dark-mode {
+  --neo-shadow-light: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --neo-shadow-medium: 0 8px 16px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --neo-shadow-elevated: 0 12px 24px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+  
+  --neo-inset-light: inset 0 1px 2px rgba(255, 255, 255, 0.05), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+  --neo-inset-medium: inset 0 2px 4px rgba(255, 255, 255, 0.03), inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+  --neo-inset-dark: inset 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 -2px 6px rgba(255, 255, 255, 0.02);
+}
+
+body.dark-mode .form-input,
+body.dark-mode .price-input,
+body.dark-mode .qty-input,
+body.dark-mode .search-input {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+body.dark-mode .form-input:focus,
+body.dark-mode .price-input:focus,
+body.dark-mode .qty-input:focus {
+  border-color: var(--primary-400);
+  background-color: var(--bg-surface);
+}
+
+body.dark-mode .btn-add,
+body.dark-mode .btn-delete,
+body.dark-mode .btn-back,
+body.dark-mode .btn-qty-small {
+  box-shadow: var(--neo-shadow-light);
+}
+
+body.dark-mode .btn-add:hover,
+body.dark-mode .btn-delete:hover,
+body.dark-mode .btn-back:hover,
+body.dark-mode .btn-qty-small:hover {
+  box-shadow: var(--neo-shadow-medium);
+}
+
+body.dark-mode .category-card,
+body.dark-mode .profit-card,
+body.dark-mode .card,
+body.dark-mode .sales-card {
+  box-shadow: var(--neo-shadow-light);
+}
+
+body.dark-mode .category-card:hover,
+body.dark-mode .profit-card:hover,
+body.dark-mode .card:hover,
+body.dark-mode .sales-card:hover {
+  box-shadow: var(--neo-shadow-medium);
+}
+
+body.dark-mode .inventory-table,
+body.dark-mode .price-table {
+  box-shadow: var(--neo-shadow-light);
+}
+
+body.dark-mode .inventory-table th,
+body.dark-mode .price-table th {
+  background: linear-gradient(135deg, var(--primary-800), var(--primary-900));
+  color: var(--primary-100);
+}
+
+body.dark-mode .page > section,
+body.dark-mode .page > div {
+  box-shadow: var(--neo-shadow-light);
+}
+
+body.dark-mode .page > section:hover,
+body.dark-mode .page > div:hover {
+  box-shadow: var(--neo-shadow-medium);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   DEBTORS DARK MODE — RED OVERRIDES (CLEANED - NO DUPLICATES)
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* Debtors Summary Cards */
+body.dark-mode .debtors-summary-cards .summary-card {
+  background: linear-gradient(135deg, #2a3a26 0%, #1f2d1b 100%) !important;
+  border-color: #3d4d39 !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 -2px 0 rgba(255, 255, 255, 0.05) inset !important;
+}
+
+body.dark-mode .debt-card-red {
+  background: linear-gradient(135deg, #3a4a2a 0%, #2f3f25 100%) !important;
+  border-color: #4a5a3a !important;
+}
+
+body.dark-mode .debt-card-red .card-label,
+body.dark-mode .debt-card-red .card-sub {
+  color: #b8e994 !important;
+}
+
+body.dark-mode .debt-card-red .card-value {
+  color: #e8f5e9 !important;
+}
+
+body.dark-mode .debt-card-green {
+  background: linear-gradient(135deg, #2a3f35 0%, #1f3430 100%) !important;
+  border-color: #3a5a4a !important;
+}
+
+body.dark-mode .debt-card-green .card-label,
+body.dark-mode .debt-card-green .card-sub {
+  color: #a8d4ba !important;
+}
+
+body.dark-mode .debt-card-green .card-value {
+  color: #c8efd9 !important;
+}
+
+body.dark-mode .debt-card-blue {
+  background: linear-gradient(135deg, #3a3f2a 0%, #2f3425 100%) !important;
+  border-color: #4a5a3a !important;
+}
+
+body.dark-mode .debt-card-blue .card-label,
+body.dark-mode .debt-card-blue .card-sub {
+  color: #b8b890 !important;
+}
+
+body.dark-mode .debt-card-blue .card-value {
+  color: #e8e8c8 !important;
+}
+
+body.dark-mode .debt-card-amber {
+  background: linear-gradient(135deg, #4a3a2a 0%, #3f3425 100%) !important;
+  border-color: #5a4a3a !important;
+}
+
+body.dark-mode .debt-card-amber .card-label,
+body.dark-mode .debt-card-amber .card-sub {
+  color: #d4a895 !important;
+}
+
+body.dark-mode .debt-card-amber .card-value {
+  color: #e8d4c8 !important;
+}
+
+body.dark-mode .debt-card-orange {
+  background: linear-gradient(135deg, #4a3f2a 0%, #3f3825 100%) !important;
+  border-color: #5a5a3a !important;
+}
+
+body.dark-mode .debt-card-orange .card-label,
+body.dark-mode .debt-card-orange .card-sub {
+  color: #d4b895 !important;
+}
+
+body.dark-mode .debt-card-orange .card-value {
+  color: #e8d8c8 !important;
+}
+
+body.dark-mode .debt-card-purple {
+  background: linear-gradient(135deg, #4a3a2a 0%, #3f3425 100%) !important;
+  border-color: #5a4a3a !important;
+}
+
+body.dark-mode .debt-card-purple .card-label,
+body.dark-mode .debt-card-purple .card-sub {
+  color: #d4a895 !important;
+}
+
+body.dark-mode .debt-card-purple .card-value {
+  color: #e8d4c8 !important;
+}
+
+/* Debtor Cards */
+body.dark-mode .debtor-card {
+  background: linear-gradient(135deg, #2a3335 0%, #1f2728 100%) !important;
+  border-color: #3a4a4a !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 -1px 0 rgba(255, 255, 255, 0.05) inset !important;
+}
+
+body.dark-mode .debtor-card-inner {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 50%) !important;
+}
+
+body.dark-mode .debtor-card:hover {
+  box-shadow: 
+    0 14px 40px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 -1px 0 rgba(255, 255, 255, 0.08) inset !important;
+}
+
+body.dark-mode .debtor-name {
+  color: #e8f5e9 !important;
+}
+
+body.dark-mode .debtor-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .detail-row {
+  color: #c8d8c8 !important;
+}
+
+body.dark-mode .detail-label {
+  color: #a8b8a8 !important;
+}
+
+body.dark-mode .detail-value {
+  color: #e8f5e9 !important;
+}
+
+/* Items Box */
+body.dark-mode .debtor-items {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-mode .items-label {
+  color: #a8b8a8 !important;
+}
+
+body.dark-mode .items-list {
+  color: #e8f5e9 !important;
+}
+
+/* Amounts & Breakdowns */
+body.dark-mode .debtor-amount {
+  background: linear-gradient(135deg, #3a4a4a 0%, #2a3a3a 100%) !important;
+  color: #e8f5e9 !important;
+  border-color: #4a5a5a !important;
+}
+
+body.dark-mode .amount-paid {
+  background: linear-gradient(135deg, #3a5a48, #2a4a38) !important;
+  color: #a8d4ba !important;
+}
+
+body.dark-mode .debtor-amount-breakdown {
+  background: linear-gradient(135deg, #3a4a4a 0%, #2a3a3a 100%) !important;
+  border-color: #4a5a5a !important;
+  color: #e8f5e9 !important;
+}
+
+body.dark-mode .breakdown-row {
+  color: #e8f5e9 !important;
+}
+
+body.dark-mode .breakdown-label {
+  color: #a8b8a8 !important;
+  opacity: 0.9 !important;
+}
+
+body.dark-mode .breakdown-value {
+  color: #f0f8f0 !important;
+  font-weight: 700 !important;
+}
+
+body.dark-mode .breakdown-divider {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark-mode .total-label-text {
+  color: #e8f5e9 !important;
+}
+
+body.dark-mode .total-value {
+  color: #f0f8f0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   UNPAID ELEMENTS — RED (NOT PINK)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+body.dark-mode .badge-unpaid {
+  background: linear-gradient(135deg, #7a2c2c, #5a1a1a) !important;
+  color: #ff9999 !important;
+  border-color: #8a3a3a !important;
+}
+
+body.dark-mode .amount-unpaid {
+  background: linear-gradient(135deg, #7a2c2c, #5a1a1a) !important;
+  color: #ff9999 !important;
+}
+
+body.dark-mode .debtor-amount-breakdown.amount-unpaid {
+  background: linear-gradient(135deg, #7a2c2c, #5a1a1a) !important;
+  color: #ff9999 !important;
+}
+
+body.dark-mode .amount-unpaid .breakdown-label {
+  color: rgba(255, 200, 200, 0.85) !important;
+}
+
+body.dark-mode .amount-unpaid .breakdown-value {
+  color: #ffcccc !important;
+}
+
+body.dark-mode .debtor-card.unpaid::before {
+  background: linear-gradient(180deg, #e74c3c, #8a2a2a) !important;
+}
+
+body.dark-mode .unpaid-header {
+  color: #ff9999 !important;
+}
+
+/* Paid Elements */
+body.dark-mode .badge-paid {
+  background: linear-gradient(135deg, #3a5a48, #2a4a38) !important;
+  color: #a8d4ba !important;
+  border-color: #4a6a58 !important;
+}
+
+body.dark-mode .paid-info {
+  background: linear-gradient(135deg, #3a5a48, #2a4a38) !important;
+  color: #a8d4ba !important;
+  border-color: rgba(168, 212, 186, 0.2) !important;
+}
+
+body.dark-mode .paid-header {
+  color: #a8d4ba !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BUTTONS & TOGGLES — RED (NOT PINK)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+body.dark-mode .btn-mark-paid {
+  background: var(--btn-green-bg) !important;
+  color: var(--btn-green-text) !important;
+  border: none !important;
+}
+
+body.dark-mode .btn-mark-paid:hover {
+  background: var(--btn-green-hover) !important;
+  box-shadow: var(--btn-green-shadow-hover) !important;
+}
+
+body.dark-mode .btn-delete-debtor {
+  background: var(--btn-red-bg) !important;
+  color: var(--btn-red-text) !important;
+  border: none !important;
+}
+
+body.dark-mode .btn-delete-debtor:hover {
+  background: var(--btn-red-hover) !important;
+  color: var(--btn-red-text) !important;
+  box-shadow: var(--btn-red-shadow-hover) !important;
+}
+
+body.dark-mode .toggle-btn-red {
+  background: var(--btn-red-bg) !important;
+  color: var(--btn-red-text) !important;
+  border: none !important;
+}
+
+body.dark-mode .toggle-btn-red:hover {
+  background: var(--btn-red-hover) !important;
+  color: var(--btn-red-text) !important;
+  box-shadow: var(--btn-red-shadow-hover) !important;
+}
+
+body.dark-mode .toggle-btn-green {
+  background: var(--btn-green-bg) !important;
+  color: var(--btn-green-text) !important;
+}
+
+body.dark-mode .btn-clear-paid {
+  background: var(--btn-red-bg) !important;
+  color: var(--btn-red-text) !important;
+  border: none !important;
+}
+
+body.dark-mode .btn-clear-paid:hover {
+  background: var(--btn-red-hover) !important;
+  color: var(--btn-red-text) !important;
+  box-shadow: var(--btn-red-shadow-hover) !important;
+}
+
+body.dark-mode .toggle-section-btn {
+  background: linear-gradient(135deg, #3a4a4a, #2a3a3a) !important;
+  color: #e8f5e9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .toggle-section-btn:hover {
+  background: linear-gradient(135deg, #4a5a5a, #3a4a4a) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Surcharge & Delete Elements */
+body.dark-mode .surcharge-note {
+  background: linear-gradient(135deg, #5a2a10, #4a1a00) !important;
+  border-left-color: #e74c3c !important;
+  color: #ff9999 !important;
+}
+
+body.dark-mode .surcharge-note strong {
+  color: #ffb3b3 !important;
+}
+
+body.dark-mode .surcharge-value {
+  color: #f5c890 !important;
+}
+
+body.dark-mode .auto-delete-countdown {
+  background: linear-gradient(135deg, #4a4a2a, #3a3a1a) !important;
+  color: #d4b843 !important;
+  border-color: rgba(180, 130, 30, 0.3) !important;
+}
+
+body.dark-mode .auto-delete-notice {
+  background: rgba(125, 184, 159, 0.1) !important;
+  color: #a8d4ba !important;
+  border-left-color: #7db89f !important;
+}
+
+body.dark-mode .no-data {
+  background: rgba(30, 30, 30, 0.6) !important;
+  color: #a0a0a0 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE — CATEGORY NAME FIX (Inventory & Prices)
+   ═══════════════════════════════════════════════════════════════ */
+body.dark-mode #inventoryContent h2,
+body.dark-mode #inventoryContent h3,
+body.dark-mode #inventoryContent .category-title,
+body.dark-mode #inventoryContent .category-name,
+body.dark-mode #inventoryContent .category-header h2,
+body.dark-mode #inventoryContent .category-header h3,
+body.dark-mode #inventoryContent .category-header span,
+body.dark-mode #inventoryContent [class*="category"] h2,
+body.dark-mode #inventoryContent [class*="category"] h3,
+body.dark-mode #priceListContent h2,
+body.dark-mode #priceListContent h3,
+body.dark-mode #priceListContent .category-title,
+body.dark-mode #priceListContent .category-name,
+body.dark-mode #priceListContent .category-header h2,
+body.dark-mode #priceListContent .category-header h3,
+body.dark-mode #priceListContent .category-header span,
+body.dark-mode #priceListContent [class*="category"] h2,
+body.dark-mode #priceListContent [class*="category"] h3 {
+    color: #fff !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+    opacity: 1 !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important;
+}
+
+/* DARK MODE — PRODUCT NAME & PRICE FIX (Inventory & Prices) */
+body.dark-mode .inventory-table td,
+body.dark-mode .price-table td {
+  color: #fff !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+}
+body.dark-mode .inventory-table td strong,
+body.dark-mode .price-table td strong {
+  color: #fff !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE — PROFIT MARGIN WARNING MODAL
+   ═══════════════════════════════════════════════════════════════ */
+body.dark-mode #modernWarningOverlay .modern-warning-box {
+    background: linear-gradient(145deg, #1a2420, #151a18) !important;
+    border: 1px solid rgba(135,179,130,0.2) !important;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6) !important;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+}
+body.dark-mode #modernWarningOverlay .modern-warning-title {
+    background: linear-gradient(135deg, #ff8a7a, #ff6b5a) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+body.dark-mode #modernWarningOverlay .modern-warning-message {
+    color: #a0b8a0 !important;
+}
+body.dark-mode #modernWarningOverlay .detail-card-negative {
+    background: linear-gradient(135deg, rgba(127,29,29,0.5), rgba(153,27,27,0.4)) !important;
+    border-color: rgba(220,38,38,0.3) !important;
+}
+body.dark-mode #modernWarningOverlay .detail-card-negative .detail-label {
+    color: #fca5a5 !important;
+}
+body.dark-mode #modernWarningOverlay .detail-card-negative .detail-value {
+    color: #ff8a7a !important;
+}
+body.dark-mode #modernWarningOverlay .detail-card-positive {
+    background: linear-gradient(135deg, rgba(20,83,45,0.5), rgba(22,101,52,0.4)) !important;
+    border-color: rgba(5,150,105,0.3) !important;
+}
+body.dark-mode #modernWarningOverlay .detail-card-positive .detail-label {
+    color: #86efac !important;
+}
+body.dark-mode #modernWarningOverlay .detail-card-positive .detail-value {
+    color: #4ade80 !important;
+}
+body.dark-mode #modernWarningOverlay .modern-warning-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 32px auto 0 auto !important;
+  min-width: 200px;
+  max-width: 340px;
+  padding: 18px 0;
+  font-size: 1.25em !important;
+  font-weight: 700;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 24px #0007 !important;
+  border: none;
+  outline: none;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+  cursor: pointer;
+}
+body.dark-mode #modernWarningOverlay .modern-warning-btn:hover {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+    box-shadow: 0 4px 22px #000a !important;
+    transform: scale(1.04);
+}
+/* ═══════════════════════════════════════════════════════
+   PROFIT PAGE — DARK MODE TEXT CONTRAST FIX
+   Add this to darkmode.css or inject via profit.js
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Card eyebrow labels (TODAY'S PERFORMANCE etc.) ── */
+body.dark-mode #profitContent .p-card-eyebrow {
+    color: #c8e6c0 !important;
+    opacity: 1 !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* ── Section labels (REVENUE, PROFIT EARNED) ── */
+body.dark-mode #profitContent .p-card-section-label {
+    color: #a0c898 !important;
+    opacity: 1 !important;
+    letter-spacing: 1.4px;
+}
+
+/* ── Main value numbers ── */
+body.dark-mode #profitContent .p-card-value {
+    color: #eaf6e4 !important;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+}
+body.dark-mode #profitContent .p-card-value.profit-color {
+    color: #5edc8a !important;
+    text-shadow: 0 0 14px rgba(74,222,128,0.3), 0 1px 4px rgba(0,0,0,0.4) !important;
+}
+body.dark-mode #profitContent .p-card-value.gold-color {
+    color: #f0cc55 !important;
+    text-shadow: 0 0 14px rgba(240,204,85,0.3), 0 1px 4px rgba(0,0,0,0.4) !important;
+}
+body.dark-mode #profitContent .p-card-value.muted-val {
+    color: #8aaa84 !important;
+}
+
+/* ── Sub text (X sales, date ranges) ── */
+body.dark-mode #profitContent .p-card-sub {
+    color: #8aaa84 !important;
+    opacity: 1 !important;
+}
+
+/* ── Empty state message ── */
+body.dark-mode #profitContent .p-empty-msg {
+    color: #8aaa84 !important;
+    opacity: 1 !important;
+}
+
+/* ── Date range text inside cards ── */
+body.dark-mode #profitContent .p-card-sub[style*="margin-bottom:14px"] {
+    color: #90b88a !important;
+}
+
+/* ── Timer badge ── */
+body.dark-mode #profitContent .p-timer-badge {
+    background: rgba(30, 55, 28, 0.7) !important;
+    border-color: rgba(135, 179, 130, 0.25) !important;
+    color: #87B382 !important;
+}
+body.dark-mode #profitContent .p-timer-row {
+    color: #87B382 !important;
+}
+body.dark-mode #profitContent .p-timer-row strong {
+    color: #b8e090 !important;
+}
+
+/* ── Timing strip ── */
+body.dark-mode #profitContent .p-timing {
+    background: rgba(255,255,255,0.07) !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    color: #90b88a !important;
+}
+body.dark-mode #profitContent .p-timing strong {
+    color: #c8e6c0 !important;
+}
+body.dark-mode #profitContent .p-timing-row {
+    color: #90b88a !important;
+}
+
+/* ── Card backgrounds — slightly lighter so text pops ── */
+body.dark-mode #profitContent .p-card.c-today,
+body.dark-mode #profitContent .p-card.c-week {
+    background: rgba(38, 62, 35, 0.82) !important;
+    border-color: rgba(135, 179, 130, 0.28) !important;
+}
+body.dark-mode #profitContent .p-card.c-yesterday {
+    background: rgba(58, 50, 22, 0.82) !important;
+    border-color: rgba(210, 180, 80, 0.25) !important;
+}
+body.dark-mode #profitContent .p-card.c-neutral {
+    background: rgba(42, 52, 40, 0.80) !important;
+    border-color: rgba(140, 160, 130, 0.25) !important;
+}
+body.dark-mode #profitContent .p-card.c-gold {
+    background: rgba(62, 48, 10, 0.85) !important;
+    border-color: rgba(210, 175, 60, 0.28) !important;
+}
+
+/* ── Section title ── */
+body.dark-mode #profitContent .p-section-title {
+    color: #d0eac8 !important;
+}
+
+/* ── Page subtitle ── */
+body.dark-mode #profitContent .p-page-sub {
+    color: #7a9a74 !important;
+}
+
+/* ── Divider ── */
+body.dark-mode #profitContent .p-divider {
+    background: linear-gradient(90deg, transparent, rgba(135,179,130,0.3), transparent) !important;
+}
+
+/* ── Sale cards ── */
+body.dark-mode #profitContent .p-sale-date {
+    color: #d0eac8 !important;
+}
+body.dark-mode #profitContent .p-sale-time,
+body.dark-mode #profitContent .p-sale-customer {
+    color: #7a9a74 !important;
+}
+body.dark-mode #profitContent .p-sale-items-label,
+body.dark-mode #profitContent .p-sale-stat-label {
+    color: #7a9a74 !important;
+    opacity: 1 !important;
+}
+body.dark-mode #profitContent .p-sale-items {
+    color: #a8c4a0 !important;
+}
+body.dark-mode #profitContent .p-sale-total {
+    color: #d8ecd4 !important;
+}
+body.dark-mode #profitContent .p-sale-profit {
+    color: #5edc8a !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK MODE — GLOBAL INLINE TEXT VISIBILITY FIX
+   Overrides ALL hardcoded dark text colors set via inline styles
+   in JS-generated HTML so every label, heading, price, and
+   description is clearly readable on dark backgrounds.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Very dark text (headings, product names) → near-white ─────── */
+body.dark-mode [style*="color:#2d3a2d"],
+body.dark-mode [style*="color: #2d3a2d"],
+body.dark-mode [style*="color:#2d3748"],
+body.dark-mode [style*="color: #2d3748"],
+body.dark-mode [style*="color:#2C3E50"],
+body.dark-mode [style*="color: #2C3E50"],
+body.dark-mode [style*="color:#1c1917"],
+body.dark-mode [style*="color: #1c1917"] {
+    color: #e8f5e9 !important;
+}
+
+/* ── Dark green text (buttons, modal titles) → light mint ──────── */
+body.dark-mode [style*="color:#3e5235"],
+body.dark-mode [style*="color: #3e5235"],
+body.dark-mode [style*="color:#2d5238"],
+body.dark-mode [style*="color: #2d5238"],
+body.dark-mode [style*="color:#2d5a3b"],
+body.dark-mode [style*="color: #2d5a3b"],
+body.dark-mode [style*="color:#32422b"],
+body.dark-mode [style*="color: #32422b"] {
+    color: #c8e6c0 !important;
+}
+
+/* ── Medium green (sell price, stock value) → bright green ─────── */
+body.dark-mode [style*="color:#3e6e48"],
+body.dark-mode [style*="color: #3e6e48"] {
+    color: #86efac !important;
+}
+
+/* ── Warm brown labels → light warm gray ───────────────────────── */
+body.dark-mode [style*="color:#5D534A"],
+body.dark-mode [style*="color: #5D534A"],
+body.dark-mode [style*="color:#5d534a"],
+body.dark-mode [style*="color: #5d534a"] {
+    color: #d6d3d1 !important;
+}
+
+/* ── Muted tan (descriptions, hints) → lighter tan ─────────────── */
+body.dark-mode [style*="color:#9E9382"],
+body.dark-mode [style*="color: #9E9382"],
+body.dark-mode [style*="color:#9e9382"],
+body.dark-mode [style*="color: #9e9382"] {
+    color: #b8b0a8 !important;
+}
+
+/* ── Medium gray (loading text, subtitles) → lighter gray ──────── */
+body.dark-mode [style*="color:#666"],
+body.dark-mode [style*="color: #666"] {
+    color: #a0a0a0 !important;
+}
+body.dark-mode [style*="color:#7F8C8D"],
+body.dark-mode [style*="color: #7F8C8D"] {
+    color: #b0b8b0 !important;
+}
+
+/* ── Olive-green subtitles → soft sage ─────────────────────────── */
+body.dark-mode [style*="color:#7a9070"],
+body.dark-mode [style*="color: #7a9070"] {
+    color: #a8c8a0 !important;
+}
+
+/* ── Muted green (debtor labels) → soft green ──────────────────── */
+body.dark-mode [style*="color:#6a7a6a"],
+body.dark-mode [style*="color: #6a7a6a"] {
+    color: #a8b8a8 !important;
+}
+
+/* ── Cost-red (₱ prices) → salmon ──────────────────────────────── */
+body.dark-mode [style*="color:#a44a3f"],
+body.dark-mode [style*="color: #a44a3f"] {
+    color: #f5a8a8 !important;
+}
+
+/* ── Error/danger headings → light red ─────────────────────────── */
+body.dark-mode [style*="color:#7a2820"],
+body.dark-mode [style*="color: #7a2820"],
+body.dark-mode [style*="color:#7F1D1D"],
+body.dark-mode [style*="color: #7F1D1D"] {
+    color: #ffa0a0 !important;
+}
+
+/* ── Warning amber (LOW badges) → bright yellow ────────────────── */
+body.dark-mode [style*="color:#d4a726"],
+body.dark-mode [style*="color: #d4a726"] {
+    color: #fde047 !important;
+}
+
+/* ── Emerald (customer labels) → lighter emerald ───────────────── */
+body.dark-mode [style*="color:#059669"],
+body.dark-mode [style*="color: #059669"] {
+    color: #6ee7b7 !important;
+}
+
+/* ── Surcharge/caution brown → warm gold ───────────────────────── */
+body.dark-mode [style*="color:#8a6a30"],
+body.dark-mode [style*="color: #8a6a30"] {
+    color: #e8c87a !important;
+}
+body.dark-mode [style*="color:#b67a2a"],
+body.dark-mode [style*="color: #b67a2a"] {
+    color: #f0d48a !important;
+}
+
+/* ── Red text (errors, DC2626) → softer red ────────────────────── */
+body.dark-mode [style*="color:#DC2626"],
+body.dark-mode [style*="color: #DC2626"],
+body.dark-mode [style*="color:#dc2626"],
+body.dark-mode [style*="color: #dc2626"] {
+    color: #ff8888 !important;
+}
+
+/* ── Red-brown (E74C3C error text) → lighter ───────────────────── */
+body.dark-mode [style*="color:#E74C3C"],
+body.dark-mode [style*="color: #E74C3C"],
+body.dark-mode [style*="color:#e74c3c"],
+body.dark-mode [style*="color: #e74c3c"] {
+    color: #ffa0a0 !important;
+}
+
+/* ── Deep green button text on green bg → keep readable ────────── */
+body.dark-mode [style*="color:#1e3a1e"],
+body.dark-mode [style*="color: #1e3a1e"] {
+    color: #dcfce7 !important;
+}
+
+/* ── Gray-blue (cart/search hints) → lighter ───────────────────── */
+body.dark-mode [style*="color:#999"],
+body.dark-mode [style*="color: #999"] {
+    color: #a0a0a0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK MODE — DEBTORS CSS-IN-JS TEXT OVERRIDES
+   (For classes defined in debtors.js embedded <style> blocks)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Debtor stat card labels & values (all card colors) */
+body.dark-mode .debt-card-red .card-label,
+body.dark-mode .debt-card-red .card-sub {
+    color: #c8e0a8 !important;
+}
+body.dark-mode .debt-card-red .card-value {
+    color: #e8f5d8 !important;
+}
+body.dark-mode .debt-card-green .card-label,
+body.dark-mode .debt-card-green .card-sub {
+    color: #a8d4ba !important;
+}
+body.dark-mode .debt-card-green .card-value {
+    color: #c8efd9 !important;
+}
+body.dark-mode .debt-card-blue .card-label,
+body.dark-mode .debt-card-blue .card-sub {
+    color: #d4d4a8 !important;
+}
+body.dark-mode .debt-card-blue .card-value {
+    color: #e8e8c8 !important;
+}
+body.dark-mode .debt-card-amber .card-label,
+body.dark-mode .debt-card-amber .card-sub {
+    color: #d4b89a !important;
+}
+body.dark-mode .debt-card-amber .card-value {
+    color: #e8d4c8 !important;
+}
+body.dark-mode .debt-card-orange .card-label,
+body.dark-mode .debt-card-orange .card-sub {
+    color: #d4c0a0 !important;
+}
+body.dark-mode .debt-card-orange .card-value {
+    color: #e8dcc8 !important;
+}
+body.dark-mode .debt-card-purple .card-label,
+body.dark-mode .debt-card-purple .card-sub {
+    color: #d4b89a !important;
+}
+body.dark-mode .debt-card-purple .card-value {
+    color: #e8d4c8 !important;
+}
+
+/* Debtor info text */
+body.dark-mode .debtor-name {
+    color: #e8f5e9 !important;
+}
+body.dark-mode .detail-label {
+    color: #a8b8a8 !important;
+}
+body.dark-mode .detail-value {
+    color: #e8f5e9 !important;
+}
+body.dark-mode .items-label {
+    color: #a8b8a8 !important;
+}
+body.dark-mode .items-list {
+    color: #e8f5e9 !important;
+}
+
+/* Surcharge note text */
+body.dark-mode .surcharge-note {
+    background: linear-gradient(135deg, rgba(100,70,10,0.25), rgba(80,50,0,0.15)) !important;
+    border-color: rgba(200,150,50,0.3) !important;
+    border-left-color: #d4a843 !important;
+    color: #e8c87a !important;
+}
+body.dark-mode .surcharge-note strong {
+    color: #f0d48a !important;
+}
+
+/* Paid info */
+body.dark-mode .paid-info {
+    background: linear-gradient(135deg, #3a5a48, #2a4a38) !important;
+    color: #a8d4ba !important;
+    border-color: rgba(168, 212, 186, 0.2) !important;
+}
+
+/* Section headers in debtors */
+body.dark-mode .section-header {
+    color: #e8f5e9 !important;
+}
+body.dark-mode .unpaid-header {
+    color: #ff9999 !important;
+}
+body.dark-mode .paid-header {
+    color: #a8d4ba !important;
+}
+
+/* No data placeholder */
+body.dark-mode .no-data {
+    background: rgba(30, 30, 30, 0.6) !important;
+    color: #a0a0a0 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK MODE — INVENTORY CSS-IN-JS TEXT OVERRIDES
+   (For .ms-red stat card that was missing a dark override)
+   ═══════════════════════════════════════════════════════════════════ */
+body.dark-mode .ms-red .ms-label {
+    color: #fca5a5 !important;
+}
+body.dark-mode .ms-red .ms-value {
+    color: #fecaca !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT MODE — TERTIARY TEXT CONTRAST BOOST
+   Ensure pale/muted text passes WCAG AA on light backgrounds
+   ═══════════════════════════════════════════════════════════════════ */
+.stat-label,
+.card-sub,
+.detail-label,
+.items-label {
+    opacity: 1 !important;
+}

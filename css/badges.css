@@ -1,0 +1,96 @@
+
+.badge,
+.in-cart-badge,
+.payment-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    2px 2px 8px 0 rgba(0,0,0,0.12), 
+    -2px -2px 8px 0 rgba(255,255,255,0.18), 
+    inset 1px 1px 4px 0 rgba(255,255,255,0.12), 
+    inset -1px -1px 4px 0 rgba(0,0,0,0.10); 
+  border: 1.5px solid rgba(255,255,255,0.22);
+  transition: all 0.3s ease;
+}
+
+
+.in-cart-badge {
+  background: linear-gradient(135deg, var(--success), var(--success-dark), rgba(255,255,255,0.18));
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.22);
+}
+
+
+.payment-badge.cash {
+  background: linear-gradient(135deg, var(--success), var(--success-dark), rgba(255,255,255,0.18));
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.22);
+}
+
+
+.payment-badge.gcash,
+.payment-badge.credit {
+  background: linear-gradient(135deg, #1e88e5, #1565c0, rgba(255,255,255,0.18));
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.22);
+}
+
+
+.badge:hover,
+.in-cart-badge:hover,
+.payment-badge:hover {
+  transform: scale(1.05);
+  box-shadow:
+    4px 4px 16px 0 rgba(0,0,0,0.18),
+    -4px -4px 16px 0 rgba(255,255,255,0.22),
+    inset 2px 2px 8px 0 rgba(255,255,255,0.18),
+    inset -2px -2px 8px 0 rgba(0,0,0,0.14);
+}
+
+
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    2px 2px 8px 0 rgba(0,0,0,0.12),
+    -2px -2px 8px 0 rgba(255,255,255,0.18),
+    inset 1px 1px 4px 0 rgba(255,255,255,0.12),
+    inset -1px -1px 4px 0 rgba(0,0,0,0.10);
+  border: 1.5px solid rgba(255,255,255,0.22);
+}
+
+
+.status-badge.success {
+  background: linear-gradient(135deg, var(--success), var(--success-dark), rgba(255,255,255,0.18));
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.22);
+}
+
+
+.status-badge.warning {
+  background: linear-gradient(135deg, #ffd600, #ffea00, rgba(255,255,255,0.18));
+  color: #1a1a2e;
+  border: 1.5px solid rgba(255,255,255,0.22);
+}
+
+
+.status-badge.danger {
+  background: linear-gradient(135deg, var(--danger), var(--danger-dark), rgba(255,255,255,0.18));
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.22);
+}

@@ -1,0 +1,391 @@
+/* ========================================
+   CARDS.CSS — Category Chip-Cards &
+   Performance / Stat Cards
+   ========================================
+   LOAD ORDER : 5 of 13
+   FIXED: Removed watermark characters from .profit-card::after
+   ======================================== */
+
+/* === CATEGORY CARDS === */
+
+.category-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--neo-shadow-light);
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-revenue);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.category-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary-300);
+    box-shadow: var(--neo-shadow-medium);
+}
+
+.category-card:hover::before { opacity: 1; }
+.category-card:active { transform: translateY(-2px); box-shadow: var(--neo-shadow-light); }
+
+.category-icon {
+    font-size: 3.5rem;
+    text-align: center;
+    margin-bottom: var(--space-md);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    transition: transform var(--transition-base);
+}
+.category-card:hover .category-icon { transform: scale(1.1); }
+
+.category-name {
+    text-align: center;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    margin-bottom: var(--space-lg);
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-stats {
+    display: flex;
+    justify-content: space-around;
+    padding-top: var(--space-lg);
+    border-top: 2px solid var(--border-light);
+    gap: var(--space-md);
+}
+
+.category-stat {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--primary-600);
+    line-height: 1;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+/* === PERFORMANCE CARDS === */
+
+.section-title {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.cards-grid,
+.sales-cards-grid,
+.profit-summary,
+.category-cards-container,
+.debtors-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    width: 100%;
+}
+
+.card,
+.sales-card,
+.stat-card,
+.profit-card {
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--neo-shadow-light);
+    background: var(--bg-surface);
+}
+
+/* ── WATERMARK FIX ──────────────────────────────────────────────────────────
+   The ::after pseudo-element provides a glassmorphic gradient overlay.
+   content must be an empty string for the overlay to render, but on some
+   browsers / environments this can bleed as garbled characters.
+   We keep the visual overlay but explicitly guard against text content.
+─────────────────────────────────────────────────────────────────────────── */
+.card::after,
+.sales-card::after,
+.stat-card::after,
+.profit-card::after {
+    content: '' !important;   /* keep empty — never allow text content */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(135deg,
+        rgba(255,255,255,0.2) 0%,
+        rgba(255,255,255,0) 50%);
+    pointer-events: none;
+    font-size: 0 !important;  /* belt-and-suspenders: zero font size */
+    color: transparent !important;
+    overflow: hidden;
+}
+
+.card:hover,
+.sales-card:hover,
+.stat-card:hover,
+.profit-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* === MUTED LIGHT MODE CARDS === */
+
+.card.revenue, .sales-card.revenue {
+    background: linear-gradient(135deg, #c5dfc7 0%, #b8d8ba 100%);
+    border-color: #a8c9a8;
+}
+.card.revenue .card-label, .sales-card.revenue .label { color: #2d5a3b !important; font-weight: 700; }
+.card.revenue .card-amount, .sales-card.revenue .amount { color: #1a3a28 !important; font-weight: 800; }
+.sales-card.revenue .subtitle { color: #4a6a5a !important; }
+
+.card.profit, .sales-card.profit {
+    background: linear-gradient(135deg, #d9e8c9 0%, #cce0ba 100%);
+    border-color: #bfd4a8;
+}
+.card.profit .card-label, .sales-card.profit .label { color: #3a4a2a !important; font-weight: 700; }
+.card.profit .card-amount, .sales-card.profit .amount { color: #1f2a15 !important; font-weight: 800; }
+.sales-card.profit .subtitle { color: #5a6a4a !important; }
+
+.card.yesterday, .sales-card.yesterday, .card.previous {
+    background: linear-gradient(135deg, #e8dcc5 0%, #dfd3b5 100%);
+    border-color: #d4c7a0;
+}
+.card.yesterday .card-label, .sales-card.yesterday .label { color: #5a4a28 !important; font-weight: 700; }
+.card.yesterday .card-amount, .sales-card.yesterday .amount { color: #2a1f10 !important; font-weight: 800; }
+.sales-card.yesterday .subtitle { color: #6a5a3a !important; }
+
+.card.info, .sales-card.info {
+    background: linear-gradient(135deg, #c9dce8 0%, #bad3e0 100%);
+    border-color: #a8c9d8;
+}
+.card.info .card-label, .sales-card.info .label { color: #2a4a5a !important; font-weight: 700; }
+.card.info .card-amount, .sales-card.info .amount { color: #1a2a38 !important; font-weight: 800; }
+
+.stat-card .card-label, .sales-card .label {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-md);
+    opacity: 1;
+    color: inherit !important;
+}
+
+.stat-card .card-amount,
+.sales-card .amount,
+.card-value,
+.profit-amount {
+    font-size: var(--font-size-4xl) !important;
+    font-weight: 800;
+    margin-bottom: var(--space-sm);
+    line-height: 1;
+    color: inherit !important;
+}
+
+.sales-card .subtitle, .card-description {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* === INVENTORY STATS === */
+.inventory-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.stat-box {
+    background: var(--bg-surface);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    text-align: center;
+    transition: all var(--transition-base);
+}
+.stat-box:hover { border-color: var(--primary-300); box-shadow: var(--shadow-md); }
+.stat-box .stat-label { display: block; font-size: var(--font-size-sm); color: var(--text-secondary); font-weight: 600; margin-bottom: var(--space-sm); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-box .stat-value { display: block; font-size: var(--font-size-4xl) !important; font-weight: 800; color: var(--primary-600); }
+
+/* === LIGHT MODE === */
+body:not(.dark-mode) .stat-number { color: #2d5a3b !important; font-size: var(--font-size-3xl) !important; font-weight: 800 !important; }
+body:not(.dark-mode) .stat-label { color: #5a6a5a !important; }
+
+/* === DARK MODE === */
+body.dark-mode .category-card,
+body.dark-mode .card,
+body.dark-mode .sales-card,
+body.dark-mode .stat-card,
+body.dark-mode .profit-card,
+body.dark-mode .stat-box { box-shadow: var(--shadow-md); }
+
+body.dark-mode .category-card:hover,
+body.dark-mode .card:hover,
+body.dark-mode .sales-card:hover,
+body.dark-mode .stat-card:hover,
+body.dark-mode .profit-card:hover { box-shadow: var(--shadow-xl); }
+
+body.dark-mode .card.revenue, body.dark-mode .sales-card.revenue {
+    background: linear-gradient(135deg, #1a2821 0%, #15211a 100%) !important;
+    border-color: #2a3a2d !important;
+}
+body.dark-mode .card.revenue .card-label, body.dark-mode .sales-card.revenue .label { color: #6b9370 !important; font-weight: 700; }
+body.dark-mode .card.revenue .card-amount, body.dark-mode .sales-card.revenue .amount { color: #87b38c !important; font-weight: 800; }
+body.dark-mode .sales-card.revenue .subtitle { color: #5a7a5e !important; }
+
+body.dark-mode .card.profit, body.dark-mode .sales-card.profit {
+    background: linear-gradient(135deg, #1f2818 0%, #181f12 100%) !important;
+    border-color: #2d3a20 !important;
+}
+body.dark-mode .card.profit .card-label, body.dark-mode .sales-card.profit .label { color: #7a9c6a !important; font-weight: 700; }
+body.dark-mode .card.profit .card-amount, body.dark-mode .sales-card.profit .amount { color: #95b885 !important; font-weight: 800; }
+body.dark-mode .sales-card.profit .subtitle { color: #6a8a5a !important; }
+
+body.dark-mode .card.yesterday, body.dark-mode .sales-card.yesterday, body.dark-mode .card.previous {
+    background: linear-gradient(135deg, #28251a 0%, #1f1c13 100%) !important;
+    border-color: #3a3525 !important;
+}
+body.dark-mode .card.yesterday .card-label, body.dark-mode .sales-card.yesterday .label { color: #9d9577 !important; font-weight: 700; }
+body.dark-mode .card.yesterday .card-amount, body.dark-mode .sales-card.yesterday .amount { color: #b8ae8a !important; font-weight: 800; }
+body.dark-mode .sales-card.yesterday .subtitle { color: #8a8068 !important; }
+
+body.dark-mode .card.info, body.dark-mode .sales-card.info {
+    background: linear-gradient(135deg, #1a2530 0%, #131d26 100%) !important;
+    border-color: #253545 !important;
+}
+body.dark-mode .card.info .card-label, body.dark-mode .sales-card.info .label { color: #6b8ca8 !important; font-weight: 700; }
+body.dark-mode .card.info .card-amount, body.dark-mode .sales-card.info .amount { color: #85a5c0 !important; font-weight: 800; }
+
+body.dark-mode .stat-box { background: #1a1a1a !important; border-color: #2a2a2a !important; }
+body.dark-mode .stat-box .stat-label { color: #aaaaaa !important; font-weight: 700 !important; }
+body.dark-mode .stat-box .stat-value { color: #d4ffd4 !important; font-size: var(--font-size-4xl) !important; font-weight: 800 !important; }
+body.dark-mode .stat-box:hover { border-color: #3a4a3d !important; box-shadow: 0 8px 25px rgba(70,90,74,0.3) !important; }
+
+body.dark-mode .category-card { background: #1a1a1a !important; border-color: #2a2a2a !important; }
+body.dark-mode .category-card:hover { border-color: #3a4a3d !important; box-shadow: 0 8px 25px rgba(70,90,74,0.3) !important; }
+body.dark-mode .category-name { color: #f0f9f0 !important; }
+body.dark-mode .category-card .category-name {
+    color: #fff !important;
+    text-shadow:
+        0 2px 8px #000,
+        0 0 2px #000,
+        0 0 1px #000;
+    -webkit-text-stroke: 1.2px #222;
+    text-box-edge: 1.2px #222;
+}
+
+body.dark-mode #inventoryContent .category-card .category-name {
+    color: #fff !important;
+    text-shadow:
+        0 2px 8px #000,
+        0 0 2px #000,
+        0 0 1px #000;
+    -webkit-text-stroke: 1.2px #222;
+}
+body.dark-mode .stat-number { color: #87b38c !important; font-size: var(--font-size-3xl) !important; font-weight: 800 !important; }
+body.dark-mode .stat-label { color: #888 !important; }
+
+/* === STAT CARD BASE === */
+.stat-card { border-radius: 16px; padding: 25px; text-align: center; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.stat-card .card-label { font-size: 18px; opacity: 0.9; margin-bottom: 8px; font-weight: 600; color: inherit !important; }
+.stat-card .card-amount { font-size: 36px; font-weight: 800; color: inherit !important; }
+
+.stat-card.revenue  { background: linear-gradient(135deg, #cbdfbd 0%, #a8c99c 100%); color: #2d5a3b; }
+.stat-card.profit   { background: linear-gradient(135deg, #d4e09b 0%, #c5d68d 100%); color: #4a5a2a; }
+.stat-card.yesterday{ background: linear-gradient(135deg, #f6f4d2 0%, #eee9c4 100%); color: #6b6438; }
+.stat-card.info     { background: linear-gradient(135deg, #d99b89 0%, #c98977 100%); color: #5a2d23; }
+
+body.dark-mode .stat-card                { background: #1a1a1a !important; border: 1px solid #333 !important; }
+body.dark-mode .stat-card.revenue        { background: #1a1a1a !important; border: 1px solid #2a3a2d !important; }
+body.dark-mode .stat-card.profit         { background: #1a1a1a !important; border: 1px solid #2d3a20 !important; }
+body.dark-mode .stat-card.yesterday      { background: #1a1a1a !important; border: 1px solid #3a3525 !important; }
+body.dark-mode .stat-card.info           { background: #1a1a1a !important; border: 1px solid #253545 !important; }
+body.dark-mode .stat-card .card-label    { color: #cccccc !important; font-weight: 700 !important; }
+body.dark-mode .stat-card .card-amount   { color: #e0ffe0 !important; font-weight: 800 !important; }
+
+/* === ADD PRODUCT FORM === */
+.add-product-form { background: white; border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 2px solid rgba(93,83,74,0.1); transition: all 0.3s ease; }
+.add-product-form .form-title { color: #5D534A; margin: 0 0 20px 0; font-size: 1.3rem; font-weight: 700; }
+body.dark-mode .add-product-form { background: #1a1a1a !important; border-color: #2a2a2a !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; }
+body.dark-mode .add-product-form .form-title { color: #f0f9f0 !important; }
+body.dark-mode .add-product-form label { color: #b0b0b0 !important; }
+body.dark-mode .add-product-form input { background: #252525 !important; color: #e0e0e0 !important; border-color: #3a3a3a !important; }
+body.dark-mode .add-product-form input:focus { background: #2a2a2a !important; border-color: #4a6a4a !important; box-shadow: 0 0 0 4px rgba(74,106,74,0.2) !important; }
+
+/* === PRO TIP BOX === */
+.pro-tip-box { background: linear-gradient(135deg, rgba(203,223,189,0.15), rgba(203,223,189,0.08)); border-left: 4px solid #cbdfbd; padding: 20px; margin-bottom: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; }
+.pro-tip-box strong { color: #5D534A; font-size: 16px; }
+.pro-tip-box p { color: #9E9382; margin: 5px 0 0 0; font-size: 14px; }
+body.dark-mode .pro-tip-box { background: linear-gradient(135deg, rgba(74,106,74,0.15), rgba(74,106,74,0.08)) !important; border-left-color: #4a6a4a !important; }
+body.dark-mode .pro-tip-box strong { color: #87b38c !important; }
+body.dark-mode .pro-tip-box p { color: #b0b0b0 !important; }
+
+body.dark-mode .stat-card { background: #1a1a1a !important; border: 1px solid #333333 !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; }
+body.dark-mode .stat-card .card-label { color: #cccccc !important; }
+body.dark-mode .stat-card .card-amount { color: #e0ffe0 !important; }
+
+/* === MOBILE RESPONSIVE === */
+@media (max-width: 1024px) {
+    .category-card { padding: var(--space-lg); }
+    .category-icon { font-size: 2.5rem; }
+    .cards-grid, .sales-cards-grid, .profit-summary { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-md); }
+}
+@media (max-width: 768px) {
+    .category-card { padding: var(--space-md); min-height: auto; }
+    .category-icon { font-size: 2rem; margin-bottom: var(--space-sm); }
+    .category-name { font-size: var(--font-size-base); min-height: 2.5rem; margin-bottom: var(--space-md); }
+    .category-stats { gap: var(--space-sm); padding-top: var(--space-md); }
+    .stat-number { font-size: var(--font-size-lg); }
+    .stat-label { font-size: 0.65rem; }
+    .cards-grid, .sales-cards-grid, .profit-summary { grid-template-columns: 1fr; gap: var(--space-md); }
+}
+@media (max-width: 480px) {
+    .category-card { padding: var(--space-sm); }
+    .category-icon { font-size: 1.5rem; }
+    .category-name { font-size: var(--font-size-sm); }
+    .stat-number { font-size: var(--font-size-base); }
+    .stat-label { font-size: 0.6rem; }
+    .pro-tip-box { padding: 12px; font-size: 13px; }
+}   

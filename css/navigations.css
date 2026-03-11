@@ -1,0 +1,542 @@
+/* ============================================================
+   NAVIGATIONS.CSS — Top Navigation Bar
+   ============================================================ */
+
+:root {
+    --nav-height: 72px;
+    --nav-bg:      linear-gradient(145deg, #4a7c59, #3a6b48);
+    --nav-bg-dark: linear-gradient(145deg, #2d4a3e, #1e3a2f);
+}
+
+/* ============================================================
+   TOP NAV
+   ============================================================ */
+.top-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 9999;
+    height: var(--nav-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: linear-gradient(135deg, rgba(58,107,72,0.92), rgba(42,82,55,0.95));
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow:
+        0 8px 32px rgba(0,0,0,0.18),
+        0 2px 8px rgba(0,0,0,0.12),
+        inset 0 1px 1px rgba(255,255,255,0.12),
+        inset 0 -1px 2px rgba(0,0,0,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+body.dark-mode .top-nav {
+    background: var(--nav-bg-dark);
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.4),
+        0 4px 10px rgba(0,0,0,0.3),
+        inset 0 2px 4px rgba(255,255,255,0.05),
+        inset 0 -1px 2px rgba(0,0,0,0.2);
+}
+
+/* ── Brand ── */
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.brand-text {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 0.4px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2), -1px -1px 2px rgba(255,255,255,0.1);
+    white-space: nowrap;
+}
+
+/* ── Nav links ── */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.nav-links a { text-decoration: none; }
+
+/* ── Nav buttons — neo-glassmorphic ── */
+.nav-links button {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px) saturate(1.3);
+    -webkit-backdrop-filter: blur(12px) saturate(1.3);
+    border: 1px solid rgba(255,255,255,0.22);
+    padding: 11px 22px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #ffffff;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    letter-spacing: 0.8px;
+    box-shadow:
+        0 4px 16px rgba(0,0,0,0.12),
+        inset 0 1px 1px rgba(255,255,255,0.18),
+        inset 0 -1px 1px rgba(0,0,0,0.06);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    filter: none;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+/* Shine sweep */
+.nav-links button::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    transition: left 0.5s ease;
+    pointer-events: none;
+}
+.nav-links button:hover::after { left: 100%; }
+
+.nav-links button:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.35);
+    box-shadow:
+        0 6px 24px rgba(0,0,0,0.16),
+        inset 0 1px 2px rgba(255,255,255,0.25),
+        inset 0 -1px 1px rgba(0,0,0,0.06);
+}
+
+.nav-links button:active {
+    transform: translateY(0) scale(0.97);
+    transition: all 0.1s;
+    background: rgba(255,255,255,0.1);
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.1),
+        inset 0 2px 4px rgba(0,0,0,0.12);
+}
+
+/* Active / current page — glass inset */
+.nav-links button.active {
+    background: rgba(255,255,255,0.28);
+    border-color: rgba(255,255,255,0.4);
+    font-weight: 800;
+    filter: none;
+    box-shadow:
+        0 2px 12px rgba(0,0,0,0.1),
+        inset 0 2px 6px rgba(0,0,0,0.1),
+        inset 0 -1px 2px rgba(255,255,255,0.2);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.45);
+}
+
+.nav-links button.active:hover {
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.32);
+    box-shadow:
+        0 4px 16px rgba(0,0,0,0.14),
+        inset 0 2px 6px rgba(0,0,0,0.1),
+        inset 0 -1px 2px rgba(255,255,255,0.22);
+}
+
+/* ── Logout button — glassmorphic red ── */
+.btn-logout {
+    background: var(--btn-red-bg) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: none !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+    box-shadow: var(--btn-red-shadow) !important;
+}
+
+.btn-logout:hover {
+    background: var(--btn-red-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: var(--btn-red-shadow-hover) !important;
+}
+
+.btn-logout:active {
+    background: var(--btn-red-hover) !important;
+    transform: translateY(0);
+    box-shadow: var(--btn-red-shadow) !important;
+}
+
+/* ── Dark mode buttons — glass style ── */
+body.dark-mode .nav-links button {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.12);
+    color: #e8f5e9;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    box-shadow:
+        0 4px 16px rgba(0,0,0,0.25),
+        inset 0 1px 1px rgba(255,255,255,0.06),
+        inset 0 -1px 1px rgba(0,0,0,0.15);
+}
+
+body.dark-mode .nav-links button:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.2);
+    box-shadow:
+        0 6px 24px rgba(0,0,0,0.3),
+        inset 0 1px 2px rgba(255,255,255,0.08);
+}
+
+body.dark-mode .nav-links button.active {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.25);
+    color: white;
+    box-shadow:
+        0 2px 12px rgba(0,0,0,0.2),
+        inset 0 2px 6px rgba(0,0,0,0.2),
+        inset 0 -1px 2px rgba(255,255,255,0.08);
+}
+
+body.dark-mode .btn-logout {
+    background: rgba(180,35,45,0.65) !important;
+    border-color: rgba(255,80,80,0.2) !important;
+    box-shadow:
+        0 4px 16px rgba(0,0,0,0.3),
+        inset 0 1px 1px rgba(255,255,255,0.08) !important;
+}
+
+/* ── Hamburger — hidden on desktop, shown in nav-fix.css mobile ── */
+.hamburger-btn { display: none; }
+
+/* ============================================================
+   PAGE CONTAINER — clears fixed nav
+   calc() uses the CSS variable so it always matches the nav height
+   ============================================================ */
+.page-container {
+    padding-top: calc(var(--nav-height) + 32px);
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 100vh;
+}
+
+/* ── Pages ── */
+.page             { display: none; }
+.page.active-page { display: block; }
+
+/* ── Page headers ── */
+.main-page-header,
+.page-header {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #5D534A;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+}
+
+body.dark-mode .main-page-header,
+body.dark-mode .page-header {
+    color: #f0f0f0;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* ── Section containers (neomorphism card) ── */
+.section-container {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow:
+        8px 8px 20px rgba(0,0,0,0.08),
+        -8px -8px 20px rgba(255,255,255,0.9),
+        inset 1px 1px 2px rgba(255,255,255,0.5);
+}
+
+body.dark-mode .section-container {
+    background: linear-gradient(145deg, #343e4a, #2a323c);
+    box-shadow:
+        8px 8px 20px rgba(0,0,0,0.4),
+        -8px -8px 20px rgba(255,255,255,0.03),
+        inset 1px 1px 2px rgba(255,255,255,0.03);
+}
+
+.period-section   { margin-bottom: 24px; }
+.period-header {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #5D534A;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid rgba(135,179,130,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+body.dark-mode .period-header { color: #f0f0f0; }
+
+/* ── Sale cards (neomorphism) ── */
+.sale-card {
+    background: linear-gradient(145deg, #ffffff, #f5f5f5);
+    border-left: 5px solid #87B382;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow:
+        6px 6px 14px rgba(0,0,0,0.07),
+        -6px -6px 14px rgba(255,255,255,0.8);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sale-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        8px 8px 18px rgba(0,0,0,0.1),
+        -8px -8px 18px rgba(255,255,255,0.9);
+}
+
+.sale-card-time   { font-size: 0.85rem; color: #9E9382; font-weight: 600; }
+.sale-card-amount { font-size: 1.2rem; font-weight: 800; color: #689962; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); }
+.sale-card-items  { font-size: 0.85rem; color: #6B7280; }
+
+body.dark-mode .sale-card {
+    background: linear-gradient(145deg, #3a4450, #2e363f);
+    box-shadow:
+        6px 6px 14px rgba(0,0,0,0.35),
+        -6px -6px 14px rgba(255,255,255,0.03);
+}
+
+body.dark-mode .sale-card:hover {
+    box-shadow:
+        8px 8px 18px rgba(0,0,0,0.4),
+        -8px -8px 18px rgba(255,255,255,0.04);
+}
+
+body.dark-mode .sale-card-items  { color: #a0aec0; }
+
+/* ── Alerts ── */
+.alert {
+    padding: 18px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    border-left: 5px solid;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 5px 5px 12px rgba(0,0,0,0.08), -5px -5px 12px rgba(255,255,255,0.8);
+}
+
+.alert-success { background: linear-gradient(145deg, rgba(135,179,130,0.15), rgba(135,179,130,0.08)); border-color: #87B382; color: #2d5a3b; }
+.alert-warning { background: linear-gradient(145deg, rgba(245,158,11,0.15), rgba(245,158,11,0.08));   border-color: #F59E0B; color: #92400E; }
+.alert-danger  { background: linear-gradient(145deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08));     border-color: #EF4444; color: #991B1B; }
+
+body.dark-mode .alert {
+    box-shadow: 5px 5px 12px rgba(0,0,0,0.35), -5px -5px 12px rgba(255,255,255,0.02);
+}
+
+/* ── Dialogs ── */
+.dialog-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 99999;
+}
+
+.dialog-box {
+    background: linear-gradient(145deg, #ffffff, #f5f5f5);
+    border-radius: 24px;
+    padding: 28px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow:
+        20px 20px 60px rgba(0,0,0,0.2),
+        -20px -20px 60px rgba(255,255,255,0.5),
+        inset 2px 2px 4px rgba(255,255,255,0.6);
+}
+
+body.dark-mode .dialog-box {
+    background: linear-gradient(145deg, #2a323c, #1e252d);
+    box-shadow:
+        20px 20px 60px rgba(0,0,0,0.5),
+        -20px -20px 60px rgba(255,255,255,0.02),
+        inset 2px 2px 4px rgba(255,255,255,0.03);
+}
+
+/* ── Accessibility ── */
+.nav-links button:focus-visible {
+    outline: 3px solid rgba(255,255,255,0.7);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-links button,
+    .nav-links button::after,
+    .sale-card { transition: none !important; }
+    .nav-links button:hover::after { left: -100%; }
+}
+
+/* ── Utility neomorphism classes ── */
+.neo-raised { box-shadow: 6px 6px 14px rgba(0,0,0,0.15), -6px -6px 14px rgba(255,255,255,0.8); }
+.neo-inset  { box-shadow: inset 4px 4px 10px rgba(0,0,0,0.15), inset -4px -4px 10px rgba(255,255,255,0.7); }
+.neo-flat   { box-shadow: 3px 3px 6px rgba(0,0,0,0.1), -3px -3px 6px rgba(255,255,255,0.7); }
+
+body.dark-mode .neo-raised { box-shadow: 6px 6px 14px rgba(0,0,0,0.4), -6px -6px 14px rgba(255,255,255,0.05); }
+body.dark-mode .neo-inset  { box-shadow: inset 4px 4px 10px rgba(0,0,0,0.5), inset -4px -4px 10px rgba(255,255,255,0.03); }
+body.dark-mode .neo-flat   { box-shadow: 3px 3px 6px rgba(0,0,0,0.35), -3px -3px 6px rgba(255,255,255,0.03); }
+
+/* ============================================================
+   MEDIUM (≤ 1199px)
+   ============================================================ */
+@media (max-width: 1199px) {
+    .nav-links { gap: 5px; }
+    .nav-links button {
+        padding: 10px 17px;
+        font-size: 0.82rem;
+        border-radius: 12px;
+        box-shadow:
+            0 4px 14px rgba(0,0,0,0.1),
+            inset 0 1px 1px rgba(255,255,255,0.15);
+    }
+    .nav-links button.active {
+        box-shadow:
+            0 2px 10px rgba(0,0,0,0.08),
+            inset 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .page-container { padding-top: calc(var(--nav-height) + 28px); }
+}
+
+/* ============================================================
+   TABLET (≤ 991px)
+   ============================================================ */
+@media (max-width: 991px) {
+    .top-nav { padding: 0 16px; }
+    .nav-links { gap: 4px; }
+    .nav-links button {
+        padding: 9px 14px;
+        font-size: 0.76rem;
+        border-radius: 10px;
+        box-shadow:
+            0 3px 12px rgba(0,0,0,0.1),
+            inset 0 1px 1px rgba(255,255,255,0.12);
+    }
+    .nav-links button.active {
+        box-shadow:
+            0 2px 8px rgba(0,0,0,0.08),
+            inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .brand-text { font-size: 1.15rem; }
+    .page-container {
+        padding-top: calc(var(--nav-height) + 24px);
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    .main-page-header, .page-header { font-size: 1.6rem; }
+    .section-container { padding: 20px; }
+}
+
+/* ============================================================
+   MOBILE (≤ 900px) — hamburger + sidebar
+   ============================================================ */
+@media (max-width: 900px) {
+    :root { --nav-height: 62px; }
+
+    .top-nav {
+        padding: 0 14px;
+        /* Override flex: use 3-col grid so brand stays centered */
+        display: grid !important;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        flex-direction: unset !important;
+        flex-wrap: unset !important;
+        gap: unset !important;
+        justify-content: unset !important;
+    }
+
+    .nav-brand {
+        grid-column: 2;
+        justify-content: center;
+        margin-bottom: 0 !important;
+        width: auto !important;
+        text-align: center !important;
+    }
+
+    /* Nav links hidden — sidebar handles navigation */
+    .nav-links { display: none !important; }
+
+    /* Hamburger visible, right column */
+    .hamburger-btn {
+        grid-column: 3;
+        justify-self: end;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: rgba(255,255,255,0.22);
+        border: 1.5px solid rgba(255,255,255,0.45);
+        border-radius: 12px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.35);
+        font-size: 20px;
+        color: white;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+        position: static !important;
+    }
+
+    .hamburger-btn:hover  { background: rgba(255,255,255,0.32); }
+    .hamburger-btn:active { transform: scale(0.88); background: rgba(255,255,255,0.42); }
+
+    body.dark-mode .hamburger-btn {
+        background: rgba(168,201,156,0.18);
+        border-color: rgba(168,201,156,0.35);
+        color: #d4f0cc;
+    }
+
+    /* Content clears nav */
+    .page-container {
+        padding-top: calc(var(--nav-height) + 20px);
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .main-page-header, .page-header { font-size: 1.4rem; }
+    .section-container { padding: 18px; }
+}
+
+/* ============================================================
+   SMALL MOBILE (≤ 480px)
+   ============================================================ */
+@media (max-width: 480px) {
+    :root { --nav-height: 56px; }
+
+    .top-nav { padding: 0 12px; }
+
+    .hamburger-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 19px;
+        border-radius: 11px;
+    }
+
+    .brand-text { font-size: 1.08rem; }
+
+    .page-container {
+        padding-top: calc(var(--nav-height) + 18px);
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .main-page-header, .page-header { font-size: 1.25rem; }
+    .section-container { padding: 14px; border-radius: 16px; }
+}

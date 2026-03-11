@@ -1,0 +1,1839 @@
+/* By default, show nav-links and hide hamburger (desktop) */
+nav.top-nav .nav-links {
+    display: flex !important;
+}
+nav.top-nav .hamburger {
+    display: none !important;
+}
+@media (max-width: 900px) {
+    /* On mobile, hide nav-links and show hamburger on right */
+    nav.top-nav .nav-links {
+        display: none !important;
+    }
+    nav.top-nav .hamburger {
+        display: flex !important;
+        position: absolute;
+        right: 0;
+        left: auto;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1002;
+    }
+    .nav-brand {
+        justify-content: center !important;
+    }
+}
+    /* Sidebar overlay covers everything */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.35);
+        z-index: 2000;
+        transition: opacity 0.2s;
+    }
+    .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+    }
+    .mobile-sidebar {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0; right: 0;
+        height: 100vh;
+        width: 80vw;
+        max-width: 320px;
+        background: #f5f6fa;
+        box-shadow: -2px 0 16px rgba(0,0,0,0.18);
+        z-index: 2001;
+        transform: translateX(100%);
+        transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    .mobile-sidebar.active {
+        transform: translateX(0);
+    }
+    /* Only show sidebar when active */
+    .mobile-sidebar:not(.active) {
+        display: none !important;
+    }
+/* Hide hamburger when sidebar is open */
+.mobile-sidebar.active ~ .hamburger {
+    display: none !important;
+}
+/* --- MOBILE SIDEBAR DRAWER NAVIGATION --- */
+@media (max-width: 900px) {
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.35);
+        z-index: 2000;
+        transition: opacity 0.2s;
+    }
+    .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+    }
+    .mobile-sidebar {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0; right: 0;
+        height: 100vh;
+        width: 80vw;
+        max-width: 320px;
+        background: #f5f6fa;
+        box-shadow: -2px 0 16px rgba(0,0,0,0.18);
+        z-index: 2001;
+        transform: translateX(100%);
+        transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    .mobile-sidebar.active {
+        transform: translateX(0);
+    }
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 20px 10px 20px;
+        border-bottom: 1px solid #e0e5ec;
+    }
+    .close-sidebar {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        color: #303952;
+        cursor: pointer;
+    }
+    .sidebar-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 24px 20px;
+    }
+    .sidebar-nav button, .sidebar-nav a button {
+        width: 100%;
+        text-align: left;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        background: #fff;
+        border: none;
+        padding: 12px 16px;
+        margin-bottom: 4px;
+        box-shadow: 1px 1px 6px #d1d9e6, -1px -1px 6px #fff;
+    }
+    .sidebar-nav .btn-logout {
+        background: #ef4444;
+        color: #fff;
+        margin-top: 16px;
+    }
+}
+/* --- FORCE MOBILE NAVIGATION OVERRIDES --- */
+@media (max-width: 900px) {
+    nav.top-nav .nav-links {
+        display: none !important;
+    }
+    nav.top-nav .hamburger {
+        display: flex !important;
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1002;
+    }
+    nav.top-nav .mobile-nav {
+        display: none !important;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100vw;
+        background: var(--neo-bg, #e0e5ec);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        z-index: 1000;
+        padding: 16px 0 8px 0;
+        border-radius: 0 0 18px 18px;
+        animation: slideDown 0.25s;
+    }
+    nav.top-nav .mobile-nav button, nav.top-nav .mobile-nav a button {
+        margin: 8px 24px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        box-shadow: 2px 2px 8px #d1d9e6, -2px -2px 8px #fff;
+        background: #f5f6fa;
+        border: none;
+        padding: 10px 0;
+    }
+}
+@media (max-width: 768px) {
+    .nav-links {
+        display: none !important;
+    }
+    .hamburger {
+        display: flex !important;
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1002;
+    }
+    .mobile-nav {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100vw;
+        background: var(--neo-bg, #e0e5ec);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        z-index: 1000;
+        padding: 16px 0 8px 0;
+        border-radius: 0 0 18px 18px;
+        animation: slideDown 0.25s;
+    }
+    .mobile-nav button, .mobile-nav a button {
+        margin: 8px 24px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        box-shadow: 2px 2px 8px #d1d9e6, -2px -2px 8px #fff;
+        background: #f5f6fa;
+        border: none;
+        padding: 10px 0;
+    }
+}
+/* ========================================
+   MOBILE-RESPONSIVE.CSS — All Mobile &
+   Tablet Breakpoint Overrides
+   ========================================
+
+   LOAD ORDER : 13 of 13 (loaded LAST in dashboard.html)
+   USED BY    : dashboard.html
+
+   BREAKPOINT LADDER
+   -----------------
+   1200 px — tablets landscape / small laptops
+    991 px — tablets portrait
+    768 px — large phones / small tablets  ← MAJOR breakpoint
+    576 px — phones
+    480 px — small phones                  ← MAJOR breakpoint
+    380 px — very narrow phones
+    360 px — smallest supported width
+
+   ======================================== */
+
+/* ============================================================
+   SECTION 1: GLOBAL MOBILE FIXES
+   ============================================================ */
+
+@media (max-width: 1200px) {
+    .page-container {
+        max-width: 100% !important;
+        padding: 1.5rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+
+    body {
+        overflow-x: hidden !important;
+    }
+
+    main,
+    section,
+    .page,
+    .page-container {
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .page-container {
+        padding-bottom: 100px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 13px;
+    }
+
+    .page-container {
+        padding: 1rem !important;
+    }
+
+    body.cart-open main,
+    body.cart-open section:not(.search-panel),
+    body.cart-open .page:not(.search-panel),
+    body.cart-open nav:not(.search-panel) {
+        pointer-events: none;
+        visibility: hidden;
+    }
+}
+
+
+/* ============================================================
+   SECTION 4: INVENTORY PAGE - MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .category-card-modern {
+        padding: 20px !important;
+    }
+
+    .category-card-modern > div:first-child {
+        font-size: 80px !important;
+    }
+
+    .category-card-modern h3 {
+        font-size: 16px !important;
+    }
+
+    .category-card-modern > div:last-child > div {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .add-product-fields,
+div[style*="grid-template-columns: 2fr 1fr 1fr 1fr auto"],
+#inventoryContent .add-debtor-form {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    width: 100% !important;
+}
+
+/* Every child of the form goes full-width */
+.add-product-fields > div,
+.add-product-fields > button,
+div[style*="grid-template-columns: 2fr 1fr 1fr 1fr auto"] > div,
+div[style*="grid-template-columns: 2fr 1fr 1fr 1fr auto"] > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+    /* ── Input fields: full width, tall, readable ── */
+    #newProductName,
+    #newProductCost,
+    #newProductPrice,
+    #newProductQty {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        height: 52px !important;
+        font-size: 16px !important;
+        padding: 14px 16px !important;
+        border-radius: 12px !important;
+        display: block !important;
+    }
+
+    /* ── Add button: full width ── */
+    #btnAddProduct {
+        width: 100% !important;
+        height: 52px !important;
+        font-size: 15px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── Labels above inputs ── */
+    .add-product-form label,
+    #inventoryContent label {
+        font-size: 12px !important;
+        margin-bottom: 6px !important;
+        display: block !important;
+    }
+
+    /* ── Desktop table → mobile stacked cards ── */
+    .inventory-table-modern {
+        display: block !important;
+        overflow: visible !important;
+    }
+
+    .inventory-table-modern thead {
+        display: none !important;
+    }
+
+    .inventory-table-modern tbody {
+        display: block !important;
+    }
+
+    .inventory-table-modern tr {
+        display: block !important;
+        margin-bottom: 16px !important;
+        border: 2px solid #E5E7EB !important;
+        border-radius: 16px !important;
+        padding: 18px !important;
+        background: white !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .inventory-table-modern td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 10px 4px !important;
+        border: none !important;
+        border-bottom: 1px solid #f0f0f0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .inventory-table-modern td:last-child {
+        border-bottom: none !important;
+    }
+
+    .inventory-table-modern td > * {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .inventory-table-modern td::before {
+        font-weight: 700;
+        color: #6B7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+        min-width: 65px;
+        margin-right: 12px;
+    }
+
+    .inventory-table-modern td:nth-child(1)::before { content: "Product"; }
+    .inventory-table-modern td:nth-child(2)::before { content: "Cost"; }
+    .inventory-table-modern td:nth-child(3)::before { content: "Price"; }
+    .inventory-table-modern td:nth-child(4)::before { content: "Quantity"; }
+    .inventory-table-modern td:nth-child(5)::before { content: "Value"; }
+    .inventory-table-modern td:nth-child(6)::before { content: "Actions"; }
+
+    .inventory-table-modern td > span,
+    .inventory-table-modern td > strong {
+        text-align: right !important;
+        color: inherit !important;
+    }
+
+    .inventory-table-modern td:nth-child(1) strong { font-size: 16px !important; font-weight: 700 !important; color: #3e5235 !important; }
+    .inventory-table-modern td:nth-child(2) span   { color: #a44a3f !important; }
+    .inventory-table-modern td:nth-child(3) span   { color: #5a7a5e !important; }
+    .inventory-table-modern td:nth-child(5) span   { color: #5a7a5e !important; }
+
+    .inventory-table-modern td > div {
+        display: flex !important;
+        gap: 5px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .qty-input-modern {
+        width: 60px !important;
+        padding: 8px !important;
+    }
+
+    .btn-qty-modern {
+        width: 36px !important;
+        height: 36px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .btn-delete-modern {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+
+    .inventory-table-modern tr.low-stock-modern   { background: rgba(246, 244, 210, 0.5) !important; }
+    .inventory-table-modern tr.out-of-stock-modern { background: rgba(241, 156, 121, 0.15) !important; }
+
+    body.dark-mode .inventory-table-modern tr   { background: #1a202c !important; border-color: #2d3748 !important; }
+    body.dark-mode .inventory-table-modern td   { border-bottom-color: #2d3748 !important; }
+    body.dark-mode .inventory-table-modern td:nth-child(1) strong { color: #e2e8f0 !important; }
+}
+
+/* ============================================================
+   SECTION 5: PRICE LIST PAGE - MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .price-category-card-modern {
+        padding: 20px !important;
+    }
+
+    .category-card-debtor {
+        min-width: 0 !important;
+    }
+
+    .table-container {
+        overflow: visible !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
+    div[style*="overflow: hidden"][style*="border-radius: 16px"] {
+        overflow: visible !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .price-table-modern {
+        display: block !important;
+        overflow: visible !important;
+    }
+
+    .price-table-modern thead {
+        display: none !important;
+    }
+
+    .price-table-modern tbody {
+        display: block !important;
+    }
+
+    .price-table-modern tr {
+        display: block !important;
+        margin-bottom: 16px !important;
+        border: 2px solid #E5E7EB !important;
+        border-radius: 16px !important;
+        padding: 18px !important;
+        background: white !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .price-table-modern tr:hover {
+        background: white !important;
+    }
+
+    .price-table-modern td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 10px 4px !important;
+        border: none !important;
+        border-bottom: 1px solid #f0f0f0 !important;
+        text-align: right !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .price-table-modern td:last-child {
+        border-bottom: none !important;
+    }
+
+    .price-table-modern td::before {
+        font-weight: 700;
+        color: #6B7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+        margin-right: 12px;
+        min-width: 60px;
+    }
+
+    .price-table-modern td > * {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .price-table-modern td:nth-child(1)::before { content: "Product"; }
+    .price-table-modern td:nth-child(2)::before { content: "Cost"; }
+    .price-table-modern td:nth-child(3)::before { content: "Price"; }
+    .price-table-modern td:nth-child(4)::before { content: "Profit"; }
+    .price-table-modern td:nth-child(5)::before { content: "Margin"; }
+    .price-table-modern td:nth-child(6)::before { content: "Stock"; }
+
+    .price-table-modern td:nth-child(1) {
+        padding-bottom: 14px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .price-table-modern td:nth-child(1) strong,
+    .price-table-modern .product-name {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: #3e5235 !important;
+    }
+
+    .price-input,
+    .price-table-modern .cost-input,
+    .price-table-modern .sell-input {
+        width: 120px !important;
+        max-width: 50vw !important;
+        min-height: 44px !important;
+        padding: 10px 12px !important;
+        font-size: 16px !important;
+        border-radius: 10px !important;
+    }
+
+    .profit-badge,
+    .margin-badge {
+        font-size: 14px !important;
+        padding: 6px 12px !important;
+    }
+
+    .stock-text { font-size: 14px !important; }
+
+    .back-btn {
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    #priceListContent > div:first-child {
+        flex-direction: column !important;
+        text-align: center !important;
+    }
+
+    .pro-tip-box { padding: 15px !important; }
+    .pro-tip-box span[style*="font-size: 32px"] { font-size: 24px !important; }
+
+    .debtor-stat-card { padding: 14px 16px !important; }
+
+    #priceListContent { padding-bottom: 100px !important; }
+
+    body.dark-mode .price-table-modern tr      { background: #1a202c !important; border-color: #2d3748 !important; }
+    body.dark-mode .price-table-modern td      { border-bottom-color: #2d3748 !important; }
+    body.dark-mode .price-table-modern .product-name { color: #e2e8f0 !important; }
+}
+
+/* ============================================================
+   SECTION 6: DEBTORS PAGE - MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .debtors-summary-cards {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+
+    .summary-card { padding: 20px !important; }
+    .card-icon    { font-size: 2rem !important; margin-right: 15px !important; }
+    .card-value   { font-size: 1.5rem !important; }
+    .card-value   { font-size: 1.5rem !important; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+
+    .add-debtor-form        { flex-direction: column !important; }
+    .input-with-icon        { min-width: 100% !important; }
+    .product-selector-panel { padding: 15px !important; }
+
+    .product-grid {
+        grid-template-columns: 1fr !important;
+        max-height: 300px !important;
+    }
+
+    .product-loan-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+
+    .product-loan-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .debtors-grid   { grid-template-columns: 1fr !important; }
+    .debtor-card    { padding: 15px !important; }
+    .debtor-name    { font-size: 1rem !important; }
+    .debtor-amount  { font-size: 1.5rem !important; }
+        .debtor-amount  { font-size: 1.5rem !important; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+    .debtor-actions { flex-direction: column !important; }
+    .action-btn     { width: 100%; }
+}
+
+/* ============================================================
+   SECTION 7: FLOATING CART - MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .floating-cart {
+        bottom: 15px;
+        right: 15px;
+        width: 55px;
+        height: 55px;
+        font-size: 24px;
+        touch-action: manipulation;
+    }
+
+    .cart-count {
+        top: -5px;
+        right: -5px;
+
+/* ===============================
+   ORIENTATION & DEVICE QUERIES
+   =============================== */
+
+/* Portrait mode adjustments for mobile and tablet */
+@media (orientation: portrait) {
+    .card, .category-card-modern, .dashboard-card {
+        width: 95vw !important;
+        max-width: 480px !important;
+        margin: 0 auto 16px auto !important;
+    }
+    .dashboard-title, .card-title, .category-title {
+        font-size: 1.2rem !important;
+        text-align: center !important;
+    }
+    .dashboard-content, .card-content {
+        padding: 1rem !important;
+    }
+    .responsive-text {
+        font-size: 1rem !important;
+    }
+}
+
+/* Landscape mode adjustments for mobile and tablet */
+@media (orientation: landscape) {
+    .card, .category-card-modern, .dashboard-card {
+        width: 70vw !important;
+        max-width: 700px !important;
+        margin: 0 auto 12px auto !important;
+    }
+    .dashboard-title, .card-title, .category-title {
+        font-size: 1.4rem !important;
+        text-align: left !important;
+    }
+    .dashboard-content, .card-content {
+        padding: 0.75rem 2rem !important;
+    }
+    .responsive-text {
+        font-size: 1.1rem !important;
+    }
+}
+
+/* iOS-specific adjustments */
+@media only screen and (min-device-width: 320px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
+    .card, .category-card-modern {
+        border-radius: 18px !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .dashboard-title {
+        letter-spacing: 0.02em !important;
+    }
+}
+
+/* Android-specific adjustments */
+@media only screen and (min-device-width: 320px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 1) {
+    .card, .category-card-modern {
+        border-radius: 14px !important;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.10);
+    }
+    .dashboard-title {
+        font-weight: 700 !important;
+    }
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 600px) and (max-width: 1200px) {
+    .card, .category-card-modern, .dashboard-card {
+        width: 80vw !important;
+        max-width: 700px !important;
+    }
+    .dashboard-title, .card-title {
+        font-size: 1.5rem !important;
+    }
+    .dashboard-content, .card-content {
+        padding: 2rem !important;
+    }
+}
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+    }
+
+    .search-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        right: 0 !important;
+        border-radius: 0 !important;
+        position: fixed !important;
+        height: 100vh !important;
+        left: 0 !important;
+        top: 0 !important;
+        z-index: 9999 !important;
+        overflow-y: auto !important;
+    }
+
+    .search-panel.open {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .search-panel-header { padding: 15px !important; }
+    .search-panel-header h2 { font-size: 1.2rem !important; }
+    .search-section { padding: 15px !important; }
+    .cart-section   { padding: 15px !important; }
+
+    .cart-item {
+        display: block !important;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .cart-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .cart-item-name    { font-size: 14px; font-weight: 700; }
+    .cart-item-details { margin-bottom: 10px; font-size: 13px; color: #666; }
+
+    .cart-item > div:last-child {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 10px !important;
+    }
+
+    .cart-item-controls {
+        display: flex !important;
+        gap: 8px !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+    }
+
+    .qty-input-cart {
+        width: 60px !important;
+        text-align: center !important;
+        font-size: 16px !important;
+        padding: 8px 4px !important;
+    }
+
+    .btn-qty-round {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 18px !important;
+        flex-shrink: 0 !important;
+        touch-action: manipulation !important;
+    }
+
+    .cart-item-subtotal { flex-shrink: 0 !important; text-align: right !important; }
+    .subtotal-amount    { font-size: 16px !important; font-weight: 700 !important; color: #27AE60 !important; }
+}
+
+/* ============================================================
+   SECTION 8: MODAL/DIALOG - MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+    .custom-confirm-modal,
+    .modern-alert-box,
+    #customDialogOverlay .dialog-box {
+        width: 95% !important;
+        max-width: none !important;
+        margin: 10px !important;
+    }
+
+    .confirm-header,
+    #customDialogOverlay .dialog-box { padding: 20px !important; }
+
+    .confirm-body,
+    .modern-alert-message { padding: 20px !important; }
+
+    .confirm-actions,
+    .dialog-buttons {
+        flex-direction: column !important;
+        padding: 0 20px 20px 20px !important;
+        gap: 10px !important;
+    }
+
+    .confirm-btn,
+    .dialog-btn,
+    .modern-alert-btn { width: 100% !important; }
+
+    .confirm-icon,
+    .dialog-icon  { font-size: 2rem !important; }
+
+    .confirm-title,
+    .dialog-title { font-size: 1.2rem !important; }
+}
+
+/* ============================================================
+   SECTION 9: TOUCH ACTIONS
+   ============================================================ */
+
+button,
+.btn,
+.modern-btn,
+.action-btn,
+.btn-qty-modern,
+.btn-qty-round,
+.btn-qty-small,
+.floating-cart,
+.category-card-modern,
+.price-category-card-modern,
+.debtor-card,
+.nav-links button,
+.cart-item,
+.search-result-item {
+    touch-action: manipulation !important;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+.cart-item-name,
+.debtor-name,
+p,
+span {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+button,
+.btn,
+.modern-btn {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* ============================================================
+   SECTION 10: SAFE AREA INSETS
+   ============================================================ */
+
+@supports (padding: max(0px)) {
+    .floating-cart {
+        bottom: max(15px, env(safe-area-inset-bottom, 15px));
+    }
+
+    .top-nav {
+        padding-top: max(10px, env(safe-area-inset-top, 10px));
+    }
+}
+
+/* ============================================================
+   SECTION 11: UTILITY FIXES
+   ============================================================ */
+
+@media (max-width: 768px) {
+    body { overflow-x: hidden; }
+
+    div[style*="grid-template-columns: repeat(auto-fit"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .debtor-name,
+    .product-name,
+    strong {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        hyphens: auto;
+    }
+
+    button,
+    .btn,
+    .modern-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .product-grid,
+    .debtors-grid,
+    .inventory-table-modern {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ============================================================
+   SECTION 12: SEARCH BAR MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    #inventorySearchInput,
+    #priceSearchInput,
+    #generalSearch {
+        font-size: 16px !important;
+        padding: 12px 45px 12px 40px !important;
+    }
+
+    #inventorySearchInput + button,
+    #priceSearchInput + button {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.9rem !important;
+    }
+
+    div[style*="max-width: 500px"] {
+        max-width: 100% !important;
+    }
+}
+
+/* ============================================================
+   SECTION 13: VERY SMALL PHONES (≤ 375 px)
+   ============================================================ */
+
+@media (max-width: 375px) {
+    body { font-size: 13px; }
+
+    .card-value { font-size: 1.3rem !important; }
+    .card-value { font-size: 1.3rem !important; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+
+    .debtor-amount,
+    .total-amount,
+    .total-amount,
+    .subtotal-amount { font-size: 1.2rem !important; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+
+    .modern-btn,
+    .action-btn {
+        padding: 10px 14px !important;
+        font-size: 0.9rem !important;
+    }
+
+    h2,
+    .section-header { font-size: 1.1rem !important; }
+
+    .page-container { padding-top: 140px !important; }
+}
+
+/* ============================================================
+   SECTION 14: LANDSCAPE MODE
+   ============================================================ */
+
+@media (max-width: 968px) and (orientation: landscape) {
+    .nav-links { justify-content: center !important; }
+
+    .debtors-summary-cards,
+    div[style*="grid-template-columns: repeat(auto-fit"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* ============================================================
+   SECTION 15: PRINT STYLES
+   ============================================================ */
+
+@media print {
+    .top-nav,
+    .floating-cart,
+    .search-panel,
+    button,
+    .btn,
+    .modern-btn { display: none !important; }
+
+    body { background: white !important; color: black !important; }
+
+    .debtor-card,
+    .summary-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
+/* ============================================================
+   SECTION 16: REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================================
+   SECTION 17: MOBILE TRANSITION ANIMATIONS
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .page { display: none; }
+
+    .page.active-page {
+        display: block;
+        animation: mobilePageIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes mobilePageIn {
+        0%   { opacity: 0; transform: translateY(18px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .inv-card, .pl-card, .debtor-card, .summary-card, .sale-card,
+    .category-card-modern, .price-category-card-modern, .best-seller-card,
+    .modal-summary-card, .stylish-card, .debtors-summary-cards .summary-card {
+        animation: mobileCardUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .inv-card:nth-child(1), .pl-card:nth-child(1), .debtor-card:nth-child(1), .summary-card:nth-child(1), .sale-card:nth-child(1) { animation-delay: 0.03s; }
+    .inv-card:nth-child(2), .pl-card:nth-child(2), .debtor-card:nth-child(2), .summary-card:nth-child(2), .sale-card:nth-child(2) { animation-delay: 0.06s; }
+    .inv-card:nth-child(3), .pl-card:nth-child(3), .debtor-card:nth-child(3), .summary-card:nth-child(3), .sale-card:nth-child(3) { animation-delay: 0.09s; }
+    .inv-card:nth-child(4), .pl-card:nth-child(4), .debtor-card:nth-child(4), .sale-card:nth-child(4) { animation-delay: 0.12s; }
+    .inv-card:nth-child(5), .pl-card:nth-child(5), .debtor-card:nth-child(5), .sale-card:nth-child(5) { animation-delay: 0.15s; }
+    .inv-card:nth-child(6), .pl-card:nth-child(6), .debtor-card:nth-child(6), .sale-card:nth-child(6) { animation-delay: 0.18s; }
+    .inv-card:nth-child(7), .pl-card:nth-child(7), .sale-card:nth-child(7) { animation-delay: 0.21s; }
+    .inv-card:nth-child(8), .pl-card:nth-child(8), .sale-card:nth-child(8) { animation-delay: 0.24s; }
+    .inv-card:nth-child(9), .pl-card:nth-child(9) { animation-delay: 0.27s; }
+    .inv-card:nth-child(10), .pl-card:nth-child(10) { animation-delay: 0.30s; }
+    .inv-card:nth-child(n+11), .pl-card:nth-child(n+11) { animation-delay: 0.33s; }
+
+    @keyframes mobileCardUp {
+        0%   { opacity: 0; transform: translateY(24px) scale(0.97); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .main-page-header, .page-header, .section-header, .paid-header-row,
+    .add-debtor-section h3, .debts-section h3 {
+        animation: mobileSlideRight 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes mobileSlideRight {
+        0%   { opacity: 0; transform: translateX(-20px); }
+        100% { opacity: 1; transform: translateX(0); }
+    }
+
+    .debtors-summary-cards .summary-card:nth-child(1) { animation: mobilePopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s both; }
+    .debtors-summary-cards .summary-card:nth-child(2) { animation: mobilePopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.12s both; }
+    .debtors-summary-cards .summary-card:nth-child(3) { animation: mobilePopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.19s both; }
+
+    @keyframes mobilePopIn {
+        0%   { opacity: 0; transform: scale(0.85); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    .modern-btn, .action-btn, .btn-mark-paid, .btn-delete-debtor,
+    .btn-delete-modern, .btn-qty-modern, .neo-btn-primary, .neo-btn-secondary,
+    .btn-clear-paid, .nav-links button, .btn-logout {
+        transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 0.15s ease,
+                    background 0.2s ease !important;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .modern-btn:active, .action-btn:active, .btn-mark-paid:active,
+    .btn-delete-debtor:active, .btn-delete-modern:active,
+    .neo-btn-primary:active, .neo-btn-secondary:active, .btn-clear-paid:active {
+        transform: scale(0.94) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .btn-qty-modern:active             { transform: scale(0.88) !important; }
+    .nav-links button:active,
+    .btn-logout:active                 { transform: scale(0.93) !important; }
+
+    .inv-card, .pl-card {
+        transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 0.2s ease !important;
+    }
+
+    .inv-card:active, .pl-card:active {
+        transform: scale(0.98) !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .debtor-card {
+        transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 0.2s ease !important;
+    }
+
+    .debtor-card:active { transform: scale(0.98) !important; }
+
+    .modern-input:focus,
+    .search-input:focus,
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+        transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+        box-shadow: 0 0 0 3px rgba(135, 179, 130, 0.2) !important;
+    }
+
+    #floatingCart:active {
+        transform: scale(0.88) !important;
+        animation: none !important;
+    }
+
+    .date-modal-overlay, .modern-alert-overlay,
+    .modern-confirm-overlay, .dialog-overlay {
+        animation: mobileFadeIn 0.25s ease forwards;
+    }
+
+    .date-modal-box, .modern-alert-box,
+    .modern-confirm-box, .dialog-box {
+        animation: mobileModalPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes mobileFadeIn {
+        0%   { opacity: 0; }
+        100% { opacity: 1; }
+    }
+
+    @keyframes mobileModalPop {
+        0%   { opacity: 0; transform: scale(0.8) translateY(20px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .calendar-day {
+        transition: transform 0.15s ease, background 0.2s ease !important;
+    }
+
+    .calendar-day:active { transform: scale(0.92) !important; }
+
+    .add-product-form,
+    .product-selector-panel {
+        animation: mobileSlideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes mobileSlideDown {
+        0%   { opacity: 0; transform: translateY(-12px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-badge, .stock-badge, .badge-paid,
+    .badge-unpaid, .auto-delete-countdown {
+        animation: mobileBadgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+    }
+
+    @keyframes mobileBadgePop {
+        0%   { opacity: 0; transform: scale(0.7); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    html { scroll-behavior: smooth; }
+
+    .nav-links button.active {
+        transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
+    }
+}
+
+/* ============================================================
+   SECTION 18: DARK MODE - MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    body.dark-mode { background-color: #0f0f0f; }
+
+    body.dark-mode .btn-qty-round.btn-qty-minus {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+        color: #e5e7eb !important;
+    }
+
+    body.dark-mode .btn-qty-round.btn-qty-plus {
+        background: #10b981 !important;
+        border-color: #059669 !important;
+        color: white !important;
+    }
+
+    body.dark-mode .qty-input-cart,
+    body.dark-mode input[type="number"],
+    body.dark-mode input[type="text"],
+    body.dark-mode .modern-input {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+        color: #e5e7eb !important;
+    }
+
+    body.dark-mode .cart-item        { background: #1f2937 !important; border-color: #374151 !important; }
+    body.dark-mode .cart-item-name   { color: #e5e7eb !important; }
+    body.dark-mode .subtotal-amount  { color: #10b981 !important; }
+
+    body.dark-mode .search-panel {
+        background: #1f2937 !important;
+        border-left: 1px solid #374151 !important;
+    }
+
+    body.dark-mode .search-panel-header { background: #374151 !important; }
+    body.dark-mode .search-panel-header h2 { color: #e2e8f0 !important; }
+
+    body.dark-mode .search-input,
+    body.dark-mode #generalSearch {
+        background: #2d3748 !important;
+        border-color: #4a5568 !important;
+        color: #e2e8f0 !important;
+    }
+
+    body.dark-mode .inventory-table-modern tr,
+    body.dark-mode .price-table-modern tr     { background: #1a202c !important; border-color: #2d3748 !important; }
+
+    body.dark-mode .inventory-table-modern td,
+    body.dark-mode .price-table-modern td     { color: #e2e8f0 !important; }
+
+    body.dark-mode .category-card-modern,
+    body.dark-mode .price-category-card-modern,
+    body.dark-mode .debtor-card,
+    body.dark-mode .summary-card              { background: #1a202c !important; border-color: #2d3748 !important; }
+
+    body.dark-mode .floating-cart { background: #374151 !important; color: #e5e7eb !important; }
+    body.dark-mode .cart-count    { background: #dc2626 !important; }
+}
+
+/* ============================================================
+   SECTION 19: MOBILE NEOMORPHISM ADJUSTMENTS
+   ============================================================ */
+
+@media (max-width: 768px) {
+    :root {
+        --neo-shadow-light:    0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+        --neo-shadow-medium:   0 4px 8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+        --neo-shadow-elevated: 0 6px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .category-card, .profit-card, .card, .sales-card { padding: 1rem; }
+
+    .btn-add, .btn-delete, .btn-back, .action-btn {
+        padding: 0.75rem 1rem;
+        font-size: 14px !important;
+    }
+
+    .form-input, .price-input, .qty-input {
+        min-height: 48px;
+        font-size: 16px !important;
+    }
+
+    .page > section, .page > div { padding: 1rem; margin-bottom: 1rem; }
+
+    .main-page-header, .page h2, .page h3 {
+        padding: 0.75rem 1rem;
+        font-size: 1.3rem !important;
+        margin-bottom: 1rem;
+    }
+
+    .inventory-table, .price-table { font-size: 13px; }
+
+    .inventory-table td, .price-table td,
+    .inventory-table th, .price-table th { padding: 0.75rem; }
+
+    /* Profit page - stack auto-fill/auto-fit grids */
+    div[style*="grid-template-columns: repeat(auto-fill"],
+    div[style*="grid-template-columns: repeat(auto-fit"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .profit-card div[style*="grid-template-columns: 1fr 1fr"],
+    .profit-summary div[style*="grid-template-columns: 1fr 1fr"],
+    .period-section div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .sale-card { padding: 16px !important; }
+    .sale-card div[style*="font-size: 20px"] { font-size: 16px !important; }
+
+    .recent-sales-section > div:first-child {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .btn-clear-history { width: 100% !important; text-align: center !important; }
+
+    /* Inventory add form grid overrides */
+    .add-product-form div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+
+    .add-product-form input {
+        height: auto !important;
+        min-height: 52px !important;
+        padding: 14px 16px !important;
+        font-size: 16px !important;
+    }
+
+    .add-product-form .form-title { font-size: 1.1rem !important; }
+
+    /* Delete dialogs */
+    #deleteConfirmOverlay div[style*="grid-template-columns: 1fr 1fr"],
+    #deleteConfirmStockOverlay div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    #deleteConfirmOverlay > div,
+    #deleteConfirmStockOverlay > div {
+        padding: 30px 20px !important;
+        max-width: 95% !important;
+    }
+
+    #deleteConfirmOverlay div[style*="display: flex"][style*="gap: 12px"],
+    #deleteConfirmStockOverlay div[style*="display: flex"][style*="gap: 12px"] {
+        flex-direction: column !important;
+    }
+
+    #deleteConfirmOverlay button,
+    #deleteConfirmStockOverlay button { width: 100% !important; }
+
+    /* Cleanup indicator */
+    #transactionCleanupIndicator {
+        bottom: 80px !important;
+        right: 10px !important;
+        left: auto !important;
+        max-width: calc(100vw - 80px) !important;
+        font-size: 12px !important;
+        padding: 10px 14px !important;
+    }
+
+    #transactionCleanupIndicator + div div[style*="max-width: 500px"],
+    div[style*="max-width: 500px"][style*="border-radius: 20px"] {
+        max-width: 95% !important;
+        padding: 25px !important;
+        margin: 0 10px !important;
+    }
+
+    /* Settings page */
+    .settings-grid-container { grid-template-columns: 1fr !important; padding: 10px !important; }
+    .stylish-card { padding: 20px !important; }
+    .control-group { flex-direction: column !important; gap: 12px !important; text-align: center !important; }
+    .stylish-input { width: 100% !important; }
+    .btn-save-modern { width: 100% !important; padding: 16px 24px !important; font-size: 16px !important; }
+
+    /* Modern alerts/confirms */
+    .modern-alert-box, .modern-confirm-box, .success-dialog-box {
+        padding: 30px 24px 28px !important;
+        border-radius: 20px !important;
+        width: 92% !important;
+        max-width: none !important;
+    }
+
+    .modern-alert-icon-wrapper, .modern-confirm-icon-wrapper, .success-icon-wrapper {
+        width: 70px !important;
+        height: 70px !important;
+        margin-bottom: 20px !important;
+    }
+
+    .modern-alert-icon, .modern-confirm-icon, .success-icon { font-size: 38px !important; }
+    .modern-alert-title, .modern-confirm-title, .success-title { font-size: 20px !important; }
+
+    .modern-alert-message, .modern-confirm-message, .success-message {
+        font-size: 14px !important;
+        margin-bottom: 24px !important;
+    }
+
+    .modern-alert-btn, .modern-confirm-btn, .success-btn {
+        padding: 14px 20px !important;
+        font-size: 14px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Calendar modal grids */
+    .modal-summary-grid  { grid-template-columns: 1fr !important; }
+    .best-sellers-grid   { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --neo-shadow-light:    0 1px 2px rgba(0, 0, 0, 0.04);
+        --neo-shadow-medium:   0 2px 4px rgba(0, 0, 0, 0.05);
+        --neo-shadow-elevated: 0 4px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .category-card, .profit-card, .card, .sales-card { padding: 0.75rem; }
+
+    .btn-add, .btn-delete, .btn-back {
+        padding: 0.5rem 0.75rem;
+        font-size: 13px !important;
+    }
+
+    .form-input, .price-input, .qty-input {
+        min-height: 44px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .page > section, .page > div { padding: 0.75rem; }
+
+    .inventory-table td, .price-table td { padding: 0.5rem; }
+    .inventory-table th, .price-table th { padding: 0.75rem 0.5rem; font-size: 12px; }
+
+    body.cart-open { overflow: hidden !important; }
+
+    div[style*="minmax(350px"] { grid-template-columns: 1fr !important; }
+
+    .sale-card div[style*="font-size: 16px"],
+    .sale-card div[style*="font-size: 20px"] { font-size: 14px !important; }
+
+    .price-table-modern tr { padding: 14px !important; }
+    .price-table-modern td { padding: 8px 0 !important; }
+
+    .price-input,
+    .price-table-modern .cost-input,
+    .price-table-modern .sell-input {
+        width: 100px !important;
+        padding: 8px 10px !important;
+        font-size: 15px !important;
+    }
+
+    .profit-badge, .margin-badge {
+        font-size: 13px !important;
+        padding: 5px 10px !important;
+    }
+
+    #transactionCleanupIndicator {
+        bottom: 75px !important;
+        right: 8px !important;
+        max-width: calc(100vw - 70px) !important;
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        border-radius: 10px !important;
+    }
+
+    #deleteConfirmOverlay > div,
+    #deleteConfirmStockOverlay > div {
+        padding: 24px 16px !important;
+        border-radius: 20px !important;
+    }
+
+    #deleteConfirmOverlay div[style*="font-size: 28px"],
+    #deleteConfirmStockOverlay div[style*="font-size: 28px"] { font-size: 22px !important; }
+
+    #deleteConfirmOverlay div[style*="width: 100px"],
+    #deleteConfirmStockOverlay div[style*="width: 120px"] {
+        width: 80px !important;
+        height: 80px !important;
+        font-size: 36px !important;
+    }
+
+    .profit-card div[style*="padding: 12px 16px"],
+    .profit-card div[style*="padding: 10px 12px"] {
+        padding: 10px 12px !important;
+        font-size: 0.72rem !important;
+    }
+}
+
+/* ============================================================
+   SECTION 20: INPUT TEXT VISIBILITY + WIDTH FIX
+   iOS Safari requires -webkit-text-fill-color to show typed
+   text — the standard `color` property is ignored for inputs
+   inside dark/custom backgrounds on mobile Safari.
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    /* ── Force all inputs full-width in add-product form ── */
+    div[style*="grid-template-columns: 2fr 1fr 1fr 1fr auto"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+        width: 100% !important;
+    }
+
+    div[style*="grid-template-columns: 2fr 1fr 1fr 1fr auto"] > div,
+    div[style*="grid-template-columns: 2fr 1fr 1fr 1fr auto"] > button {
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    #newProductName,
+    #newProductCost,
+    #newProductPrice,
+    #newProductQty {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        height: 52px !important;
+        font-size: 16px !important;
+        padding: 14px 16px !important;
+        border-radius: 12px !important;
+        display: block !important;
+    }
+
+    #btnAddProduct {
+        width: 100% !important;
+        height: 52px !important;
+        font-size: 15px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── iOS dark mode: force text color with -webkit-text-fill-color ── */
+    body.dark-mode input[type="text"],
+    body.dark-mode input[type="number"],
+    body.dark-mode input[type="email"],
+    body.dark-mode input[type="password"],
+    body.dark-mode input[type="search"],
+    body.dark-mode textarea,
+    body.dark-mode select {
+        color: #f0f0f0 !important;
+        -webkit-text-fill-color: #f0f0f0 !important;
+        background-color: #2d3748 !important;
+        border-color: #4a5568 !important;
+        opacity: 1 !important;
+    }
+
+    body.dark-mode input::placeholder,
+    body.dark-mode textarea::placeholder {
+        color: #718096 !important;
+        -webkit-text-fill-color: #718096 !important;
+        opacity: 1 !important;
+    }
+
+    /* ── Specific add-product field IDs ── */
+    body.dark-mode #newProductName,
+    body.dark-mode #newProductCost,
+    body.dark-mode #newProductPrice,
+    body.dark-mode #newProductQty {
+        color: #f7fafc !important;
+        -webkit-text-fill-color: #f7fafc !important;
+        background-color: #2d3748 !important;
+        border-color: #4a5568 !important;
+        caret-color: #a8c99c !important;
+    }
+
+    body.dark-mode .add-product-form label,
+    body.dark-mode #inventoryContent label {
+        color: #a0aec0 !important;
+        -webkit-text-fill-color: #a0aec0 !important;
+    }
+
+    body.dark-mode #inventorySearchInput {
+        color: #f0f0f0 !important;
+        -webkit-text-fill-color: #f0f0f0 !important;
+        background-color: #2d3748 !important;
+    }
+
+    body.dark-mode .qty-input-modern {
+        color: #f0f0f0 !important;
+        -webkit-text-fill-color: #f0f0f0 !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* ── iOS autofill yellow/blue tint override ── */
+    body.dark-mode input:-webkit-autofill,
+    body.dark-mode input:-webkit-autofill:hover,
+    body.dark-mode input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px #2d3748 inset !important;
+        -webkit-text-fill-color: #f0f0f0 !important;
+        caret-color: #a8c99c !important;
+    }
+
+    /* Light mode: keep fill color in sync with text color */
+    input[type="text"],
+    input[type="number"] {
+        -webkit-text-fill-color: currentColor;
+    }
+}
+
+@media (max-width: 480px) {
+    #newProductName,
+    #newProductCost,
+    #newProductPrice,
+    #newProductQty {
+        width: 100% !important;
+        height: 54px !important;
+        font-size: 16px !important;
+        padding: 15px 16px !important;
+    }
+
+    body.dark-mode input[type="text"],
+    body.dark-mode input[type="number"],
+    body.dark-mode textarea {
+        color: #f7fafc !important;
+        -webkit-text-fill-color: #f7fafc !important;
+        background-color: #2d3748 !important;
+    }
+
+    body.dark-mode input::placeholder,
+    body.dark-mode textarea::placeholder {
+        color: #718096 !important;
+        -webkit-text-fill-color: #718096 !important;
+    }
+}
+/* ============================================================
+   SECTION 21: CART ITEM DARK MODE — MOBILE OVERRIDE
+   Paste at the VERY BOTTOM of mobile-responsive.css
+   Fixes the green cart item background in dark mode on mobile.
+   ============================================================ */
+
+/* ── Cart item card — dark, not green ── */
+body.dark-mode .neo-cart-item {
+    background: #1e2422 !important;
+    border: 1.5px solid #2d4535 !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.45) !important;
+    color: #e8f5e4 !important;
+}
+body.dark-mode .neo-cart-item:hover,
+body.dark-mode .neo-cart-item:active {
+    background: #232b27 !important;
+    border-color: #4ade80 !important;
+}
+
+/* ── Item name ── */
+body.dark-mode .nci-name,
+body.dark-mode .neo-cart-item-name {
+    color: #f0fdf4 !important;
+    -webkit-text-fill-color: #f0fdf4 !important;
+}
+
+/* ── Unit price ── */
+body.dark-mode .nci-unit-price,
+body.dark-mode .neo-cart-item-price {
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af !important;
+}
+
+/* ── Subtotal amount ── */
+body.dark-mode .nci-subtotal,
+body.dark-mode .neo-subtotal-amount {
+    color: #4ade80 !important;
+    -webkit-text-fill-color: #4ade80 !important;
+}
+
+/* ── Remove (✕) button ── */
+body.dark-mode .nci-remove,
+body.dark-mode .neo-btn-cart-remove,
+body.dark-mode .neo-btn-remove {
+    background: #3a2020 !important;
+    color: #fca5a5 !important;
+    border: none !important;
+    -webkit-text-fill-color: #fca5a5 !important;
+}
+body.dark-mode .nci-remove:active,
+body.dark-mode .neo-btn-cart-remove:active {
+    background: #4a2828 !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+}
+
+/* ── Qty − / + buttons ── */
+body.dark-mode .nci-btn-qty,
+body.dark-mode .neo-btn-qty-minus,
+body.dark-mode .neo-btn-qty-plus,
+body.dark-mode .neo-btn-qty,
+body.dark-mode .btn-qty-round.btn-qty-minus,
+body.dark-mode .btn-qty-round.btn-qty-plus {
+    background: #1a2e1f !important;
+    border: 1.5px solid #2d5a35 !important;
+    color: #4ade80 !important;
+    -webkit-text-fill-color: #4ade80 !important;
+}
+body.dark-mode .nci-btn-qty:active,
+body.dark-mode .neo-btn-qty-minus:active,
+body.dark-mode .neo-btn-qty-plus:active {
+    background: #22372a !important;
+    border-color: #4ade80 !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+}
+
+/* ── Qty number input ── */
+body.dark-mode .nci-qty-input,
+body.dark-mode .neo-qty-input,
+body.dark-mode .qty-input-cart {
+    background: #141c17 !important;
+    border: 1.5px solid #2d5a35 !important;
+    color: #e8f5e4 !important;
+    -webkit-text-fill-color: #e8f5e4 !important;
+}
+body.dark-mode .nci-qty-input:focus,
+body.dark-mode .neo-qty-input:focus {
+    border-color: #4ade80 !important;
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.12) !important;
+}
+
+/* ── CLEAR ALL — stays red ── */
+body.dark-mode .nci-btn-clear,
+body.dark-mode .neo-btn-clear-cart {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    border: none !important;
+}
+body.dark-mode .nci-btn-clear:active,
+body.dark-mode .neo-btn-clear-cart:active {
+    background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%) !important;
+    transform: scale(0.97) !important;
+}
+
+/* ── CHECKOUT — stays green ── */
+body.dark-mode .nci-btn-checkout,
+body.dark-mode .neo-btn-checkout {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+    color: #052e16 !important;
+    -webkit-text-fill-color: #052e16 !important;
+    border: none !important;
+    box-shadow: 0 4px 16px rgba(34,197,94,0.3) !important;
+}
+body.dark-mode .nci-btn-checkout:active,
+body.dark-mode .neo-btn-checkout:active {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    transform: scale(0.97) !important;
+}
+
+/* ── Cart panel background (mobile full-screen) ── */
+@media (max-width: 900px) {
+    body.dark-mode #searchPanel,
+    body.dark-mode .search-panel {
+        background: #181f1b !important;
+        border-left: 1px solid #2d4535 !important;
+    }
+
+    body.dark-mode .search-panel-header {
+        background: #1e2820 !important;
+        border-bottom: 1px solid #2d4535 !important;
+    }
+
+    body.dark-mode .search-panel-header h2 {
+        color: #e8f5e4 !important;
+        -webkit-text-fill-color: #e8f5e4 !important;
+    }
+}
+
+/* ── Cart footer & total bar ── */
+body.dark-mode .cart-footer {
+    background: #181f1b !important;
+    border-top: 1px solid #2d4535 !important;
+}
+body.dark-mode .cart-total {
+    background: linear-gradient(135deg, #1a3020 0%, #1e2e22 100%) !important;
+    border: 1px solid #2d5a35 !important;
+    color: #e8f5e4 !important;
+}
+body.dark-mode .cart-total strong {
+    color: #e8f5e4 !important;
+    -webkit-text-fill-color: #e8f5e4 !important;
+}
+body.dark-mode .cart-total span {
+    color: #4ade80 !important;
+    -webkit-text-fill-color: #4ade80 !important;
+}
+
+/* ── Empty cart ── */
+body.dark-mode .empty-cart {
+    background: #1a2320 !important;
+    border-color: #2d4535 !important;
+    color: #6b7280 !important;
+    -webkit-text-fill-color: #6b7280 !important;
+}
+
+/* ── Search bar inside cart panel ── */
+body.dark-mode .cart-search-bar {
+    background: #1a2820 !important;
+    border-color: #344d38 !important;
+}
+body.dark-mode .cart-search-input {
+    color: #e8f5e4 !important;
+    -webkit-text-fill-color: #e8f5e4 !important;
+}
+body.dark-mode .cart-search-input::placeholder {
+    color: #6b7280 !important;
+    -webkit-text-fill-color: #6b7280 !important;
+}
+
+/* ── Search results items ── */
+body.dark-mode .search-result-item {
+    border-bottom-color: #2d4535 !important;
+    color: #e8f5e4 !important;
+}
+body.dark-mode .search-result-item:hover,
+body.dark-mode .search-result-item:active {
+    background: rgba(255,255,255,0.04) !important;
+}
+body.dark-mode .search-result-item div[style*="font-weight:700"],
+body.dark-mode .search-result-item div[style*="font-weight: 700"] {
+    color: #f0fdf4 !important;
+    -webkit-text-fill-color: #f0fdf4 !important;
+}
+body.dark-mode .search-result-item div[style*="color:#7F8C8D"],
+body.dark-mode .search-result-item div[style*="color: #7F8C8D"] {
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af !important;
+}

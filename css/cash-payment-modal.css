@@ -1,0 +1,233 @@
+/**
+ * ============================================================================
+ * CASH PAYMENT MODAL STYLES
+ * ============================================================================
+ */
+
+/* Example CSS for modal overlay */
+.cash-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* Modal box */
+.cash-modal {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--neo-shadow-elevated);
+    padding: 32px 24px;
+    min-width: 320px;
+    max-width: 95vw;
+    animation: modalFadeIn 0.3s;
+    position: relative;
+    transition: background 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Header */
+.cash-modal-header {
+    margin-bottom: 16px;
+}
+
+.cash-modal-title {
+    font-size: var(--font-size-2xl);
+    margin: 0;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    letter-spacing: 0.5px;
+}
+
+.cash-modal-subtitle {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    margin: 4px 0 0 0;
+    font-weight: 500;
+}
+
+/* Total display */
+.cash-total-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--neo-shadow-light);
+    padding: 12px 18px;
+    font-weight: 600;
+}
+
+.cash-total-label {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.cash-total-value {
+    font-size: var(--font-size-lg);
+    color: var(--primary-700);
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* Input group */
+.cash-input-group {
+    margin-bottom: 16px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--neo-shadow-light);
+    padding: 12px 18px 8px 18px;
+}
+
+.cash-input-label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.cash-input-field {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: var(--font-size-lg);
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-md);
+    outline: none;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-shadow: var(--neo-inset-light);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cash-input-field:focus {
+    border-color: var(--primary-400);
+    box-shadow: var(--neo-inset-medium);
+}
+
+/* Change display */
+.cash-change-display {
+    display: none;
+    margin-bottom: 16px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--neo-shadow-light);
+    padding: 10px 18px;
+    font-weight: 600;
+}
+
+.cash-change-display.show {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cash-change-label {
+    font-weight: 700;
+    color: var(--warning-700);
+}
+
+.cash-change-value {
+    font-size: var(--font-size-lg);
+    color: var(--primary-700);
+    font-weight: 800;
+}
+
+.cash-change-value.insufficient {
+    color: var(--danger-600);
+}
+
+/* Actions */
+.cash-modal-actions {
+    display: flex;
+    gap: 18px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.cash-btn-complete,
+.cash-btn-cancel {
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: var(--neo-shadow-light);
+    letter-spacing: 0.5px;
+}
+
+.cash-btn-complete {
+    background: var(--btn-green-bg);
+    color: var(--btn-green-text);
+    box-shadow: var(--btn-green-shadow);
+}
+
+.cash-btn-complete:disabled {
+    background: var(--neutral-300);
+    color: var(--neutral-500);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.cash-btn-cancel {
+    background: var(--btn-red-bg);
+    color: var(--btn-red-text);
+    box-shadow: var(--btn-red-shadow);
+}
+.cash-btn-cancel:hover {
+    background: var(--btn-red-hover);
+    color: var(--btn-red-text);
+    box-shadow: var(--btn-red-shadow-hover);
+}
+/* DARK MODE OVERRIDES */
+body.dark-mode .cash-modal {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    box-shadow: var(--neo-shadow-elevated);
+}
+body.dark-mode .cash-total-display,
+body.dark-mode .cash-input-group,
+body.dark-mode .cash-change-display {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-shadow: var(--neo-shadow-light);
+}
+body.dark-mode .cash-btn-complete {
+    background: var(--btn-green-bg);
+    color: var(--btn-green-text);
+    box-shadow: var(--btn-green-shadow);
+}
+body.dark-mode .cash-btn-cancel {
+    background: var(--btn-red-bg);
+    color: var(--btn-red-text);
+    box-shadow: var(--btn-red-shadow);
+}
+body.dark-mode .cash-btn-cancel:hover {
+    background: var(--btn-red-hover);
+    color: var(--btn-red-text);
+}
+
+.cash-modal.active {
+    animation: modalFadeIn 0.3s;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Lock scroll when modal open */
+.cash-modal-open {
+    overflow: hidden;
+}

@@ -1,0 +1,622 @@
+/* ========================================
+   TABLES-FORMS.CSS — Inventory / Price
+   Tables & Add-Product Forms
+   ========================================
+
+   LOAD ORDER : 9 of 13
+   USED BY    : dashboard.html
+   RENDERED ON: Inventory page (product table + add-product form),
+               Price List page (price table)
+   JS MODULES : inventory.js  → renders .inventory-table + form
+                price_list.js → renders .price-table
+
+   PURPOSE
+   -------
+   Handles two main UI families:
+
+   A) TABLE STYLES
+      Responsive tables with gradient header rows, alternating
+      row colours, hover effects, and special stock-status rows
+      (low-stock = yellow, out-of-stock = red).
+
+   B) FORM STYLES
+      The "Add Product" section on the Inventory page: a grid-
+      based form with styled text inputs, number inputs, a
+      category dropdown, and action buttons (Add, Delete, Back).
+
+   WHAT IT DESIGNS  →  WHERE IT APPEARS
+   ------------------------------------
+   .inventory-table       → Product table on the Inventory page
+                           (columns: Name, Category, Cost, Price,
+                            Stock, Margin, Actions)
+   .price-table           → Product table on the Price List page
+                           (columns: Name, Category, Price, Stock)
+   thead / th              → Gradient header row (green → dark-green)
+   .low-stock             → Yellow-tinted row when stock ≤ threshold
+   .out-of-stock          → Red-tinted row when stock = 0
+   .margin-high/low/neg   → Colour-coded profit-margin % badge
+   .add-product-section   → Collapsible section wrapper for the form
+   .add-product-form      → CSS Grid form (2-column on desktop)
+   .form-input            → Standard text input field
+   .price-input           → Currency input (cost / sell price)
+   .qty-input             → Quantity input (stock amount)
+   .btn-add               → Green "➕ Add Product" submit button
+   .btn-delete            → Red "🗑️ Delete" button on table rows
+   .btn-back              → Grey "← Back" button
+
+   NOTE: utilities.css (loaded later) duplicates many of these
+   same table/form styles.  See utilities.css header for details.
+
+   SECTIONS INSIDE
+   ---------------
+    1. Table base styles     (.inventory-table, .price-table)
+    2. Table header          (thead, th gradient)
+    3. Table rows            (tr, hover, zebra-striping)
+    4. Stock-status rows     (.low-stock, .out-of-stock)
+    5. Margin indicators     (.margin-high, .margin-low, .margin-negative)
+    6. Add-product section   (.add-product-section)
+    7. Form grid             (.add-product-form)
+    8. Input fields          (.form-input, .price-input, .qty-input)
+    9. Action buttons        (.btn-add, .btn-delete, .btn-back)
+   10. Dark-mode overrides
+   ======================================== */
+
+/* ==========================================
+   SECTION 1: TABLE STYLES
+   Used for inventory lists and price tables
+   ========================================== */
+
+/* === BASE TABLE STRUCTURE === */
+.inventory-table,
+.price-table {
+    width: 100%;
+    border-collapse: separate;      /* Allows rounded corners */
+    border-spacing: 0;              /* No gaps between cells */
+    background: var(--bg-surface);  /* White/dark card background */
+    border-radius: var(--radius-lg);
+    overflow: hidden;               /* Keeps rounded corners clean */
+    box-shadow: var(--neo-shadow-light);
+    border: 1px solid var(--border-light);
+}
+
+/* === TABLE HEADER === */
+/* The top row with column names */
+.inventory-table thead,
+.price-table thead {
+    background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+}
+
+/* Dark mode: darker green gradient */
+body.dark-mode .inventory-table thead,
+body.dark-mode .price-table thead {
+    background: linear-gradient(135deg, var(--primary-900), var(--primary-800));
+}
+
+/* Header cells (th = table header) */
+.inventory-table th,
+.price-table th {
+    padding: var(--space-lg);       /* 24px padding */
+    text-align: left;
+    font-size: var(--font-size-sm); /* 14px */
+    font-weight: 700;
+    text-transform: uppercase;       /* MAKES TEXT ALL CAPS */
+    letter-spacing: 0.05em;         /* Slight spacing between letters */
+    color: var(--primary-800);      /* Dark green */
+    border-bottom: 2px solid var(--primary-200);
+}
+
+/* Dark mode header text */
+body.dark-mode .inventory-table th,
+body.dark-mode .price-table th {
+    color: var(--primary-100);      /* Light green text */
+    border-bottom-color: var(--primary-700);
+}
+
+/* === TABLE BODY === */
+/* Each row of data */
+.inventory-table tbody tr,
+.price-table tbody tr {
+    transition: all var(--transition-base);  /* Smooth hover effect */
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* Remove border from last row (looks cleaner) */
+.inventory-table tbody tr:last-child,
+.price-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Hover effect on rows */
+.inventory-table tbody tr:hover,
+.price-table tbody tr:hover {
+    background-color: var(--primary-50);  /* Light green highlight */
+}
+
+/* Dark mode hover */
+body.dark-mode .inventory-table tbody tr:hover,
+body.dark-mode .price-table tbody tr:hover {
+    background-color: rgba(34, 197, 94, 0.05);  /* Subtle green glow */
+}
+
+/* === SPECIAL ROW STATES === */
+/* Low stock warning (yellow background) */
+.inventory-table tbody tr.low-stock {
+    background-color: var(--warning-50);
+}
+
+/* Out of stock alert (red background, faded) */
+.inventory-table tbody tr.out-of-stock {
+    background-color: var(--danger-50);
+    opacity: 0.7;  /* Makes it look disabled */
+}
+
+/* Dark mode stock warnings */
+body.dark-mode .inventory-table tbody tr.low-stock {
+    background-color: rgba(245, 158, 11, 0.1);  /* Amber glow */
+}
+
+body.dark-mode .inventory-table tbody tr.out-of-stock {
+    background-color: rgba(239, 68, 68, 0.1);   /* Red glow */
+}
+
+/* === TABLE CELLS === */
+/* Data cells (td = table data) */
+.inventory-table td,
+.price-table td {
+    padding: var(--space-lg);         /* 24px padding */
+    font-size: var(--font-size-base); /* 16px */
+    color: var(--text-primary);
+}
+
+/* Bold text inside cells */
+.inventory-table td strong,
+.price-table td strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* === MARGIN INDICATORS === */
+/* Used in price table to show profit margins */
+.price-table .high-margin {
+    color: var(--primary-600);  /* Green = good profit */
+    font-weight: 700;
+}
+
+.price-table .low-margin {
+    color: var(--warning-600);  /* Amber = low profit */
+    font-weight: 700;
+}
+
+.price-table .negative-margin {
+    color: var(--danger-600);   /* Red = losing money! */
+    font-weight: 700;
+}
+
+/* === EMPTY STATE === */
+/* Shown when table has no data */
+.no-data {
+    text-align: center;
+    padding: var(--space-2xl) !important;  /* 48px */
+    color: var(--text-tertiary);  /* Subtle gray text */
+    font-style: italic;
+}
+
+/* ==========================================
+   SECTION 2: FORM STYLES
+   Inputs, buttons, and form sections
+   ========================================== */
+
+/* === ADD PRODUCT SECTION === */
+/* The box containing the "add new product" form */
+.add-product-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);      /* 32px padding */
+    margin-bottom: var(--space-xl);
+    box-shadow: var(--neo-shadow-light);
+    transition: all var(--transition-base);
+}
+
+/* Section heading */
+.add-product-section h3 {
+    font-size: var(--font-size-xl);  /* 20px */
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-lg);
+}
+
+/* === FORM GRID LAYOUT === */
+/* Makes form fields arrange in columns */
+.add-product-form,
+.add-debtor-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    /* ^ This means: "fit as many 150px+ columns as possible" */
+    gap: var(--space-md);  /* 16px spacing between fields */
+    width: 100%;
+}
+
+/* === INPUT FIELDS === */
+/* Standard text inputs, number inputs, quantity fields */
+.form-input,
+.price-input,
+.qty-input,
+.search-input {
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);  /* 16px top/bottom, 24px sides */
+    font-size: 16px !important; /* Prevent zoom on iOS */
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);  /* Smooth focus effect */
+    outline: none;  /* Remove default browser outline */
+    box-sizing: border-box;
+    min-height: 44px; /* Touch-friendly */
+    box-shadow: var(--neo-inset-light);
+}
+
+/* Focus state (when you click on input) */
+.form-input:focus,
+.price-input:focus,
+.qty-input:focus {
+    border-color: var(--primary-400);  /* Green border */
+    background-color: var(--bg-surface);
+    box-shadow: 
+        var(--neo-inset-light),
+        0 0 0 3px rgba(34, 197, 94, 0.1);  /* Green glow */
+}
+
+/* Placeholder text color */
+.form-input::placeholder {
+    color: var(--text-tertiary);  /* Gray placeholder */
+}
+
+/* === PRICE INPUT SPECIFIC === */
+/* Special styling for price fields */
+.price-input {
+    text-align: center;  /* Centers the numbers */
+    font-weight: 600;
+    font-size: var(--font-size-lg);  /* Slightly larger */
+}
+
+/* Cost price input (blue tint) */
+.price-cost-input {
+    background-color: var(--accent-50);    /* Light blue */
+    border-color: var(--accent-200);
+}
+
+.price-cost-input:focus {
+    border-color: var(--accent-400);       /* Darker blue on focus */
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);  /* Blue glow */
+}
+
+/* Sell price input (green tint) */
+.price-sell-input {
+    background-color: var(--primary-50);   /* Light green */
+    border-color: var(--primary-200);
+}
+
+.price-sell-input:focus {
+    border-color: var(--primary-400);      /* Darker green on focus */
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);  /* Green glow */
+}
+
+/* === QUANTITY CONTROLS === */
+/* The +/- buttons with number input */
+.qty-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);  /* 8px between buttons */
+    justify-content: center;
+}
+
+/* Quantity number input */
+.qty-input {
+    max-width: 80px;
+    text-align: center;
+    font-weight: 700;
+    font-size: var(--font-size-lg);
+    padding: var(--space-sm);
+}
+
+/* ==========================================
+   SECTION 3: BUTTONS
+   All form-related buttons
+   ========================================== */
+
+/* === BASE BUTTON STYLES === */
+/* Shared styles for all buttons */
+.btn-back,
+.btn-add,
+.btn-delete,
+.btn-qty-small,
+.btn-clear-history,
+.btn-cancel,
+.action-btn,
+.modern-btn {
+    padding: var(--space-md) var(--space-xl);  /* 16px x 32px */
+    font-size: 16px !important; /* Prevent zoom on iOS */
+    font-weight: 600;
+    font-family: var(--font-family);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    display: inline-flex;  /* Allows icon + text layout */
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    white-space: nowrap;   /* Prevents text from wrapping */
+    min-height: 44px; /* Touch-friendly minimum height */
+    min-width: 44px;  /* Touch-friendly minimum width */
+    box-sizing: border-box;
+    box-shadow: var(--neo-shadow-light);
+}
+
+/* === BACK BUTTON === */
+/* Gray button for going back */
+.btn-back {
+    background: var(--neutral-100);
+    color: var(--neutral-700);
+    border: 2px solid var(--neutral-200);
+}
+
+.btn-back:hover {
+    background: var(--neutral-200);
+    transform: translateX(-2px);  /* Slides left slightly */
+}
+
+.btn-back:active {
+    transform: translateX(0);  /* Returns to normal when clicked */
+}
+
+/* === ADD BUTTON === */
+/* Main action button (green gradient) */
+.btn-add {
+    background: var(--btn-green-bg);
+    color: var(--btn-green-text);
+    font-weight: 700;
+    box-shadow: var(--btn-green-shadow);
+    border: none;
+}
+
+.btn-add:hover {
+    background: var(--btn-green-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--btn-green-shadow-hover);
+}
+
+.btn-add:active {
+    transform: translateY(0);
+    box-shadow: var(--btn-green-shadow);
+}
+
+/* === DELETE BUTTON === */
+/* Danger button (red) for removing items */
+.btn-delete {
+    background: var(--btn-red-bg);
+    color: var(--btn-red-text);
+    border: none;
+    font-size: var(--font-size-xs);
+    padding: var(--space-sm) var(--space-md);
+    box-shadow: var(--btn-red-shadow);
+}
+
+.btn-delete:hover {
+    background: var(--btn-red-hover);
+    box-shadow: var(--btn-red-shadow-hover);
+    transform: translateY(-1px);
+}
+
+.btn-delete:active {
+    transform: translateY(0);
+}
+
+/* === QUANTITY BUTTONS === */
+/* Small +/- buttons for adjusting quantities */
+.btn-qty-small {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: var(--radius-sm);
+    background: var(--primary-100);   /* Light green */
+    color: var(--primary-700);        /* Dark green text */
+    border: 2px solid var(--primary-200);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-qty-small:hover {
+    background: var(--primary-200);   /* Darker green */
+    border-color: var(--primary-300);
+    transform: scale(1.05);           /* Grows slightly */
+}
+
+.btn-qty-small:active {
+    transform: scale(0.95);           /* Shrinks when clicked */
+}
+
+/* === CLEAR HISTORY BUTTON === */
+/* Danger button for clearing all data */
+.btn-clear-history {
+    background: var(--btn-red-bg);
+    color: var(--btn-red-text);
+    border: none;
+    font-weight: 700;
+    box-shadow: var(--btn-red-shadow);
+}
+
+.btn-clear-history:hover {
+    background: var(--btn-red-hover);
+    box-shadow: var(--btn-red-shadow-hover);
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   SECTION 4: INFO TEXT
+   Information boxes and alerts
+   ========================================== */
+
+.info-text {
+    background: var(--accent-50);            /* Light blue background */
+    border-left: 4px solid var(--accent-500); /* Blue left border */
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-xl);
+    color: var(--accent-800);                /* Dark blue text */
+    font-size: var(--font-size-sm);
+}
+
+/* Dark mode info text */
+body.dark-mode .info-text {
+    background: rgba(59, 130, 246, 0.1);     /* Blue glow */
+    color: var(--accent-300);                /* Light blue text */
+}
+
+/* ==========================================
+   SECTION 5: RESPONSIVE DESIGN
+   Mobile-friendly adjustments
+   ========================================== */
+
+@media (max-width: 768px) {
+    /* Smaller font for tables on mobile */
+    .inventory-table,
+    .price-table {
+        font-size: var(--font-size-sm);
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Modern tables should overflow visible for card layout */
+    .inventory-table-modern,
+    .price-table-modern {
+        display: block !important;
+        overflow: visible !important;
+    }
+    
+    /* Make tables scrollable on mobile */
+    .inventory-table thead {
+        display: none;
+    }
+    
+    .inventory-table tbody,
+    .price-table tbody {
+        display: block;
+    }
+    
+    .inventory-table tr,
+    .price-table tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 2px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 12px;
+        background: var(--bg-surface);
+    }
+    
+    .inventory-table td,
+    .price-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0 !important;
+        border: none !important;
+        text-align: right;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .inventory-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-secondary);
+        font-size: 11px;
+        text-transform: uppercase;
+        text-align: left;
+        flex-shrink: 0;
+        min-width: 60px;
+        margin-right: 10px;
+    }
+    
+    /* Less padding in table cells on mobile */
+    .inventory-table th,
+    .price-table th {
+        padding: var(--space-sm) var(--space-xs);
+    }
+    
+    /* Single column form on mobile */
+    .add-product-form,
+    .add-debtor-form {
+        grid-template-columns: 1fr;  /* One column only */
+    }
+    
+    /* Stack form elements properly */
+    .form-input,
+    .qty-input,
+    .search-input {
+        width: 100%;
+        padding: 12px !important;
+        font-size: 16px !important;
+        min-height: 44px !important;
+    }
+    
+    /* Left-align quantity controls on mobile */
+    .qty-controls {
+        justify-content: flex-start;
+        width: 100%;
+    }
+    
+    /* Stack button groups */
+    .btn-group,
+    .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        width: 100%;
+    }
+    
+    .btn-add,
+    .btn-delete,
+    .btn-cancel,
+    .action-btn,
+    .modern-btn {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .inventory-table,
+    .price-table {
+        font-size: 12px;
+    }
+    
+    .form-input,
+    .price-input,
+    .qty-input,
+    .search-input {
+        padding: 10px !important;
+        font-size: 14px !important;
+    }
+    
+    .btn-add,
+    .btn-delete,
+    .btn-cancel,
+    .action-btn {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+        width: 100% !important;
+    }
+    
+    .btn-qty-small {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 14px !important;
+    }
+}

@@ -1,0 +1,208 @@
+/* ========================================
+   PRODUCT.CSS — Product Item Rows / Cards
+   ========================================
+
+   LOAD ORDER : 8 of 13
+   USED BY    : dashboard.html
+   RENDERED ON: Inventory page (product list below category chips),
+               Price List page (product rows),
+               Cart panel (search results dropdown)
+   JS MODULES : inventory.js  → renders .product-item rows
+                price_list.js → renders .product-item rows
+                cart.js       → renders search-result .product-item rows
+
+   PURPOSE
+   -------
+   Styles the individual product rows displayed as a vertical
+   list or cards.  Each row shows: product name, price, stock
+   quantity, and an optional "In Cart" badge.
+
+   WHAT IT DESIGNS  →  WHERE IT APPEARS
+   ------------------------------------
+   .product-list           → Wrapper <div> around all product rows
+   .product-item           → Single product row (flex layout, hover
+                            slide-right animation)
+   .product-in-cart        → Green-tinted highlight when the product
+                            is already in the shopping cart
+   .product-name           → Bold product name text
+   .product-price          → Price with gradient-coloured text
+   .product-stock          → Stock count label (right-aligned)
+   .search-results         → Dropdown list of matching products in
+                            the cart panel search box
+
+   SECTIONS INSIDE
+   ---------------
+   1. Product list wrapper   (.product-list)
+   2. Product item row       (.product-item + hover)
+   3. In-cart highlight      (.product-in-cart)
+   4. Product text elements  (.product-name, .product-price, .product-stock)
+   5. Search results         (.search-results)
+   6. Dark-mode overrides
+   7. Responsive (768 px, 480 px)
+   ======================================== */
+
+/* MODERN PRODUCT ITEMS */
+.product-list {
+  margin-top: 15px;
+}
+
+.product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-md);
+  border: 2px solid var(--border-light);
+  transition: var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+body.dark-mode .product-item {
+  background: var(--bg-surface);
+  border-color: var(--border-light);
+}
+
+.product-item:hover {
+  transform: translateX(8px);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-item:active {
+  transform: translateX(5px) scale(0.98);
+}
+
+.product-in-cart {
+  background: var(--gradient-revenue);
+  border-color: var(--add-success);
+}
+
+.product-in-cart:hover {
+  border-color: var(--primary-700);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.25);
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  flex: 1;
+}
+
+.product-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.product-name-row strong {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.product-details-row {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+.product-price {
+  background: var(--gradient-profit);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  font-size: var(--font-size-lg);
+}
+
+.product-stock {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.product-action {
+  display: flex;
+  align-items: center;
+}
+
+/* PRODUCT SEARCH RESULTS */
+.search-results {
+  max-height: 250px;
+  overflow-y: auto;
+  margin: var(--space-md) 0;
+}
+
+.product-search-header {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  background: var(--gradient-profit);
+  color: white;
+}
+/* ========================================
+   MOBILE RESPONSIVE PRODUCT STYLES
+   ======================================== */
+
+@media (max-width: 768px) {
+  .product-item {
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+  
+  .product-name-row {
+    width: 100%;
+    gap: var(--space-sm);
+  }
+  
+  .product-name-row strong {
+    font-size: var(--font-size-sm);
+  }
+  
+  .product-details-row {
+    width: 100%;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+  }
+  
+  .product-price {
+    font-size: var(--font-size-base);
+  }
+  
+  .product-action {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .search-results {
+    max-height: 300px;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-item {
+    padding: var(--space-sm);
+  }
+  
+  .product-name-row strong {
+    font-size: calc(var(--font-size-xs) + 1px);
+  }
+
+  .product-price {
+    font-size: var(--font-size-sm);
+  }
+  
+  .product-stock {
+    font-size: calc(var(--font-size-xs) - 1px);
+  }
+}
