@@ -1,5 +1,5 @@
 /**
- * notifications.js — Enhanced with Product Navigation
+ * notifications.js — Enhanced with Product Navigation + Auto-Detection
  *
  * DEVICE PERSISTENCE:
  * - Settings change history is read from window.storeSettings.changeHistory
@@ -12,6 +12,14 @@
  *   Notifications refresh (every 5 min, or on bell click)
  *     → refreshNotifications() reads latest from local storage
  *     → badge and dropdown update automatically
+ *
+ * AUTO-DETECTION:
+ * - Patches localStorage.setItem to watch for product/settings changes
+ * - Any write to jorams_sari_sari_products or jorams_sari_sari_settings
+ *   triggers an immediate re-check (debounced 300ms)
+ * - This means: restock a product → alert clears instantly
+ *               stock runs out   → alert appears instantly
+ *               price updated    → margin alert updates instantly
  *
  * FIXES APPLIED:
  * - Waits for DB.init() before first refresh (was firing too early → 0 products)
@@ -37,6 +45,41 @@ let notificationData = {
     settingsChanges: [],
     lastUpdated: null
 };
+
+// =============================================================================
+//  AUTO-DETECTION: localStorage watcher
+//  Patches localStorage.setItem so any product or settings save
+//  immediately triggers a notification re-check (debounced 300ms).
+// =============================================================================
+
+(function patchLocalStorage() {
+    const WATCHED_KEYS = [
+        'jorams_sari_sari_products',
+        'jorams_sari_sari_settings',
+        'jorams_sari_sari_categories',
+        'cached_settings'
+    ];
+
+    // Debounce: wait 300ms after the last write before re-checking
+    let debounceTimer = null;
+    function scheduleRefresh(key) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            console.log(`🔔 Auto-detect: "${key}" changed — re-checking alerts`);
+            await refreshNotifications();
+        }, 300);
+    }
+
+    const _originalSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function (key, value) {
+        _originalSetItem(key, value);
+        if (WATCHED_KEYS.some(k => key.includes(k))) {
+            scheduleRefresh(key);
+        }
+    };
+
+    console.log('👁️ localStorage watcher active — alerts will update automatically');
+})();
 
 // =============================================================================
 //  INITIALIZATION
