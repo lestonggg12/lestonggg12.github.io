@@ -1,217 +1,203 @@
-/**
- * pull-to-refresh.js
- * Adds two refresh methods:
- *  1. Pull-to-refresh (swipe down from top on mobile)
- *  2. Floating refresh button (bottom-left, mobile only)
- */
-
 (function () {
     'use strict';
 
-    // =========================================================================
-    //  STYLES
-    // =========================================================================
-    const style = document.createElement('style');
-    style.textContent = `
-        /* ── Pull-to-refresh indicator ── */
-        #ptr-indicator {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: linear-gradient(135deg, #87B382, #5d9458);
-            color: white;
-            font-size: 14px;
-            font-weight: 700;
-            height: 0;
-            overflow: hidden;
-            z-index: 99999;
-            transition: height 0.2s ease;
-            box-shadow: 0 4px 16px rgba(93,148,88,0.35);
-        }
-        #ptr-indicator.ptr-pulling  { height: 56px; }
-        #ptr-indicator.ptr-ready    { height: 56px; background: linear-gradient(135deg, #4ade80, #22c55e); }
-        #ptr-indicator.ptr-loading  { height: 56px; }
+    const STORAGE_KEYS = [
+        'jorams_sari_sari_products',
+        'jorams_sari_sari_categories',
+        'jorams_sari_sari_settings',
+        'jorams_sari_sari_cached_settings'
+    ];
 
-        #ptr-spinner {
-            width: 22px; height: 22px;
-            border: 3px solid rgba(255,255,255,0.4);
-            border-top-color: white;
-            border-radius: 50%;
-            display: none;
-        }
-        #ptr-indicator.ptr-loading #ptr-spinner  { display: block; animation: ptr-spin 0.7s linear infinite; }
-        #ptr-indicator.ptr-loading #ptr-arrow    { display: none; }
+    const DEBOUNCE_MS  = 600;   // wait 600ms after last change before refreshing
+    const POLL_MS      = 10000; // fallback poll every 10s (catches iOS misses)
 
-        #ptr-arrow {
-            font-size: 20px;
-            transition: transform 0.2s ease;
-        }
-        #ptr-indicator.ptr-ready #ptr-arrow { transform: rotate(180deg); }
-
-        @keyframes ptr-spin { to { transform: rotate(360deg); } }
-
-        /* ── Floating refresh button (mobile only) ── */
-        #floatingRefreshBtn {
-            display: none;
-            position: fixed;
-            bottom: 90px;
-            left: 20px;
-            z-index: 5000;
-            width: 52px; height: 52px;
-            border-radius: 50%;
-            border: none;
-            background: linear-gradient(135deg, #87B382, #5d9458);
-            color: white;
-            font-size: 22px;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(93,148,88,0.45);
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-        #floatingRefreshBtn:active {
-            transform: scale(0.9);
-            box-shadow: 0 2px 8px rgba(93,148,88,0.3);
-        }
-        #floatingRefreshBtn.spinning {
-            animation: ptr-spin 0.7s linear infinite;
-        }
-
-        /* Show only on mobile */
-        @media (max-width: 900px) {
-            #floatingRefreshBtn { display: flex; }
-        }
-
-        body.dark-mode #ptr-indicator {
-            background: linear-gradient(135deg, #2e4d2e, #3a6b3a);
-        }
-        body.dark-mode #ptr-indicator.ptr-ready {
-            background: linear-gradient(135deg, #166534, #15803d);
-        }
-        body.dark-mode #floatingRefreshBtn {
-            background: linear-gradient(135deg, #2e4d2e, #3a6b3a);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-        }
-    `;
-    document.head.appendChild(style);
+    let debounceTimer  = null;
+    let lastSnapshot   = null;  // JSON snapshot of products for change detection
+    let isRefreshing   = false;
 
     // =========================================================================
-    //  BUILD DOM
+    //  CORE REFRESH
     // =========================================================================
-    const indicator = document.createElement('div');
-    indicator.id = 'ptr-indicator';
-    indicator.innerHTML = `
-        <div id="ptr-spinner"></div>
-        <span id="ptr-arrow">↓</span>
-        <span id="ptr-text">Pull down to refresh</span>
-    `;
-    document.body.prepend(indicator);
-
-    const refreshBtn = document.createElement('button');
-    refreshBtn.id = 'floatingRefreshBtn';
-    refreshBtn.title = 'Refresh';
-    refreshBtn.innerHTML = '↻';
-    document.body.appendChild(refreshBtn);
-
-    // =========================================================================
-    //  CORE REFRESH FUNCTION
-    // =========================================================================
-    async function doRefresh() {
-        console.log('🔄 Manual refresh triggered');
-
-        // Notifications
-        if (window.NotificationSystem?.refresh) {
-            await window.NotificationSystem.refresh();
-        }
-
-        // Re-render whichever page is currently active
-        const activePage = document.querySelector('.page.active-page');
-        const pageId = activePage?.id;
+    async function triggerRefresh(reason) {
+        if (isRefreshing) return;
+        isRefreshing = true;
+        console.log(`🔄 Auto-refresh triggered: ${reason}`);
 
         try {
-            if (pageId === 'profitPage'    && typeof renderProfit        === 'function') await renderProfit();
-            if (pageId === 'inventoryPage' && typeof window.renderInventory === 'function') await window.renderInventory();
-            if (pageId === 'pricePage'     && typeof window.renderPriceList === 'function') await window.renderPriceList();
-            if (pageId === 'calendarPage'  && typeof window.renderCalendar  === 'function') await window.renderCalendar();
-            if (pageId === 'debtPage'      && typeof window.renderDebtors   === 'function') await window.renderDebtors();
-            if (pageId === 'settingsPage'  && typeof window.renderSettings  === 'function') await window.renderSettings();
+            if (window.NotificationSystem?.refresh) {
+                await window.NotificationSystem.refresh();
+            }
         } catch (e) {
-            console.error('❌ Refresh error:', e);
+            console.error('❌ Auto-refresh error:', e);
         }
 
-        console.log('✅ Refresh complete');
+        isRefreshing = false;
+    }
+
+    function scheduleRefresh(reason) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => triggerRefresh(reason), DEBOUNCE_MS);
     }
 
     // =========================================================================
-    //  FLOATING BUTTON
+    //  CHANGE DETECTION — snapshot comparison
+    //  Compares qty, price, cost for every product.
+    //  Returns true if anything alert-relevant changed.
     // =========================================================================
-    refreshBtn.addEventListener('click', async () => {
-        if (refreshBtn.classList.contains('spinning')) return;
-        refreshBtn.classList.add('spinning');
-        await doRefresh();
-        refreshBtn.classList.remove('spinning');
+    function getSnapshot() {
+        try {
+            const raw = localStorage.getItem('jorams_sari_sari_products');
+            if (!raw) return null;
+            const products = JSON.parse(raw);
+            // Only track fields that affect alerts
+            return JSON.stringify(products.map(p => ({
+                id:    p.id,
+                qty:   parseFloat(p.quantity ?? p.stock ?? 0),
+                price: parseFloat(p.price ?? p.selling_price ?? 0),
+                cost:  parseFloat(p.cost  ?? p.cost_price   ?? 0)
+            })));
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function checkForChanges(reason) {
+        const current = getSnapshot();
+        if (current && current !== lastSnapshot) {
+            lastSnapshot = current;
+            scheduleRefresh(reason);
+        }
+    }
+
+    // =========================================================================
+    //  TRIGGER 1: StorageEvent
+    //  Fires when localStorage is written from ANY tab/page.
+    //  Most reliable on Android Chrome. Also works on iOS Safari 14.5+.
+    // =========================================================================
+    window.addEventListener('storage', (e) => {
+        if (STORAGE_KEYS.includes(e.key)) {
+            console.log(`📦 Storage change detected: ${e.key}`);
+            lastSnapshot = null; // force refresh
+            scheduleRefresh(`storage:${e.key}`);
+        }
+    });
+
+    // =========================================================================
+    //  TRIGGER 2: Custom DOM events
+    //  inventory.js, settings.js, cart.js should dispatch these after saving.
+    //  Add this line wherever you save products:
+    //    window.dispatchEvent(new CustomEvent('productsUpdated'));
+    //    window.dispatchEvent(new CustomEvent('settingsUpdated'));
+    // =========================================================================
+    window.addEventListener('productsUpdated',  () => {
+        console.log('📦 productsUpdated event received');
+        lastSnapshot = null;
+        scheduleRefresh('productsUpdated event');
+    });
+
+    window.addEventListener('settingsUpdated',  () => {
+        console.log('⚙️ settingsUpdated event received');
+        scheduleRefresh('settingsUpdated event');
+    });
+
+    window.addEventListener('saleCompleted', () => {
+        console.log('🛒 saleCompleted event received');
+        lastSnapshot = null;
+        scheduleRefresh('saleCompleted event');
     });
 
     // =========================================================================
-    //  PULL-TO-REFRESH (touch)
+    //  TRIGGER 3: Page Visibility API
+    //  When user switches back to the app (from another app or tab).
+    //  Critical for mobile — iOS suspends JS when app is backgrounded.
     // =========================================================================
-    let startY      = 0;
-    let currentY    = 0;
-    let isPulling   = false;
-    let isRefreshing = false;
-    const THRESHOLD = 80; // px to trigger refresh
-
-    document.addEventListener('touchstart', (e) => {
-        // Only start if scrolled to top
-        if (window.scrollY > 5) return;
-        if (isRefreshing) return;
-        startY   = e.touches[0].clientY;
-        isPulling = true;
-    }, { passive: true });
-
-    document.addEventListener('touchmove', (e) => {
-        if (!isPulling || isRefreshing) return;
-        currentY = e.touches[0].clientY;
-        const delta = currentY - startY;
-        if (delta <= 0) return;
-
-        const text = document.getElementById('ptr-text');
-        if (delta > THRESHOLD) {
-            indicator.className = 'ptr-ready';
-            if (text) text.textContent = 'Release to refresh';
-        } else {
-            indicator.className = 'ptr-pulling';
-            if (text) text.textContent = 'Pull down to refresh';
-        }
-    }, { passive: true });
-
-    document.addEventListener('touchend', async () => {
-        if (!isPulling || isRefreshing) return;
-        isPulling = false;
-
-        const delta = currentY - startY;
-        if (delta > THRESHOLD) {
-            isRefreshing = true;
-            indicator.className = 'ptr-loading';
-            const text = document.getElementById('ptr-text');
-            if (text) text.textContent = 'Refreshing…';
-
-            await doRefresh();
-
-            indicator.className = '';
-            isRefreshing = false;
-            currentY = 0;
-            startY   = 0;
-        } else {
-            indicator.className = '';
-            currentY = 0;
-            startY   = 0;
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            console.log('👁 App became visible — checking for changes');
+            checkForChanges('visibilitychange');
         }
     });
+
+    // iOS: also fires when user taps back to the browser
+    window.addEventListener('pageshow', (e) => {
+        if (e.persisted) {
+            // Page restored from bfcache (iOS Safari back/forward)
+            console.log('📱 Page restored from bfcache — refreshing');
+            lastSnapshot = null;
+            scheduleRefresh('pageshow:persisted');
+        }
+    });
+
+    // =========================================================================
+    //  TRIGGER 4: Polling fallback (10s)
+    //  Catches cases where StorageEvent doesn't fire (same-tab writes on iOS,
+    //  or any browser that throttles storage events in background).
+    // =========================================================================
+    setInterval(() => {
+        checkForChanges('poll');
+    }, POLL_MS);
+
+    // =========================================================================
+    //  TRIGGER 5: Patch DB.saveProducts / DB.updateProduct
+    //  Wraps the database write methods so alerts fire immediately on same tab.
+    //  Safe — only patches if the methods exist.
+    // =========================================================================
+    function patchDB() {
+        if (!window.DB) return;
+
+        const methodsToPatch = [
+            'addProduct',
+            'updateProduct',
+            'deleteProduct',
+            'saveSales',
+            'addSale',
+            'saveSettings'
+        ];
+
+        methodsToPatch.forEach(method => {
+            if (typeof window.DB[method] === 'function' && !window.DB[`_ptr_${method}`]) {
+                window.DB[`_ptr_${method}`] = window.DB[method];
+                window.DB[method] = async function (...args) {
+                    const result = await window.DB[`_ptr_${method}`].apply(this, args);
+                    lastSnapshot = null; // invalidate snapshot
+                    scheduleRefresh(`DB.${method}`);
+                    return result;
+                };
+                console.log(`✅ Patched DB.${method} for auto-detect`);
+            }
+        });
+    }
+
+    // =========================================================================
+    //  INIT
+    // =========================================================================
+    function init() {
+        lastSnapshot = getSnapshot(); // baseline — don't alert on load
+        console.log('✅ Auto-detect refresh initialized');
+        console.log(`   Polling every ${POLL_MS / 1000}s as fallback`);
+
+        // Try patching DB immediately, or wait for it to load
+        if (window.DB) {
+            patchDB();
+        } else {
+            let attempts = 0;
+            const waitForDB = setInterval(() => {
+                attempts++;
+                if (window.DB) {
+                    clearInterval(waitForDB);
+                    patchDB();
+                } else if (attempts > 50) {
+                    clearInterval(waitForDB);
+                    console.warn('⚠️ DB not found — relying on storage events + polling');
+                }
+            }, 100);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
 })();
