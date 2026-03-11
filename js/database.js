@@ -169,9 +169,24 @@ const DB = (function () {
         throw new Error(`Category ${categoryId} not found`);
     }
 
-    async function deleteCategory(categoryId) {
+    async function deleteCategory(categoryId, reassignToId = null, deleteProducts = false) {
         const categories = load('categories', defaultCategories);
-        save('categories', categories.filter(c => c.id !== categoryId));
+        const filtered = categories.filter(c => c.id !== categoryId);
+        save('categories', filtered);
+        
+        let products = load('products', []);
+        if (deleteProducts) {
+            products = products.filter(p => (p.category !== categoryId && p.category_id !== categoryId));
+            save('products', products);
+        } else if (reassignToId) {
+            products = products.map(p => {
+                if (p.category === categoryId || p.category_id === categoryId) {
+                    return { ...p, category: reassignToId, category_id: reassignToId };
+                }
+                return p;
+            });
+            save('products', products);
+        }
         return Promise.resolve(true);
     }
 

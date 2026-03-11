@@ -632,8 +632,8 @@ async function renderCategorySelection(content) {
         html += `
             <div class="gl-cat-card" data-category="${cat.id}">
                 <div class="cat-manage-btns" onclick="event.stopPropagation()">
-                    <button class="cat-btn-edit"   data-cat-pk="${cat.pk||''}" title="Edit">✏️</button>
-                    <button class="cat-btn-delete" data-cat-pk="${cat.pk||''}" data-cat-id="${cat.id}" data-cat-name="${encodeURIComponent(cat.name)}" title="Delete">🗑️</button>
+                    <button class="cat-btn-edit"   data-cat-id="${cat.id}" title="Edit">✏️</button>
+                    <button class="cat-btn-delete" data-cat-id="${cat.id}" data-cat-name="${encodeURIComponent(cat.name)}" title="Delete">🗑️</button>
                 </div>
                 <div class="gl-cat-inner">
                     <div class="gl-cat-icon-box" style="background:${cat.color};">${cat.icon}</div>
@@ -668,15 +668,15 @@ async function renderCategorySelection(content) {
     content.querySelectorAll('.cat-btn-edit').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            const pk  = this.getAttribute('data-cat-pk');
-            const cat = CATEGORIES.find(c => String(c.pk) === String(pk));
+            const id  = this.getAttribute('data-cat-id');
+            const cat = CATEGORIES.find(c => String(c.id) === String(id));
             if (cat) showEditCategoryModal(cat);
         });
     });
     content.querySelectorAll('.cat-btn-delete').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            showDeleteCategoryModal(this.getAttribute('data-cat-pk'), this.getAttribute('data-cat-id'), decodeURIComponent(this.getAttribute('data-cat-name')));
+            showDeleteCategoryModal(this.getAttribute('data-cat-id'), decodeURIComponent(this.getAttribute('data-cat-name')));
         });
     });
     document.getElementById('btnAddCategory')?.addEventListener('click', () => showAddCategoryModal());
@@ -1159,10 +1159,10 @@ function showAddCategoryModal() {
     showCategoryModal({ title:'➕ New Category', icon:'📦', submitLabel:'➕ Add Category', onSubmit:({name,icon,color}) => DB.addCategory({name,icon,color}) });
 }
 function showEditCategoryModal(cat) {
-    showCategoryModal({ title:`✏️ Edit "${cat.name}"`, icon:cat.icon, name:cat.name, color:cat.color, editingName:cat.name, submitLabel:'💾 Save Changes', onSubmit:({name,icon,color}) => DB.updateCategory(cat.pk,{name,icon,color}) });
+    showCategoryModal({ title:`✏️ Edit "${cat.name}"`, icon:cat.icon, name:cat.name, color:cat.color, editingName:cat.name, submitLabel:'💾 Save Changes', onSubmit:({name,icon,color}) => DB.updateCategory(cat.id,{name,icon,color}) });
 }
 
-async function showDeleteCategoryModal(pk, id, name) {
+async function showDeleteCategoryModal(id, name) {
     const isDark       = document.body.classList.contains('dark-mode');
     const allProducts  = await DB.getProducts();
     const productCount = allProducts.filter(p => (p.category||p.category_id) === id).length;
@@ -1237,7 +1237,7 @@ async function showDeleteCategoryModal(pk, id, name) {
                 if (action==='reassign') reassignTo = document.getElementById('reassignTarget')?.value||null;
                 else deleteProds = true;
             }
-            await DB.deleteCategory(pk, reassignTo, deleteProds);
+            await DB.deleteCategory(id, reassignTo, deleteProds);
             overlay.remove();
             if (selectedCategory===id) selectedCategory=null;
             await window.renderInventory();
