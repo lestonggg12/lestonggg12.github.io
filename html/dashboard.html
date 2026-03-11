@@ -177,8 +177,41 @@
             font-size: 16px;
         }
     </style>
+    <style>
+        /* Install Banner */
+        #installBanner {
+            display: none;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10005;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-weight: 600;
+        }
+        #installBanner button {
+            background: white;
+            color: #15803d;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
+    <div id="installBanner">
+        <span>📲 Experience Joram's as a native app!</span>
+        <button id="btnInstallApp">Download App</button>
+        <span id="closeInstallBanner" style="cursor:pointer; padding: 0 5px; opacity: 0.8;">✕</span>
+    </div>
 
     <!-- ═══════════════════════════════
          TOP NAV
@@ -537,6 +570,38 @@
          PWA SERVICE WORKER (disabled for offline mode)
     ═══════════════════════════════ -->
     <script>
+    let deferredPrompt;
+    const installBanner = document.getElementById('installBanner');
+    const btnInstallApp = document.getElementById('btnInstallApp');
+    const closeBanner = document.getElementById('closeInstallBanner');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI notify the user they can add to home screen
+        installBanner.style.display = 'flex';
+    });
+
+    btnInstallApp.addEventListener('click', (e) => {
+        if (!deferredPrompt) return;
+        // Show the prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the A2HS prompt');
+                installBanner.style.display = 'none';
+            } else {
+                console.log('User dismissed the A2HS prompt');
+            }
+            deferredPrompt = null;
+        });
+    });
+
+    closeBanner.onclick = () => { installBanner.style.display = 'none'; };
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('../sw.js')
