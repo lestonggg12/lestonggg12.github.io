@@ -49,115 +49,123 @@ function getCsrfToken() {
 //  INITIALIZATION
 // =============================================================================
 
-document.addEventListener('DOMContentLoaded', function() {
+/**
+ * PATCH: Replace these two sections in your notifications.js
+ *
+ * FIX 1: DOMContentLoaded — wait for DB.init() before refreshing
+ * FIX 2: refreshNotifications — load settings from DB first, not just cached_settings
+ */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REPLACE your existing DOMContentLoaded block with this:
+// ─────────────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('🔔 Initializing enhanced notification system...');
 
     injectNotificationBell();
-    refreshNotifications();
 
-    // Refresh notifications every 5 minutes (pulls latest from server)
+    // ✅ FIX: Wait for DB to be ready before first refresh.
+    // dashboard.js calls DB.init() — we poll until it's done (max 3s).
+    let attempts = 0;
+    const waitForDB = setInterval(async () => {
+        attempts++;
+        const products = await DB.getProducts().catch(() => null);
+        // DB is ready once getProducts() returns an array (even empty)
+        if (Array.isArray(products) || attempts > 30) {
+            clearInterval(waitForDB);
+            await refreshNotifications();
+        }
+    }, 100);
+
+    // Refresh every 5 minutes
     setInterval(refreshNotifications, 5 * 60 * 1000);
 
     console.log('✅ Enhanced notification system initialized');
 });
 
-// =============================================================================
-//  INJECT NOTIFICATION BELL
-// =============================================================================
 
-function injectNotificationBell() {
-    const settingsBtn = document.getElementById('btnSettings');
-
-    if (!settingsBtn || !settingsBtn.parentElement) {
-        console.error('❌ Could not find settings button');
-        return;
-    }
-
-    const bellBtn = document.createElement('button');
-    bellBtn.id    = 'btnNotifications';
-    bellBtn.className = 'nav-button notification-bell-btn';
-    bellBtn.innerHTML = `
-        <span class="nav-icon">🔔</span>
-        <span class="nav-label">ALERTS</span>
-        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
-    `;
-
-    // Insert AFTER settings button
-    settingsBtn.parentElement.insertBefore(bellBtn, settingsBtn.nextSibling);
-
-    injectNotificationStyles();
-
-    bellBtn.addEventListener('click', toggleNotificationDropdown);
-
-    document.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('notificationDropdown');
-        const bellBtn  = document.getElementById('btnNotifications');
-        if (dropdown && bellBtn &&
-            !dropdown.contains(e.target) &&
-            !bellBtn.contains(e.target)) {
-            closeNotificationDropdown();
-        }
-    });
-
-    console.log('✅ Notification bell injected after settings button');
-}
-
-// =============================================================================
-//  REFRESH NOTIFICATIONS
-//  — re-fetches settings from server so cross-device changes are picked up
-// =============================================================================
+// ─────────────────────────────────────────────────────────────────────────────
+// REPLACE your existing refreshNotifications() function with this:
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function refreshNotifications() {
     console.log('🔄 Refreshing notifications...');
 
     try {
-        const raw = localStorage.getItem('cached_settings');
-        const freshSettings = raw ? JSON.parse(raw) : null;
+        // ✅ FIX 1: Load settings from DB first (source of truth),
+        //           then fall back to cached_settings, then defaults.
+        let freshSettings = null;
+        try {
+            freshSettings = await DB.getSettings();
+        } catch (e) {
+            const raw = localStorage.getItem('cached_settings');
+            freshSettings = raw ? JSON.parse(raw) : null;
+        }
 
         if (freshSettings) {
             window.storeSettings = {
                 ...window.storeSettings,
                 ...freshSettings,
                 debtSurcharge: parseFloat(freshSettings.debtSurcharge ?? 0) || 0,
-                changeHistory:  Array.isArray(freshSettings.changeHistory)
-                                    ? freshSettings.changeHistory
-                                    : []
+                changeHistory: Array.isArray(freshSettings.changeHistory)
+                    ? freshSettings.changeHistory
+                    : []
             };
-            console.log('💾 Settings (+ change history) loaded from local storage');
+            console.log('💾 Settings loaded:', window.storeSettings);
         }
 
-
-        // ── Low stock and out of stock alerts from product database ───────
+        // ✅ FIX 2: Use the correct lowStockLimit (from settings, not hardcoded).
+        //           DB defaultSettings uses 5; notifications was hardcoding 10.
         const products      = await DB.getProducts();
-        const lowStockLimit = window.storeSettings?.lowStockLimit || 10;
+        const lowStockLimit = (window.storeSettings?.lowStockLimit) ?? 5;
 
+        console.log(`📦 Loaded ${products.length} products, lowStockLimit=${lowStockLimit}`);
+
+        // ── Out of Stock ──────────────────────────────────────────────────────
         notificationData.outOfStock = products.filter(p => {
-            const qty = parseFloat(p.quantity || p.stock || 0);
+            const qty = parseFloat(p.quantity ?? p.stock ?? 0);
             return qty === 0;
         });
 
+        // ── Low Stock ─────────────────────────────────────────────────────────
         notificationData.lowStock = products.filter(p => {
-            const qty = parseFloat(p.quantity || p.stock || 0);
+            const qty = parseFloat(p.quantity ?? p.stock ?? 0);
             return qty > 0 && qty < lowStockLimit;
         }).sort((a, b) =>
-            parseFloat(a.quantity || a.stock || 0) - parseFloat(b.quantity || b.stock || 0)
+            parseFloat(a.quantity ?? a.stock ?? 0) - parseFloat(b.quantity ?? b.stock ?? 0)
         );
 
-        // ── Low margin alerts ──────────────────────────────────────────────
+        // ── Low Margin ────────────────────────────────────────────────────────
+        // ✅ FIX 3: Use profitMargin from settings (default 20%), not hardcoded.
+        const minMargin = (window.storeSettings?.profitMargin) ?? 20;
+
         notificationData.lowMargin = products.filter(p => {
-            const cost  = parseFloat(p.cost || p.cost_price || 0);
-            const price = parseFloat(p.price || p.selling_price || 0);
-            return cost > 0 && ((price - cost) / cost * 100) < 20;
+            const cost  = parseFloat(p.cost  ?? p.cost_price    ?? 0);
+            const price = parseFloat(p.price ?? p.selling_price ?? 0);
+            if (cost <= 0) return false; // skip free/unpriced items
+            const margin = ((price - cost) / cost) * 100;
+            return margin < minMargin;
         }).sort((a, b) => {
-            const aCost = parseFloat(a.cost||a.cost_price||0), aPrice = parseFloat(a.price||a.selling_price||0);
-            const bCost = parseFloat(b.cost||b.cost_price||0), bPrice = parseFloat(b.price||b.selling_price||0);
-            return (aCost>0?(aPrice-aCost)/aCost:0) - (bCost>0?(bPrice-bCost)/bCost:0);
+            const marginOf = p => {
+                const c = parseFloat(p.cost ?? p.cost_price ?? 0);
+                const pr = parseFloat(p.price ?? p.selling_price ?? 0);
+                return c > 0 ? ((pr - c) / c) * 100 : 0;
+            };
+            return marginOf(a) - marginOf(b);
         });
 
-        // ── Change history comes from server (via window.storeSettings) ────
+        // ── Settings change history ───────────────────────────────────────────
         notificationData.settingsChanges = window.storeSettings?.changeHistory || [];
 
         notificationData.lastUpdated = new Date();
+
+        console.log(
+            `✅ Alerts — outOfStock: ${notificationData.outOfStock.length}, ` +
+            `lowStock: ${notificationData.lowStock.length}, ` +
+            `lowMargin: ${notificationData.lowMargin.length}, ` +
+            `settingsChanges: ${notificationData.settingsChanges.length}`
+        );
 
         updateNotificationBadge();
 
@@ -165,7 +173,6 @@ async function refreshNotifications() {
             renderNotificationDropdown();
         }
 
-        console.log(`✅ ${notificationData.lowStock.length} low stock, ${notificationData.lowMargin.length} low margin, ${notificationData.settingsChanges.length} settings changes`);
     } catch (error) {
         console.error('❌ Error refreshing notifications:', error);
     }
