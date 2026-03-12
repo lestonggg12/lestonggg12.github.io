@@ -17,7 +17,6 @@
   ║  • `isCartPanelOpen` boolean — tracks side-panel visibility                ║
   ║                                                                            ║
   ║  DEPENDENCIES:                                                             ║
-  ║  • database.js → DB.getProducts(), DB.addSale(), DB.updateProduct(), etc.  ║
   ║  • dialog-system.js → DialogSystem.alert() for user-facing messages        ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 */

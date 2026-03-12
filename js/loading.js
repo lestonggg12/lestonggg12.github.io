@@ -11,7 +11,6 @@
  *   - Offline banner
  *   - Dark mode support
  *
- * LOAD ORDER:  Load BEFORE database.js and all other scripts.
  * No dependencies. Pure vanilla JS.
  */
 

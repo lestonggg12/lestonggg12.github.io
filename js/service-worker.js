@@ -5,7 +5,6 @@
  *  - Static assets (CSS, JS, icons): Cache as requested, serve cache-first
  *  - Dashboard page: Network-first, cache fallback (so it works offline)
  *  - API GET calls: Network-first, cache fallback (offline reads from cache)
- *  - POST/PUT/DELETE: Not intercepted (handled by offline queue in database.js)
  *
  * NOTE: No pre-caching — WhiteNoise uses hashed filenames in production,
  * so we cache assets at runtime as the browser actually requests them.
@@ -42,7 +41,6 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only handle GET requests — mutations go through database.js offline queue
   if (request.method !== 'GET') return;
 
   // Don't cache the login page, admin, or the SW itself

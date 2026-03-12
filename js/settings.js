@@ -1,12 +1,5 @@
 /**
  * settings.js — Enhanced with File System Access API Integration
- * 
- * NEW FEATURES:
- *  - Export app backup (JSON)
- *  - Import app backup (JSON)
- *  - Export inventory as CSV
- *  - Export sales as CSV
- *  - File operations with progress feedback
  */
 
 window.storeSettings = null;
@@ -91,17 +84,6 @@ function showSuccessDialog(message, icon = '✅') {
             }
             body.dark-mode .success-btn:hover,
             body.dark-mode .save-settings-btn:hover {
-                background: var(--btn-green-hover) !important;
-                color: var(--btn-green-text) !important;
-            }
-            body.dark-mode .success-btn {
-                background: var(--btn-green-bg) !important;
-                color: var(--btn-green-text) !important;
-                border: none !important;
-                text-shadow: none !important;
-                box-shadow: var(--btn-green-shadow);
-            }
-            body.dark-mode .success-btn:hover {
                 background: var(--btn-green-hover) !important;
                 color: var(--btn-green-text) !important;
             }
@@ -207,7 +189,6 @@ function showSuccessDialog(message, icon = '✅') {
 
 async function exportAppBackup() {
     try {
-        // Show loading state
         const btn = document.getElementById('btnExportBackup');
         if (btn) btn.disabled = true;
 
@@ -251,7 +232,6 @@ async function importAppBackup() {
             return;
         }
 
-        // Validate JSON
         try {
             JSON.parse(result.content);
         } catch {
@@ -264,7 +244,6 @@ async function importAppBackup() {
             return;
         }
 
-        // Ask for confirmation
         const confirm = window.confirm(
             `Import backup from: ${result.name}?\n\n` +
             'This will merge settings and data. Existing products with the same ID will be skipped.\n\n' +
@@ -276,7 +255,6 @@ async function importAppBackup() {
             return;
         }
 
-        // Import
         const importResult = await window.FileSystem.importAppData(result.content);
 
         let message = `✅ Import successful!<br><br>
@@ -291,7 +269,6 @@ async function importAppBackup() {
 
         showSuccessDialog(message, '📥');
 
-        // Refresh current page
         setTimeout(() => {
             if (typeof renderSettings === 'function') renderSettings();
         }, 2500);
@@ -376,7 +353,7 @@ async function exportSalesCSV() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SETTINGS RENDER (with File I/O section)
+// SETTINGS RENDER
 // ═══════════════════════════════════════════════════════════════════════════
 
 window.renderSettings = async function() {
@@ -400,9 +377,6 @@ window.renderSettings = async function() {
                 padding: 20px;
             }
 
-            /* ══════════════════════════════════════════
-               NEO-GLASSMORPHIC CARDS
-            ══════════════════════════════════════════ */
             .stylish-card {
                 background: linear-gradient(
                     135deg,
@@ -446,6 +420,9 @@ window.renderSettings = async function() {
             .stylish-card.file-ops-card::before {
                 background: linear-gradient(90deg, #3B82F6 0%, #06B6D4 50%, #10B981 100%);
             }
+            .stylish-card.device-storage-card::before {
+                background: linear-gradient(90deg, #87B382 0%, #5d9458 50%, #3e5235 100%);
+            }
             .stylish-card:hover {
                 transform: translateY(-6px) scale(1.012);
                 box-shadow:
@@ -466,16 +443,16 @@ window.renderSettings = async function() {
             .card-body { position: relative; z-index: 1; }
             .card-body h3 { color:#5D534A; font-size:1.5rem; font-weight:800; margin-bottom:8px; text-align:center; }
             .card-body > p { color:#9E9382; font-size:14px; text-align:center; margin-bottom:30px; }
-            
+
             .control-group {
                 display:flex; justify-content:space-between; align-items:center;
                 margin-bottom:20px; padding:15px 20px;
                 background:linear-gradient(135deg,rgba(203,223,189,0.08),rgba(212,224,155,0.05));
                 border-radius:12px; border:1px solid rgba(203,223,189,0.2);
             }
-            
+
             .label-text { font-weight:700; color:#5D534A; font-size:14px; text-transform:uppercase; letter-spacing:0.5px; }
-            
+
             .stylish-input {
                 width:120px; padding:12px 16px;
                 border:2px solid rgba(93,83,74,0.2); border-radius:10px;
@@ -484,7 +461,7 @@ window.renderSettings = async function() {
             }
             .stylish-input:focus { outline:none; border-color:#cbdfbd; box-shadow:0 0 0 4px rgba(203,223,189,0.2); transform:scale(1.05); }
             .stylish-input:hover { border-color:#cbdfbd; }
-            
+
             .stylish-switch { position:relative; display:inline-block; width:70px; height:36px; }
             .stylish-switch input { opacity:0; width:0; height:0; }
             .stylish-slider {
@@ -501,15 +478,14 @@ window.renderSettings = async function() {
             }
             input:checked + .stylish-slider { background:linear-gradient(135deg,#cbdfbd 0%,#a8c99c 100%); box-shadow:0 0 15px rgba(203,223,189,0.4); }
             input:checked + .stylish-slider:before { transform:translateX(34px); box-shadow:0 2px 12px rgba(0,0,0,0.3); }
-            
-            /* File operations buttons */
+
             .file-ops-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 12px;
                 margin-top: 24px;
             }
-            
+
             .file-op-btn {
                 padding: 14px 18px;
                 background: linear-gradient(135deg, #10B981 0%, #059669 100%);
@@ -524,22 +500,14 @@ window.renderSettings = async function() {
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
             }
-            
-            .file-op-btn:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 8px 20px rgba(16,185,129,0.4);
-                background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            }
-            
+            .file-op-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(16,185,129,0.4); background: linear-gradient(135deg, #059669 0%, #047857 100%); }
             .file-op-btn:active { transform: translateY(-1px); }
             .file-op-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-            
             .file-op-btn.export { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
             .file-op-btn.export:hover { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); box-shadow: 0 8px 20px rgba(59,130,246,0.4); }
-            
             .file-op-btn.import { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
             .file-op-btn.import:hover { background: linear-gradient(135deg, #D97706 0%, #B45309 100%); box-shadow: 0 8px 20px rgba(245,158,11,0.4); }
-            
+
             .sync-badge {
                 display: inline-flex; align-items: center; gap: 8px;
                 background: linear-gradient(135deg,rgba(203,223,189,0.2),rgba(168,201,156,0.15));
@@ -547,14 +515,14 @@ window.renderSettings = async function() {
                 font-weight: 700; color: #3e5235;
                 border: 1px solid rgba(203,223,189,0.4); margin-top: 10px;
             }
-            
+
             .info-box { background:linear-gradient(135deg,rgba(203,223,189,0.15),rgba(203,223,189,0.08)); border-left:4px solid #cbdfbd; padding:20px; margin-top:20px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
             .info-box-content { display:flex; align-items:flex-start; gap:12px; }
             .info-icon { font-size:32px; flex-shrink:0; }
             .info-text { flex:1; }
             .info-text strong { color:#5D534A; font-size:16px; display:block; margin-bottom:5px; }
             .info-text p { color:#9E9382; margin:0; font-size:14px; line-height:1.6; }
-            
+
             .surcharge-preview {
                 margin-top:14px; padding:12px 16px;
                 background:rgba(245,158,11,0.08);
@@ -577,20 +545,10 @@ window.renderSettings = async function() {
             .btn-save-modern:active { transform:translateY(-2px); }
 
             body.dark-mode .stylish-card {
-                background: linear-gradient(
-                    135deg,
-                    rgba(40, 52, 45, 0.75) 0%,
-                    rgba(30, 42, 35, 0.60) 50%,
-                    rgba(22, 32, 26, 0.55) 100%
-                ) !important;
-                border: 1px solid rgba(203, 223, 189, 0.18) !important;
-                box-shadow:
-                    0 8px 32px rgba(0, 0, 0, 0.35),
-                    0 2px 8px rgba(0, 0, 0, 0.20),
-                    inset 0 1.5px 0 rgba(255, 255, 255, 0.08),
-                    inset 0 -1px 0 rgba(0, 0, 0, 0.20) !important;
+                background: linear-gradient(135deg, rgba(40,52,45,0.75) 0%, rgba(30,42,35,0.60) 50%, rgba(22,32,26,0.55) 100%) !important;
+                border: 1px solid rgba(203,223,189,0.18) !important;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.20), inset 0 1.5px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.20) !important;
             }
-            
             body.dark-mode .card-body h3 { color:#f9fafb; }
             body.dark-mode .card-body > p { color:#9ca3af; }
             body.dark-mode .label-text { color:#d1d5db; }
@@ -666,7 +624,7 @@ window.renderSettings = async function() {
                 </div>
             </div>
 
-            <!-- ── File Operations card (NEW) ── -->
+            <!-- ── Data Backup card ── -->
             <div class="stylish-card file-ops-card">
                 <div class="card-icon">💾</div>
                 <div class="card-body">
@@ -696,6 +654,32 @@ window.renderSettings = async function() {
                 </div>
             </div>
 
+            <!-- ── Device Storage card ── -->
+            <div class="stylish-card device-storage-card">
+                <div class="card-icon">📁</div>
+                <div class="card-body">
+                    <h3>Device Storage</h3>
+                    <p>Save data directly to your device</p>
+                    <div style="margin-bottom:16px; padding:14px; background:rgba(203,223,189,0.12); border-radius:12px; border:1px solid rgba(203,223,189,0.3); font-size:13px; color:#5D534A;">
+                        ${window.DB?.dirHandle
+                          ? `✅ <strong>Connected:</strong> ${window.DB.dirHandle.name}<br><small style="color:#9E9382;">All data saves to your device folder.</small>`
+                          : `⚠️ <strong>Using browser storage</strong><br><small style="color:#9E9382;">Limited space. Choose a folder to upgrade.</small>`}
+                    </div>
+                    <button onclick="handleDeviceStorageBtn()" style="width:100%; padding:14px; background:linear-gradient(135deg,#87B382,#5d9458); color:white; border:none; border-radius:12px; font-size:15px; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(93,148,88,0.3); transition:all 0.3s ease;">
+                        📂 ${window.DB?.dirHandle ? 'Change Folder' : 'Connect Device Storage'}
+                    </button>
+                    <div class="info-box" style="margin-top:16px;">
+                        <div class="info-box-content">
+                            <span class="info-icon">💡</span>
+                            <div class="info-text">
+                                <strong>Why use device storage?</strong>
+                                <p>Unlimited space, faster saves, and data survives browser cache clears.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div class="settings-footer">
@@ -708,7 +692,6 @@ window.renderSettings = async function() {
         window.toggleDarkMode();
     };
 
-    // Margin & low-stock clamping
     const marginInput   = document.getElementById('marginInput');
     const lowStockInput = document.getElementById('lowStockInput');
 
@@ -726,7 +709,6 @@ window.renderSettings = async function() {
         });
     }
 
-    // Live surcharge preview
     const surchargeInput = document.getElementById('debtSurchargeInput');
     const preview        = document.getElementById('surchargePreview');
 
@@ -830,6 +812,22 @@ window.saveAllSettings = async function() {
     } catch (error) {
         console.error("Failed to save settings:", error);
         alert('❌ Failed to save settings: ' + error.message);
+    }
+};
+
+window.handleDeviceStorageBtn = async function () {
+    const granted = await window.DB.requestDirectoryAccess();
+    if (granted) {
+        await window.renderSettings();
+        showSuccessDialog(
+            `Device storage connected!<br><br><strong>Folder:</strong> ${window.DB.dirHandle.name}<br><br><small>Your existing data has been copied to the device folder.</small>`,
+            '📁'
+        );
+        var badge = document.querySelector('.offline-badge');
+        if (badge) {
+            badge.textContent = '✓ Device Storage: ' + window.DB.dirHandle.name;
+            badge.style.background = 'linear-gradient(135deg,#15803d,#166534)';
+        }
     }
 };
 

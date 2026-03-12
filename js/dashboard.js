@@ -69,10 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
  *     auto-cleanup, and injects the cleanup countdown indicator.
  *  5. Sticky-hover fix — blurs nav buttons on touchend so mobile users
  *     don't see a permanent :hover highlight.
- *
- * Dependencies: database.js (DB), profit.js, calendar.js, price_list.js,
- *               inventory.js, debtors.js, settings.js, cart.js
- */
+ 
 
 // =============================================================================
 //  1. PAGE SWITCHING

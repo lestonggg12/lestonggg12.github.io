@@ -11,7 +11,6 @@
  *  - Handle errors gracefully for unsupported browsers
  * 
  * DEPENDENCIES:
- *  - database.js (window.DB for app state)
  *  - IndexedDB (for persisting file handles)
  * 
  * BROWSER SUPPORT:
@@ -282,9 +281,9 @@ class FileSystemManager {
   async exportAppData() {
     try {
       const settings = await window.DB.getSettings();
-      const products = await window.DB.getAllProducts();
-      const sales = await window.DB.getAllSales();
-      const debtors = await window.DB.getAllDebtors();
+      const products = await window.DB.getProducts();
+      const sales = await window.DB.getSales();
+      const debtors = await window.DB.getDebtors();
 
       const backup = {
         version: '1.0',
@@ -340,7 +339,8 @@ class FileSystemManager {
         for (const product of backup.data.products) {
           try {
             // Check if product already exists
-            const exists = await window.DB.getProduct(product.id);
+            const products = await window.DB.getProducts();
+            const exists = products.find(p => p.id === product.id);
             if (!exists) {
               await window.DB.addProduct(product);
               results.imported++;
@@ -391,7 +391,7 @@ class FileSystemManager {
   
   async exportInventoryCSV() {
     try {
-      const products = await window.DB.getAllProducts();
+      const products = await window.DB.getProducts();
       
       let csv = 'ID,Name,Category,Quantity,Cost,Selling Price,Profit Margin\n';
       products.forEach(p => {
@@ -407,7 +407,7 @@ class FileSystemManager {
 
   async exportSalesCSV() {
     try {
-      const sales = await window.DB.getAllSales();
+      const sales = await window.DB.getSales();
       
       let csv = 'Date,Product,Quantity,Unit Price,Total,Payment Method\n';
       sales.forEach(s => {

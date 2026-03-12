@@ -9,7 +9,6 @@
  *  - Auto-save on every change
  *  - Persistent file handles (no re-asking for permissions)
  *  - Graceful fallback to localStorage if API unsupported
- *  - Same API as database.js (drop-in replacement)
  * 
  * FILES CREATED ON DEVICE:
  *  - .jorams-data/sales.json (sales + sales_history)
@@ -17,10 +16,6 @@
  *  - .jorams-data/debtors.json (debtors + payment_history)
  *  - .jorams-data/settings.json
  *  - .jorams-data/categories.json
- * 
- * USAGE:
- *  Replace database.js with this file in index.html
- *  OR use alongside database.js and call DeviceStorage.init() first
  */
 
 class DeviceStorageManager {
@@ -127,41 +122,67 @@ class DeviceStorageManager {
     }
 
     try {
-      // Try to get existing directory handle
       let dirHandle = await this.getHandleFromIDB();
 
       if (!dirHandle) {
-        // Request user to select/create directory
-        console.log('📁 Requesting directory access...');
-        dirHandle = await window.showDirectoryPicker({
-          id: 'jorams-data-folder',
-          mode: 'readwrite',
-          startIn: 'documents'
-        });
-        
-        // Save handle for future use
-        await this.saveHandleToIDB(dirHandle);
-        console.log('✅ Directory access granted: ' + dirHandle.name);
-      } else {
-        console.log('✅ Using saved directory handle');
+        // No saved handle — never auto-prompt, silently use localStorage
+        console.log('📦 No saved directory handle — using localStorage fallback');
+        return this.loadFromLocalStorage();
+      }
+
+      // Check if permission is still valid
+      const permission = await dirHandle.queryPermission({ mode: 'readwrite' });
+      if (permission !== 'granted') {
+        console.warn('⚠️ Directory permission lost — using localStorage fallback');
+        return this.loadFromLocalStorage();
       }
 
       this.dirHandle = dirHandle;
-
-      // Load all data from device
       await this.loadAllFromDevice();
-
       this.initialized = true;
-      console.log('✅ Device Storage initialized successfully');
+      console.log('✅ Device Storage initialized from saved handle');
       return true;
 
     } catch (err) {
-      if (err.name === 'NotAllowedError') {
-        console.warn('⚠️ User denied file system access. Falling back to localStorage.');
-      } else {
-        console.error('Device storage init error:', err);
-      }
+      console.error('Device storage init error:', err);
       return this.loadFromLocalStorage();
+    }
+  }
+
+  // Only call this from a button click — never on page load
+  async requestDirectoryAccess() {
+    if (!this.isSupported) return false;
+
+    try {
+      const dirHandle = await window.showDirectoryPicker({
+        id: 'jorams-data-folder',
+        mode: 'readwrite',
+        startIn: 'documents'
+      });
+
+      await this.saveHandleToIDB(dirHandle);
+      this.dirHandle = dirHandle;
+
+      // Copy existing localStorage data to device files (first time only)
+      const existingProducts = await this.readFile('products.json');
+      if (!existingProducts || existingProducts.length === 0) {
+        console.log('🔄 Migrating localStorage data to device...');
+        this.loadFromLocalStorage(); // loads into this.data
+        await this.saveAllToDevice(); // writes this.data to files
+        console.log('✅ Migration complete');
+      } else {
+        await this.loadAllFromDevice();
+      }
+
+      this.initialized = true;
+      console.log('✅ Directory access granted: ' + dirHandle.name);
+      return true;
+
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Directory access error:', err);
+      }
+      return false;
     }
   }
 
@@ -939,12 +960,12 @@ class DeviceStorageManager {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const DB = new DeviceStorageManager();
+window.DB = DB; // ← add this line
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = DB;
 }
-
 console.log('✅ Device Storage module loaded');
 console.log(`📁 Storage: ${DB.isSupported ? '✅ File System API' : '⚠️ localStorage (fallback)'}`);
 
