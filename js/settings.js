@@ -1,45 +1,12 @@
-// Dark mode: force Save Settings button styling via CSS variables (no hardcoded colors needed)
-    if (document.body.classList.contains('dark-mode')) {
-        // The CSS variables handle dark mode styling automatically now
-        // Keep observer for any edge cases where inline styles override
-        const observer = new MutationObserver(() => {
-            document.querySelectorAll('button').forEach(btn => {
-                if (btn.textContent && btn.textContent.trim().toUpperCase().includes('SAVE SETTINGS')) {
-                    btn.style.background = 'var(--btn-green-bg)';
-                    btn.style.color = 'var(--btn-green-text)';
-                    btn.style.border = 'none';
-                    btn.style.textShadow = 'none';
-                    btn.style.boxShadow = '';
-                }
-            });
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-        // Also run once immediately
-        setTimeout(() => {
-            document.querySelectorAll('button').forEach(btn => {
-                if (btn.textContent && btn.textContent.trim().toUpperCase().includes('SAVE SETTINGS')) {
-                    btn.style.background = perfectBtnStyle;
-                    btn.style.color = perfectBtnText;
-                    btn.style.border = perfectBtnBorder;
-                    btn.style.textShadow = 'none';
-                    btn.style.boxShadow = perfectBtnShadow;
-                }
-            });
-        }, 100);
-    }
 /**
- * settings.js — Enhanced with Change Notifications
- *
- * FEATURES:
- * - Dark mode toggle (back in settings)
- * - Records changes to Profit Margin, Low Stock Alert, and Debt Surcharge
- * - Theme changes NOT tracked in notifications
- *
- * DEVICE PERSISTENCE:
- * - changeHistory is stored LOCALLY in this browser's database.
- *   Settings are specific to this device and browser.
- *
- * FIX: Surcharge change detection uses explicit numeric snapshots.
+ * settings.js — Enhanced with File System Access API Integration
+ * 
+ * NEW FEATURES:
+ *  - Export app backup (JSON)
+ *  - Import app backup (JSON)
+ *  - Export inventory as CSV
+ *  - Export sales as CSV
+ *  - File operations with progress feedback
  */
 
 window.storeSettings = null;
@@ -49,7 +16,6 @@ async function initSettings() {
         let data = await DB.getSettings();
 
         if (!data) {
-            // Fallback to localStorage or defaults
             const raw = localStorage.getItem('cached_settings');
             data = raw ? JSON.parse(raw) : {
                 profitMargin:  20,
@@ -235,6 +201,184 @@ function showSuccessDialog(message, icon = '✅') {
     }, 4000);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// FILE SYSTEM OPERATIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function exportAppBackup() {
+    try {
+        // Show loading state
+        const btn = document.getElementById('btnExportBackup');
+        if (btn) btn.disabled = true;
+
+        const jsonData = await window.FileSystem.exportAppData();
+        const timestamp = new Date().toISOString().split('T')[0];
+        const result = await window.FileSystem.saveFile(
+            jsonData,
+            `jorams-backup-${timestamp}.json`
+        );
+
+        if (result) {
+            showSuccessDialog(
+                `✅ Backup exported successfully!<br><br>
+                <strong>File:</strong> ${result.name}<br>
+                <strong>Size:</strong> ${(result.written / 1024).toFixed(2)} KB<br><br>
+                <small>This backup includes all your settings, inventory, sales, and debtor records.</small>`,
+                '💾'
+            );
+        }
+    } catch (err) {
+        console.error('Export error:', err);
+        if (window.DialogSystem) {
+            await DialogSystem.alert(`Failed to export backup: ${err.message}`, '❌');
+        } else {
+            alert(`❌ Failed to export backup: ${err.message}`);
+        }
+    } finally {
+        const btn = document.getElementById('btnExportBackup');
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function importAppBackup() {
+    try {
+        const btn = document.getElementById('btnImportBackup');
+        if (btn) btn.disabled = true;
+
+        const result = await window.FileSystem.openFile();
+        if (!result) {
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        // Validate JSON
+        try {
+            JSON.parse(result.content);
+        } catch {
+            if (window.DialogSystem) {
+                await DialogSystem.alert('Invalid JSON file. Please select a valid backup file.', '⚠️');
+            } else {
+                alert('⚠️ Invalid JSON file.');
+            }
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        // Ask for confirmation
+        const confirm = window.confirm(
+            `Import backup from: ${result.name}?\n\n` +
+            'This will merge settings and data. Existing products with the same ID will be skipped.\n\n' +
+            'Continue?'
+        );
+
+        if (!confirm) {
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        // Import
+        const importResult = await window.FileSystem.importAppData(result.content);
+
+        let message = `✅ Import successful!<br><br>
+            <strong>File:</strong> ${result.name}<br>
+            <strong>Imported:</strong> ${importResult.imported} records<br>
+            <strong>Skipped:</strong> ${importResult.skipped} (duplicates)<br>`;
+
+        if (importResult.errors.length > 0) {
+            message += `<strong>Errors:</strong> ${importResult.errors.length}<br>
+                <small>${importResult.errors.slice(0, 3).join('<br>')}</small>`;
+        }
+
+        showSuccessDialog(message, '📥');
+
+        // Refresh current page
+        setTimeout(() => {
+            if (typeof renderSettings === 'function') renderSettings();
+        }, 2500);
+
+    } catch (err) {
+        console.error('Import error:', err);
+        if (window.DialogSystem) {
+            await DialogSystem.alert(`Failed to import backup: ${err.message}`, '❌');
+        } else {
+            alert(`❌ Failed to import backup: ${err.message}`);
+        }
+    } finally {
+        const btn = document.getElementById('btnImportBackup');
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function exportInventoryCSV() {
+    try {
+        const btn = document.getElementById('btnExportInventory');
+        if (btn) btn.disabled = true;
+
+        const csvData = await window.FileSystem.exportInventoryCSV();
+        const timestamp = new Date().toISOString().split('T')[0];
+        const result = await window.FileSystem.saveFile(
+            csvData,
+            `inventory-${timestamp}.csv`
+        );
+
+        if (result) {
+            showSuccessDialog(
+                `Inventory exported as CSV!<br><br>
+                <strong>File:</strong> ${result.name}<br>
+                <strong>Size:</strong> ${(result.written / 1024).toFixed(2)} KB`,
+                '📊'
+            );
+        }
+    } catch (err) {
+        console.error('CSV export error:', err);
+        if (window.DialogSystem) {
+            await DialogSystem.alert(`Failed to export CSV: ${err.message}`, '❌');
+        } else {
+            alert(`❌ Failed to export CSV: ${err.message}`);
+        }
+    } finally {
+        const btn = document.getElementById('btnExportInventory');
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function exportSalesCSV() {
+    try {
+        const btn = document.getElementById('btnExportSales');
+        if (btn) btn.disabled = true;
+
+        const csvData = await window.FileSystem.exportSalesCSV();
+        const timestamp = new Date().toISOString().split('T')[0];
+        const result = await window.FileSystem.saveFile(
+            csvData,
+            `sales-${timestamp}.csv`
+        );
+
+        if (result) {
+            showSuccessDialog(
+                `Sales exported as CSV!<br><br>
+                <strong>File:</strong> ${result.name}<br>
+                <strong>Size:</strong> ${(result.written / 1024).toFixed(2)} KB`,
+                '📈'
+            );
+        }
+    } catch (err) {
+        console.error('CSV export error:', err);
+        if (window.DialogSystem) {
+            await DialogSystem.alert(`Failed to export CSV: ${err.message}`, '❌');
+        } else {
+            alert(`❌ Failed to export CSV: ${err.message}`);
+        }
+    } finally {
+        const btn = document.getElementById('btnExportSales');
+        if (btn) btn.disabled = false;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS RENDER (with File I/O section)
+// ═══════════════════════════════════════════════════════════════════════════
+
 window.renderSettings = async function() {
     const container = document.getElementById('settingsContent');
     if (!container) return;
@@ -243,6 +387,7 @@ window.renderSettings = async function() {
 
     const isDark    = document.body.classList.contains('dark-mode');
     const surcharge = parseFloat(window.storeSettings.debtSurcharge || 0);
+    const fsSupport = window.FileSystem?.isSupported ? '✅ Supported' : '⚠️ Using Fallback';
 
     container.innerHTML = `
         <style>
@@ -286,7 +431,6 @@ window.renderSettings = async function() {
                 border-radius: 28px 28px 0 0;
                 z-index: 1;
             }
-            /* Neo-glassmorphic shimmer overlay */
             .stylish-card::after {
                 content: '';
                 position: absolute; inset: 0;
@@ -299,8 +443,8 @@ window.renderSettings = async function() {
                 pointer-events: none;
                 border-radius: 28px;
             }
-            .stylish-card.debtors-card::before {
-                background: linear-gradient(90deg, #F59E0B 0%, #FBBF24 50%, #FDE68A 100%);
+            .stylish-card.file-ops-card::before {
+                background: linear-gradient(90deg, #3B82F6 0%, #06B6D4 50%, #10B981 100%);
             }
             .stylish-card:hover {
                 transform: translateY(-6px) scale(1.012);
@@ -317,27 +461,21 @@ window.renderSettings = async function() {
                     rgba(235, 245, 228, 0.55) 100%
                 );
             }
-            .stylish-card.debtors-card:hover {
-                box-shadow:
-                    0 20px 60px rgba(245, 158, 11, 0.12),
-                    0 4px 16px rgba(245, 158, 11, 0.20),
-                    inset 0 1.5px 0 rgba(255, 255, 255, 1),
-                    inset 0 -1px 0 rgba(245, 158, 11, 0.20);
-            }
-            /* ══════════════════════════════════════════ */
 
             .card-icon { font-size:56px; margin-bottom:20px; text-align:center; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.1)); position: relative; z-index: 1; }
             .card-body { position: relative; z-index: 1; }
             .card-body h3 { color:#5D534A; font-size:1.5rem; font-weight:800; margin-bottom:8px; text-align:center; }
             .card-body > p { color:#9E9382; font-size:14px; text-align:center; margin-bottom:30px; }
+            
             .control-group {
                 display:flex; justify-content:space-between; align-items:center;
                 margin-bottom:20px; padding:15px 20px;
                 background:linear-gradient(135deg,rgba(203,223,189,0.08),rgba(212,224,155,0.05));
                 border-radius:12px; border:1px solid rgba(203,223,189,0.2);
             }
-            .debtors-card .control-group { background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(251,191,36,0.05)); border-color:rgba(245,158,11,0.2); }
+            
             .label-text { font-weight:700; color:#5D534A; font-size:14px; text-transform:uppercase; letter-spacing:0.5px; }
+            
             .stylish-input {
                 width:120px; padding:12px 16px;
                 border:2px solid rgba(93,83,74,0.2); border-radius:10px;
@@ -345,9 +483,8 @@ window.renderSettings = async function() {
                 text-align:center; transition:all 0.3s ease; background:white;
             }
             .stylish-input:focus { outline:none; border-color:#cbdfbd; box-shadow:0 0 0 4px rgba(203,223,189,0.2); transform:scale(1.05); }
-            .debtors-card .stylish-input:focus { border-color:#F59E0B; box-shadow:0 0 0 4px rgba(245,158,11,0.15); }
             .stylish-input:hover { border-color:#cbdfbd; }
-            .debtors-card .stylish-input:hover { border-color:#F59E0B; }
+            
             .stylish-switch { position:relative; display:inline-block; width:70px; height:36px; }
             .stylish-switch input { opacity:0; width:0; height:0; }
             .stylish-slider {
@@ -364,9 +501,69 @@ window.renderSettings = async function() {
             }
             input:checked + .stylish-slider { background:linear-gradient(135deg,#cbdfbd 0%,#a8c99c 100%); box-shadow:0 0 15px rgba(203,223,189,0.4); }
             input:checked + .stylish-slider:before { transform:translateX(34px); box-shadow:0 2px 12px rgba(0,0,0,0.3); }
+            
+            /* File operations buttons */
+            .file-ops-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-top: 24px;
+            }
+            
+            .file-op-btn {
+                padding: 14px 18px;
+                background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            .file-op-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 20px rgba(16,185,129,0.4);
+                background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            }
+            
+            .file-op-btn:active { transform: translateY(-1px); }
+            .file-op-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+            
+            .file-op-btn.export { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
+            .file-op-btn.export:hover { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); box-shadow: 0 8px 20px rgba(59,130,246,0.4); }
+            
+            .file-op-btn.import { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
+            .file-op-btn.import:hover { background: linear-gradient(135deg, #D97706 0%, #B45309 100%); box-shadow: 0 8px 20px rgba(245,158,11,0.4); }
+            
+            .sync-badge {
+                display: inline-flex; align-items: center; gap: 8px;
+                background: linear-gradient(135deg,rgba(203,223,189,0.2),rgba(168,201,156,0.15));
+                padding: 8px 16px; border-radius: 20px; font-size: 13px;
+                font-weight: 700; color: #3e5235;
+                border: 1px solid rgba(203,223,189,0.4); margin-top: 10px;
+            }
+            
+            .info-box { background:linear-gradient(135deg,rgba(203,223,189,0.15),rgba(203,223,189,0.08)); border-left:4px solid #cbdfbd; padding:20px; margin-top:20px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+            .info-box-content { display:flex; align-items:flex-start; gap:12px; }
+            .info-icon { font-size:32px; flex-shrink:0; }
+            .info-text { flex:1; }
+            .info-text strong { color:#5D534A; font-size:16px; display:block; margin-bottom:5px; }
+            .info-text p { color:#9E9382; margin:0; font-size:14px; line-height:1.6; }
+            
+            .surcharge-preview {
+                margin-top:14px; padding:12px 16px;
+                background:rgba(245,158,11,0.08);
+                border:1px solid rgba(245,158,11,0.25);
+                border-radius:10px; font-size:13px; color:#92400E; line-height:1.7;
+            }
+
             .settings-footer { text-align:center; margin-top:40px; padding:20px; }
 
-            /* ── SAVE SETTINGS button ── */
             .btn-save-modern {
                 padding:18px 48px;
                 background:var(--btn-green-bg);
@@ -379,52 +576,6 @@ window.renderSettings = async function() {
             .btn-save-modern:hover { transform:translateY(-4px); box-shadow:var(--btn-green-shadow-hover); background:var(--btn-green-hover); }
             .btn-save-modern:active { transform:translateY(-2px); }
 
-            /* ── SAVE SETTINGS dark mode ── */
-            body.dark-mode .btn-save-modern {
-                background: var(--btn-green-bg) !important;
-                color: var(--btn-green-text) !important;
-                border: none !important;
-                box-shadow: var(--btn-green-shadow) !important;
-                text-shadow: none !important;
-            }
-            body.dark-mode .btn-save-modern:hover {
-                background: var(--btn-green-hover) !important;
-                color: var(--btn-green-text) !important;
-                box-shadow: var(--btn-green-shadow-hover) !important;
-                transform: translateY(-3px);
-            }
-            body.dark-mode .btn-save-modern:active {
-                transform: translateY(-1px) !important;
-                box-shadow: var(--btn-green-shadow) !important;
-            }
-
-            .info-box { background:linear-gradient(135deg,rgba(203,223,189,0.15),rgba(203,223,189,0.08)); border-left:4px solid #cbdfbd; padding:20px; margin-top:20px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-            .debtors-card .info-box { background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(251,191,36,0.05)); border-left-color:#F59E0B; }
-            .info-box-content { display:flex; align-items:flex-start; gap:12px; }
-            .info-icon { font-size:32px; flex-shrink:0; }
-            .info-text { flex:1; }
-            .info-text strong { color:#5D534A; font-size:16px; display:block; margin-bottom:5px; }
-            .info-text p { color:#9E9382; margin:0; font-size:14px; line-height:1.6; }
-            .sync-badge {
-                display:inline-flex; align-items:center; gap:8px;
-                background:linear-gradient(135deg,rgba(203,223,189,0.2),rgba(168,201,156,0.15));
-                padding:8px 16px; border-radius:20px; font-size:13px;
-                font-weight:700; color:#3e5235;
-                border:1px solid rgba(203,223,189,0.4); margin-top:10px;
-            }
-            .sync-badge.amber { background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(251,191,36,0.1)); color:#92400E; border-color:rgba(245,158,11,0.3); }
-            .sync-badge::before { content:'💾'; font-size:16px; }
-            .surcharge-preview {
-                margin-top:14px; padding:12px 16px;
-                background:rgba(245,158,11,0.08);
-                border:1px solid rgba(245,158,11,0.25);
-                border-radius:10px; font-size:13px; color:#92400E; line-height:1.7;
-            }
-            body.dark-mode .surcharge-preview { background:rgba(245,158,11,0.08); color:#fcd34d; border-color:rgba(245,158,11,0.2); }
-
-            /* ══════════════════════════════════════════
-               NEO-GLASSMORPHIC DARK MODE CARDS
-            ══════════════════════════════════════════ */
             body.dark-mode .stylish-card {
                 background: linear-gradient(
                     135deg,
@@ -439,69 +590,23 @@ window.renderSettings = async function() {
                     inset 0 1.5px 0 rgba(255, 255, 255, 0.08),
                     inset 0 -1px 0 rgba(0, 0, 0, 0.20) !important;
             }
-            body.dark-mode .stylish-card::after {
-                background: linear-gradient(
-                    135deg,
-                    rgba(255,255,255,0.06) 0%,
-                    rgba(255,255,255,0.00) 40%,
-                    rgba(203,223,189,0.04) 100%
-                );
-            }
-            body.dark-mode .stylish-card:hover {
-                background: linear-gradient(
-                    135deg,
-                    rgba(48, 62, 52, 0.85) 0%,
-                    rgba(36, 50, 40, 0.72) 50%,
-                    rgba(28, 40, 32, 0.68) 100%
-                ) !important;
-                border-color: rgba(203, 223, 189, 0.30) !important;
-                box-shadow:
-                    0 20px 60px rgba(0, 0, 0, 0.50),
-                    0 4px 16px rgba(0, 0, 0, 0.30),
-                    inset 0 1.5px 0 rgba(255, 255, 255, 0.12),
-                    inset 0 -1px 0 rgba(0, 0, 0, 0.20) !important;
-            }
-            body.dark-mode .stylish-card.debtors-card { border-color: rgba(245, 158, 11, 0.20) !important; }
-            body.dark-mode .stylish-card.debtors-card:hover { border-color: rgba(245, 158, 11, 0.35) !important; }
-            /* ══════════════════════════════════════════ */
-
+            
             body.dark-mode .card-body h3 { color:#f9fafb; }
             body.dark-mode .card-body > p { color:#9ca3af; }
             body.dark-mode .label-text { color:#d1d5db; }
             body.dark-mode .stylish-input { background:rgba(255,255,255,0.1); color:#f9fafb; border-color:rgba(203,223,189,0.3); }
-            body.dark-mode .debtors-card .stylish-input { border-color:rgba(245,158,11,0.3); }
             body.dark-mode .control-group { background:rgba(203,223,189,0.05); border-color:rgba(203,223,189,0.15); }
-            body.dark-mode .debtors-card .control-group { background:rgba(245,158,11,0.05); border-color:rgba(245,158,11,0.15); }
             body.dark-mode .info-box { background:rgba(203,223,189,0.1); }
-            body.dark-mode .debtors-card .info-box { background:rgba(245,158,11,0.08); }
             body.dark-mode .info-text strong { color:#f9fafb; }
             body.dark-mode .info-text p { color:#9ca3af; }
             body.dark-mode .sync-badge { background:rgba(203,223,189,0.15); border-color:rgba(203,223,189,0.3); color:#cbdfbd; }
-            body.dark-mode .sync-badge.amber { background:rgba(245,158,11,0.12); color:#fbbf24; border-color:rgba(245,158,11,0.25); }
-
-            /* ── Dark mode toggle switch — muted when dark ── */
-            body.dark-mode .stylish-slider {
-                background: linear-gradient(135deg, #2a3a2e 0%, #1e2e22 100%);
-                box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06);
-            }
-            body.dark-mode input:checked + .stylish-slider {
-                background: linear-gradient(135deg, #3a6b42 0%, #2d5235 100%);
-                box-shadow: 0 0 12px rgba(74,122,66,0.35), inset 0 1px 2px rgba(0,0,0,0.2);
-            }
-            body.dark-mode .stylish-slider:before {
-                background: #c8d8cc;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-            }
-            body.dark-mode input:checked + .stylish-slider:before {
-                background: #e8f5ea;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-            }
 
             @media (max-width: 768px) {
                 .settings-grid-container { grid-template-columns:1fr; padding:15px; }
                 .stylish-card { padding:25px; }
                 .control-group { flex-direction:column; gap:15px; text-align:center; }
                 .stylish-input { width:100%; }
+                .file-ops-grid { grid-template-columns: 1fr; }
             }
         </style>
 
@@ -520,7 +625,7 @@ window.renderSettings = async function() {
                             <span class="stylish-slider"></span>
                         </label>
                     </div>
-                    <div class="sync-badge">Saved to this device (not tracked in notifications)</div>
+                    <div class="sync-badge">Saved to this device</div>
                 </div>
             </div>
 
@@ -538,24 +643,12 @@ window.renderSettings = async function() {
                         <span class="label-text">Low Stock Alert</span>
                         <input type="number" id="lowStockInput" value="${window.storeSettings.lowStockLimit}" class="stylish-input" min="1" max="100" step="1">
                     </div>
-                    <div class="sync-badge">Changes saved locally & tracked in alerts</div>
-                    <div class="info-box">
-                        <div class="info-box-content">
-                            <span class="info-icon">💡</span>
-                            <div class="info-text">
-                                <strong>How These Settings Work</strong>
-                                <p>
-                                    <strong>Profit Margin:</strong> When adding or editing products, you'll receive warnings if the margin falls below this percentage.<br><br>
-                                    <strong>Low Stock Alert:</strong> Products with quantities below this number will be highlighted in yellow in your inventory.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="sync-badge">Changes tracked in notifications</div>
                 </div>
             </div>
 
             <!-- ── Debtors card ── -->
-            <div class="stylish-card debtors-card">
+            <div class="stylish-card">
                 <div class="card-icon">🧾</div>
                 <div class="card-body">
                     <h3>Debtors</h3>
@@ -569,16 +662,33 @@ window.renderSettings = async function() {
                     <div id="surchargePreview" style="display:${surcharge > 0 ? 'block' : 'none'};" class="surcharge-preview">
                         Example: ₱100 subtotal + ₱${surcharge.toFixed(2)} surcharge (${surcharge}%) = <strong>₱${(100 + surcharge).toFixed(2)} total</strong>
                     </div>
-                    <div class="sync-badge amber">Changes saved locally & tracked in alerts</div>
-                    <div class="info-box">
+                    <div class="sync-badge">Changes tracked in notifications</div>
+                </div>
+            </div>
+
+            <!-- ── File Operations card (NEW) ── -->
+            <div class="stylish-card file-ops-card">
+                <div class="card-icon">💾</div>
+                <div class="card-body">
+                    <h3>Data Backup</h3>
+                    <p>Export &amp; import all app data</p>
+                    <div style="font-size: 12px; color: #9E9382; margin-bottom: 18px;">
+                        <strong>${fsSupport}</strong> • Full device file access
+                    </div>
+                    <div class="file-ops-grid">
+                        <button class="file-op-btn export" id="btnExportBackup" onclick="exportAppBackup()">📥 Full Backup</button>
+                        <button class="file-op-btn import" id="btnImportBackup" onclick="importAppBackup()">📤 Restore</button>
+                        <button class="file-op-btn export" id="btnExportInventory" onclick="exportInventoryCSV()">📊 Inventory</button>
+                        <button class="file-op-btn export" id="btnExportSales" onclick="exportSalesCSV()">📈 Sales</button>
+                    </div>
+                    <div class="info-box" style="margin-top: 20px;">
                         <div class="info-box-content">
                             <span class="info-icon">💡</span>
                             <div class="info-text">
-                                <strong>How Debt Surcharge Works</strong>
+                                <strong>How to use</strong>
                                 <p>
-                                    When a new debt is recorded, this percentage is added on top of the product subtotal.
-                                    The debtor card shows a full breakdown: Subtotal → Surcharge → Total.<br><br>
-                                    Set to <strong>0</strong> to disable surcharges entirely.
+                                    <strong>Full Backup:</strong> Creates a complete JSON backup of everything (settings, inventory, sales, debtors). Use to restore after device reset.<br><br>
+                                    <strong>CSV Exports:</strong> Export inventory or sales as CSV for use in Excel/Sheets.
                                 </p>
                             </div>
                         </div>
@@ -643,35 +753,21 @@ window.saveAllSettings = async function() {
         parseFloat(document.getElementById('debtSurchargeInput').value || 0).toFixed(2)
     );
 
-    // ── Validation ──────────────────────────────────────────────────────────
     if (isNaN(marginValue) || marginValue < 0 || marginValue > 100) {
-        if (window.DialogSystem) {
-            await DialogSystem.alert('Profit margin must be between 0% and 100%!', '⚠️');
-        } else {
-            alert('⚠️ Profit margin must be between 0% and 100%!');
-        }
+        alert('⚠️ Profit margin must be between 0% and 100%!');
         return;
     }
 
     if (isNaN(lowStockValue) || lowStockValue < 1 || lowStockValue > 100) {
-        if (window.DialogSystem) {
-            await DialogSystem.alert('Low stock alert must be between 1 and 100!', '⚠️');
-        } else {
-            alert('⚠️ Low stock alert must be between 1 and 100!');
-        }
+        alert('⚠️ Low stock alert must be between 1 and 100!');
         return;
     }
 
     if (isNaN(surchargeValue) || surchargeValue < 0 || surchargeValue > 100) {
-        if (window.DialogSystem) {
-            await DialogSystem.alert('Debt surcharge must be between 0% and 100%!', '⚠️');
-        } else {
-            alert('⚠️ Debt surcharge must be between 0% and 100%!');
-        }
+        alert('⚠️ Debt surcharge must be between 0% and 100%!');
         return;
     }
 
-    // ── Detect changes ───────────────────────────────────────────────────────
     const oldMargin    = parseFloat(window.storeSettings?.profitMargin  ?? 0);
     const oldLowStock  = parseInt(window.storeSettings?.lowStockLimit   ?? 0);
     const oldSurcharge = parseFloat(window.storeSettings?.debtSurcharge ?? 0) || 0;
@@ -681,13 +777,6 @@ window.saveAllSettings = async function() {
     if (oldLowStock  !== lowStockValue)  changes.lowStockLimit = lowStockValue;
     if (oldSurcharge !== surchargeValue) changes.debtSurcharge = surchargeValue;
 
-    console.log('📊 Settings change detection:', {
-        old: { margin: oldMargin, lowStock: oldLowStock, surcharge: oldSurcharge },
-        new: { margin: marginValue, lowStock: lowStockValue, surcharge: surchargeValue },
-        changes
-    });
-
-    // ── Build updated history ────────────────────────────────────────────────
     let updatedHistory = Array.isArray(window.storeSettings?.changeHistory)
         ? [...window.storeSettings.changeHistory]
         : [];
@@ -710,9 +799,7 @@ window.saveAllSettings = async function() {
     };
 
     try {
-        // ✅ FIXED: Use offline database instead of API
         await DB.saveSettings(updatedData);
-
         window.storeSettings = updatedData;
         applyThemeFromSettings();
 
@@ -721,7 +808,6 @@ window.saveAllSettings = async function() {
                 window.storeSettings.changeHistory.length - 1
             ];
             window.NotificationSystem.onSettingsSaved(latestRecord);
-            console.log('🔔 NotificationSystem updated with new change record');
         }
 
         const changesText = Object.keys(changes).length > 0
@@ -735,12 +821,7 @@ window.saveAllSettings = async function() {
             : '';
 
         showSuccessDialog(
-            `Settings saved successfully!${changesText}<br><br>
-            <small style="color:#9ca3af;">${
-                Object.keys(changes).length > 0
-                    ? '💾 Saved to device storage — visible across all sessions.'
-                    : 'Theme saved (not tracked in notifications).'
-            }</small>`,
+            `Settings saved successfully!${changesText}`,
             '✅'
         );
 
@@ -748,17 +829,10 @@ window.saveAllSettings = async function() {
 
     } catch (error) {
         console.error("Failed to save settings:", error);
-        if (window.DialogSystem) {
-            await DialogSystem.alert('Failed to save settings: ' + error.message, '❌');
-        } else {
-            alert('❌ Failed to save settings: ' + error.message);
-        }
+        alert('❌ Failed to save settings: ' + error.message);
     }
 };
 
-window.applyThemeFromSettings = function() {
-    if (!window.storeSettings) return;
-    // ...existing code...
-};
+window.applyThemeFromSettings = applyThemeFromSettings;
 
 initSettings();
