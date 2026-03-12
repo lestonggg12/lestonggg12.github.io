@@ -127,11 +127,11 @@ window.renderDebtors = async function() {
             </button>
           ` : ''}
         </div>
-        ${paidDebtors.length > 0 ? `<div class="auto-delete-notice-banner">
+      ${paidDebtors.length > 0 ? `<div class="auto-delete-notice-banner">
           <span class="adn-icon">⏱️</span>
           <div class="adn-body">
             <div class="adn-title">Auto-Delete Active</div>
-            <div class="adn-text">Paid debts are <strong>automatically deleted 7 days</strong> after being marked as paid. This also removes them from the <strong>📅 Calendar</strong>.</div>
+            <div class="adn-text">Paid debts are <strong>automatically deleted 7 days</strong> after being marked as paid from this page. They remain visible in the <strong>📅 Calendar</strong> for <strong>1 year</strong>.</div>
           </div>
         </div>` : ''}
         <div id="paidDebtContainer" style="transition: max-height 0.35s ease, opacity 0.3s ease; overflow: hidden; max-height: none; opacity: 1;">

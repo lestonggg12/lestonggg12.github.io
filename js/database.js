@@ -573,14 +573,27 @@ const DB = (function () {
     }
 
     async function autoCleanupPaidDebtors() {
-        const debtors      = load('debtors', []);
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        save('debtors', debtors.filter(d => {
-            if (!d.paid || !d.date_paid) return true;
-            return new Date(d.date_paid) > sevenDaysAgo;
-        }));
-        return Promise.resolve(true);
-    }
+    const debtors      = load('debtors', []);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    
+    // Delete paid debts older than 7 days from the live debtors list
+    // (they'll still be in payment_history for the calendar)
+    save('debtors', debtors.filter(d => {
+        if (!d.paid || !d.date_paid) return true;
+        return new Date(d.date_paid) > sevenDaysAgo;
+    }));
+    return Promise.resolve(true);
+}
+
+async function cleanupPaymentHistory() {
+    const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+    
+    // Delete paid debt history older than 1 year
+    // (keeps them visible in calendar for 1 year)
+    const pHistory = load('payment_history', []);
+    save('payment_history', pHistory.filter(p => new Date(p.date_paid) > oneYearAgo));
+    return Promise.resolve(true);
+}
 
     // =========================================================================
     //  ACCUMULATED TOTALS API
@@ -721,3 +734,4 @@ const DB = (function () {
 })();
 
 console.log('✅ Offline database module loaded (v' + DB.version + ')');
+window.DB = DB;
