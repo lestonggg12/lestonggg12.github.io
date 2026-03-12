@@ -661,9 +661,37 @@ window.renderSettings = async function() {
                     <h3>Device Storage</h3>
                     <p>Save data directly to your device</p>
                     <div style="margin-bottom:16px; padding:14px; background:rgba(203,223,189,0.12); border-radius:12px; border:1px solid rgba(203,223,189,0.3); font-size:13px; color:#5D534A;">
-                        ${window.DB?.dirHandle
-                          ? `✅ <strong>Connected:</strong> ${window.DB.dirHandle.name}<br><small style="color:#9E9382;">All data saves to your device folder.</small>`
-                          : `⚠️ <strong>Using browser storage</strong><br><small style="color:#9E9382;">Limited space. Choose a folder to upgrade.</small>`}
+                       <!-- ── Device Storage card ── -->
+<div class="stylish-card device-storage-card">
+    <div class="card-icon">📁</div>
+    <div class="card-body">
+        <h3>Device Storage</h3>
+        <p>Save data directly to your device</p>
+        <div style="margin-bottom:16px; padding:14px; background:rgba(203,223,189,0.12); border-radius:12px; border:1px solid rgba(203,223,189,0.3); font-size:13px; color:#5D534A;">
+            ${!window.DB?.isSupported
+              ? `ℹ️ <strong>Not available on iOS/Firefox</strong><br><small style="color:#9E9382;">Use the Data Backup card above to export and restore your data instead.</small>`
+              : window.DB?.dirHandle
+                ? `✅ <strong>Connected:</strong> ${window.DB.dirHandle.name}<br><small style="color:#9E9382;">All data saves to your device folder.</small>`
+                : `⚠️ <strong>Using browser storage</strong><br><small style="color:#9E9382;">Limited space. Choose a folder to upgrade.</small>`}
+        </div>
+        ${window.DB?.isSupported ? `
+        <button onclick="handleDeviceStorageBtn()" style="width:100%; padding:14px; background:linear-gradient(135deg,#87B382,#5d9458); color:white; border:none; border-radius:12px; font-size:15px; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(93,148,88,0.3); transition:all 0.3s ease;">
+            📂 ${window.DB?.dirHandle ? 'Change Folder' : 'Connect Device Storage'}
+        </button>` : `
+        <div style="padding:12px 16px; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:12px; font-size:13px; color:#1e40af; text-align:center;">
+            💡 To protect your data on iOS, use <strong>Full Backup</strong> in the Data Backup card to save a copy to your Files app regularly.
+        </div>`}
+        <div class="info-box" style="margin-top:16px;">
+            <div class="info-box-content">
+                <span class="info-icon">💡</span>
+                <div class="info-text">
+                    <strong>Why use device storage?</strong>
+                    <p>Unlimited space, faster saves, and data survives browser cache clears.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                     </div>
                     <button onclick="handleDeviceStorageBtn()" style="width:100%; padding:14px; background:linear-gradient(135deg,#87B382,#5d9458); color:white; border:none; border-radius:12px; font-size:15px; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(93,148,88,0.3); transition:all 0.3s ease;">
                         📂 ${window.DB?.dirHandle ? 'Change Folder' : 'Connect Device Storage'}
