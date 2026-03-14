@@ -60,9 +60,6 @@
 
         body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-        /* ══════════════════════════════════════════
-           HAMBURGER
-        ══════════════════════════════════════════ */
         .hamburger-btn {
             display: none;
             width: 56px; height: 56px;
@@ -80,15 +77,9 @@
         body.dark-mode .hamburger-btn { background: rgba(168,201,156,0.18); border-color: rgba(168,201,156,0.4); color: #d4f0cc; }
         @media (max-width: 900px) { .hamburger-btn { display: flex !important; } }
 
-        /* ══════════════════════════════════════════
-           SIDEBAR OVERLAY
-        ══════════════════════════════════════════ */
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10002; }
         .sidebar-overlay.active { display: block; }
 
-        /* ══════════════════════════════════════════
-           MOBILE SIDEBAR DRAWER
-        ══════════════════════════════════════════ */
         .mobile-sidebar {
             position: fixed; top: 0; right: 0;
             height: 100dvh; width: 83vw; max-width: 310px;
@@ -152,54 +143,29 @@
         .sidebar-logout-btn:active { transform: scale(0.97); }
         body.dark-mode .sidebar-logout-btn { background: linear-gradient(135deg,#dc2626,#ef4444) !important; color: white !important; box-shadow: 0 4px 18px rgba(220,38,38,0.45); }
 
-        /* OFFLINE MODE BADGE */
         .offline-badge {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 5000;
+            position: fixed; bottom: 20px; right: 20px; z-index: 5000;
             background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
-            color: white;
-            padding: 10px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 700;
+            color: white; padding: 10px 16px; border-radius: 20px;
+            font-size: 13px; font-weight: 700;
             box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
         }
-        .offline-badge::before {
-            content: '✓';
-            font-size: 16px;
-        }
+        .offline-badge::before { content: '✓'; font-size: 16px; }
     </style>
     <style>
-        /* Install Banner */
         #installBanner {
             display: none;
             background: linear-gradient(135deg, #16a34a, #15803d);
-            color: white;
-            padding: 12px 20px;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 10005;
+            color: white; padding: 12px 20px; text-align: center;
+            position: sticky; top: 0; z-index: 10005;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            font-weight: 600;
+            align-items: center; justify-content: center; gap: 15px; font-weight: 600;
         }
         #installBanner button {
-            background: white;
-            color: #15803d;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-weight: 800;
-            cursor: pointer;
-            font-size: 13px;
+            background: white; color: #15803d; border: none;
+            padding: 6px 16px; border-radius: 20px;
+            font-weight: 800; cursor: pointer; font-size: 13px;
         }
     </style>
 </head>
@@ -218,7 +184,7 @@
          DEVICE STORAGE PROMPT BANNER
     ═══════════════════════════════ -->
     <div id="storagePromptBanner" style="display:none; background:linear-gradient(135deg,#e8f5e9,#f1f8e9); border-bottom:2px solid #81c784; padding:13px 20px; text-align:center; position:sticky; top:0; z-index:10004; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;">
-        <span style="font-size:13px; font-weight:700; color:#2d4d28;">📁 Enable device storage for unlimited space & better performance?</span>
+        <span id="storagePromptText" style="font-size:13px; font-weight:700; color:#2d4d28;">📁 Enable device storage for unlimited space & better performance?</span>
         <button id="enableDeviceStorageBtn" style="background:linear-gradient(135deg,#87B382,#5d9458); color:white; border:none; padding:8px 18px; border-radius:20px; font-weight:800; cursor:pointer; font-size:13px; white-space:nowrap;">📂 Choose Folder</button>
         <button id="dismissStoragePrompt" style="background:none; border:none; color:#888; font-size:12px; cursor:pointer; text-decoration:underline; white-space:nowrap;">No thanks</button>
     </div>
@@ -240,8 +206,6 @@
             </span>
             <span class="brand-text">Joram's</span>
         </div>
-
-        <!-- Desktop nav links -->
         <div class="nav-links" id="navLinks">
             <button id="btnProfit" class="active">SALES</button>
             <button id="btnCalendar">CALENDAR</button>
@@ -251,8 +215,6 @@
             <button id="btnSettings">SETTINGS</button>
             <a href="#"><button class="btn-logout">LOGOUT</button></a>
         </div>
-
-        <!-- Hamburger — always on the right on mobile -->
         <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">&#9776;</button>
     </nav>
 
@@ -334,53 +296,30 @@
          CART PANEL
     ═══════════════════════════════ -->
     <aside id="searchPanel" class="search-panel">
-
         <div class="search-panel-header">
             <h2>🛒 Shopping Cart</h2>
             <button class="btn-close-panel" onclick="toggleCartPanel()">✕</button>
         </div>
-
         <div id="cartSearchWrapper" style="padding: 18px 18px 0 18px;">
             <div class="cart-search-bar neo-search-bar" id="cartSearchBar"
                 style="display: flex; align-items: center; background: rgba(240,253,244,0.65); border-radius: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 2px rgba(0,0,0,0.04); padding: 7px 14px; gap: 10px; border: 1.5px solid rgba(34,197,94,0.18); transition: background 0.25s, box-shadow 0.25s, border-color 0.25s; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
                 <span class="cart-search-icon" style="font-size: 1.25rem; color: #66bb6a;">🔍</span>
-                <input
-                    type="text"
-                    id="generalSearch"
-                    class="cart-search-input neo-search-input"
+                <input type="text" id="generalSearch" class="cart-search-input neo-search-input"
                     placeholder="Search products..."
-                    autocomplete="off"
-                    autocorrect="off"
-                    autocapitalize="off"
-                    spellcheck="false"
-                    style="flex: 1; border: none; outline: none; background: transparent; font-size: 1.08rem; color: #2d4d28; font-weight: 600; padding: 7px 0; box-shadow: none; border-radius: 12px; transition: color 0.2s, background 0.2s;"
-                />
+                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                    style="flex: 1; border: none; outline: none; background: transparent; font-size: 1.08rem; color: #2d4d28; font-weight: 600; padding: 7px 0; box-shadow: none; border-radius: 12px; transition: color 0.2s, background 0.2s;" />
                 <button class="clear-search-btn" id="clearSearchBtn" aria-label="Clear search" style="background: none; border: none; color: #b0b0b0; font-size: 1.2rem; cursor: pointer; border-radius: 50%; width: 28px; height: 28px; display: none; align-items: center; justify-content: center; transition: background 0.15s;">✕</button>
             </div>
         </div>
         <style id="cartSearchDarkModeStyles">
-        #cartSearchBar:focus-within {
-            border-color: rgba(34,197,94,0.45) !important;
-            box-shadow: 0 0 0 3px rgba(34,197,94,0.10), 0 1px 4px rgba(0,0,0,0.08) !important;
-        }
-        body.dark-mode #cartSearchBar {
-            background: rgba(30,40,34,0.85) !important;
-            border: 1.5px solid rgba(74,222,128,0.15) !important;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03) !important;
-            backdrop-filter: blur(10px) !important;
-            -webkit-backdrop-filter: blur(10px) !important;
-        }
-        body.dark-mode #cartSearchBar:focus-within {
-            border-color: rgba(74,222,128,0.35) !important;
-            box-shadow: 0 0 0 3px rgba(74,222,128,0.08), 0 1px 6px rgba(0,0,0,0.4) !important;
-        }
+        #cartSearchBar:focus-within { border-color: rgba(34,197,94,0.45) !important; box-shadow: 0 0 0 3px rgba(34,197,94,0.10), 0 1px 4px rgba(0,0,0,0.08) !important; }
+        body.dark-mode #cartSearchBar { background: rgba(30,40,34,0.85) !important; border: 1.5px solid rgba(74,222,128,0.15) !important; box-shadow: 0 1px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; }
+        body.dark-mode #cartSearchBar:focus-within { border-color: rgba(74,222,128,0.35) !important; box-shadow: 0 0 0 3px rgba(74,222,128,0.08), 0 1px 6px rgba(0,0,0,0.4) !important; }
         body.dark-mode #cartSearchBar .cart-search-icon { color: #81c784 !important; }
         body.dark-mode #cartSearchBar input.cart-search-input { background: transparent !important; color: #e0ffe0 !important; }
         body.dark-mode #cartSearchBar .clear-search-btn { color: #9ca3af !important; }
         </style>
-
         <div id="searchResults" class="search-results"></div>
-
         <div class="cart-section">
             <div id="cartItems" class="cart-items">
                 <p class="empty-cart">🛒 Cart is empty<br><small>Search and click products to add</small></p>
@@ -494,9 +433,7 @@
         var input    = document.getElementById('generalSearch');
         var clearBtn = document.getElementById('clearSearchBtn');
         if (!input || !clearBtn) return;
-
         var _fallbackTimer = null;
-
         input.addEventListener('input', function() {
             var hasText = input.value.trim().length > 0;
             clearBtn.style.display = hasText ? 'flex' : 'none';
@@ -511,7 +448,6 @@
                 if (typeof handleSearch === 'function') handleSearch();
             }, 150);
         });
-
         clearBtn.addEventListener('click', function() {
             if (typeof clearSearch === 'function') { clearSearch(); }
             else { input.value = ''; input.focus(); }
@@ -523,20 +459,17 @@
 
     (function() {
         var allowedBodyStyleIds = { cartSearchDarkModeStyles: true };
-
         function shouldNeutralizeStyle(styleEl) {
             if (!styleEl || styleEl.tagName !== 'STYLE') return false;
             if (styleEl.parentElement !== document.body) return false;
             if (styleEl.id && allowedBodyStyleIds[styleEl.id]) return false;
             return true;
         }
-
         function neutralizeStyle(styleEl) {
             if (!shouldNeutralizeStyle(styleEl)) return;
             styleEl.disabled = true;
             if (styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
         }
-
         var observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(m) {
                 m.addedNodes.forEach(function(node) {
@@ -598,34 +531,92 @@
     ═══════════════════════════════ -->
     <script>
     (function () {
+        var banner     = document.getElementById('storagePromptBanner');
+        var textEl     = document.getElementById('storagePromptText');
+        var enableBtn  = document.getElementById('enableDeviceStorageBtn');
+        var dismissBtn = document.getElementById('dismissStoragePrompt');
+
         async function initStoragePrompt() {
             if (!window.DB || !window.DB.isSupported) return;
-            if (window.DB.dirHandle) { updateBadge(window.DB.dirHandle.name); return; }
-            if (localStorage.getItem('storagePromptDismissed')) return;
 
-            var banner = document.getElementById('storagePromptBanner');
+            // Already connected this session — just update badge silently
+            if (window.DB.dirHandle) {
+                updateBadge(window.DB.dirHandle.name);
+                return;
+            }
+
+            var hasConnectedBefore = localStorage.getItem('deviceStorageConnected');
+            var dismissed = localStorage.getItem('storagePromptDismissed');
+
+            if (hasConnectedBefore) {
+                // Folder was chosen before — show one-tap Reconnect, no folder picker
+                showReconnectBanner();
+            } else if (!dismissed) {
+                // First time — show Choose Folder
+                showChooseBanner();
+            }
+        }
+
+        function showReconnectBanner() {
+            textEl.textContent = '📁 Tap to reconnect your storage folder';
+            enableBtn.textContent = '🔗 Reconnect';
+            enableBtn.style.background = 'linear-gradient(135deg,#3B82F6,#2563EB)';
+            dismissBtn.textContent = 'Use local storage for now';
             banner.style.display = 'flex';
 
-            document.getElementById('enableDeviceStorageBtn').addEventListener('click', async function () {
-                var btn = this;
-                btn.textContent = '⏳ Waiting...';
-                btn.disabled = true;
+            enableBtn.onclick = async function () {
+                enableBtn.textContent = '⏳ Reconnecting...';
+                enableBtn.disabled = true;
                 banner.style.display = 'none';
 
-                var granted = await window.DB.requestDirectoryAccess();
-                if (granted) {
+                var reconnected = await window.DB.reconnectDirectory();
+                if (reconnected) {
                     updateBadge(window.DB.dirHandle.name);
+                    if (typeof window.renderSettings === 'function') window.renderSettings();
                 } else {
+                    // Reconnect failed — fall back to full folder picker
+                    textEl.textContent = '📁 Could not reconnect. Choose your folder again?';
+                    enableBtn.textContent = '📂 Choose Folder Again';
+                    enableBtn.style.background = 'linear-gradient(135deg,#87B382,#5d9458)';
+                    enableBtn.disabled = false;
                     banner.style.display = 'flex';
-                    btn.textContent = '📂 Choose Folder';
-                    btn.disabled = false;
+                    enableBtn.onclick = chooseNewFolder;
                 }
-            });
+            };
 
-            document.getElementById('dismissStoragePrompt').addEventListener('click', function () {
+            // "Use local storage for now" — dismiss until next session (no permanent flag)
+            dismissBtn.onclick = function () {
+                banner.style.display = 'none';
+            };
+        }
+
+        function showChooseBanner() {
+            textEl.textContent = '📁 Enable device storage for unlimited space & better performance?';
+            enableBtn.textContent = '📂 Choose Folder';
+            enableBtn.style.background = 'linear-gradient(135deg,#87B382,#5d9458)';
+            dismissBtn.textContent = 'No thanks';
+            banner.style.display = 'flex';
+            enableBtn.onclick = chooseNewFolder;
+            dismissBtn.onclick = function () {
                 banner.style.display = 'none';
                 localStorage.setItem('storagePromptDismissed', 'true');
-            });
+            };
+        }
+
+        async function chooseNewFolder() {
+            enableBtn.textContent = '⏳ Waiting...';
+            enableBtn.disabled = true;
+            banner.style.display = 'none';
+
+            var granted = await window.DB.requestDirectoryAccess();
+            if (granted) {
+                updateBadge(window.DB.dirHandle.name);
+                if (typeof window.renderSettings === 'function') window.renderSettings();
+            } else {
+                banner.style.display = 'flex';
+                enableBtn.textContent = '📂 Choose Folder';
+                enableBtn.disabled = false;
+            }
         }
 
         function updateBadge(folderName) {
