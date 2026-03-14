@@ -21,7 +21,8 @@ class DeviceStorageManager {
     this.dbName = 'DeviceStorageHandles';
     this.storeName = 'fileHandles';
     this.initialized = false;
-    this._savedHandle = null; // cached for reconnect
+    this._savedHandle = null;
+    this._initPromise = null; 
     this.initIndexedDB();
 
     if (!this.isSupported) {
@@ -85,45 +86,50 @@ class DeviceStorageManager {
   // =========================================================================
 
   async init() {
-    if (!this.isSupported) {
-      console.warn('⚠️ Using localStorage fallback (File System API not supported)');
-      return this.loadFromLocalStorage();
-    }
+  // Prevent multiple simultaneous init calls
+  if (this._initPromise) return this._initPromise;
+  if (this.initialized) return true;
 
-    try {
-      const dirHandle = await this.getHandleFromIDB();
+  this._initPromise = this._doInit();
+  const result = await this._initPromise;
+  this._initPromise = null;
+  return result;
+}
 
-      if (!dirHandle) {
-        // First time — no folder chosen yet
-        console.log('📦 No saved directory handle — using localStorage fallback');
-        return this.loadFromLocalStorage();
-      }
-
-      // Cache the handle so reconnect() can use it without hitting IDB again
-      this._savedHandle = dirHandle;
-
-      const permission = await dirHandle.queryPermission({ mode: 'readwrite' });
-
-      if (permission === 'granted') {
-        // Permission still active — load straight from device
-        this.dirHandle = dirHandle;
-        await this.loadAllFromDevice();
-        this.initialized = true;
-        console.log('✅ Device Storage initialized from saved handle');
-        return true;
-      } else {
-        // Permission lapsed (normal after browser restart) — need one tap to restore
-        // Mark that the user HAS chosen a folder before, so we show "Reconnect" not "Choose Folder"
-        localStorage.setItem('deviceStorageConnected', 'true');
-        console.log('📦 Directory permission needs re-confirmation — tap to reconnect');
-        return this.loadFromLocalStorage();
-      }
-
-    } catch (err) {
-      console.error('Device storage init error:', err);
-      return this.loadFromLocalStorage();
-    }
+async _doInit() {
+  if (!this.isSupported) {
+    console.warn('⚠️ Using localStorage fallback (File System API not supported)');
+    return this.loadFromLocalStorage();
   }
+
+  try {
+    const dirHandle = await this.getHandleFromIDB();
+
+    if (!dirHandle) {
+      console.log('📦 No saved directory handle — using localStorage fallback');
+      return this.loadFromLocalStorage();
+    }
+
+    this._savedHandle = dirHandle;
+    const permission = await dirHandle.queryPermission({ mode: 'readwrite' });
+
+    if (permission === 'granted') {
+      this.dirHandle = dirHandle;
+      await this.loadAllFromDevice();
+      this.initialized = true;
+      console.log('✅ Device Storage initialized from saved handle');
+      return true;
+    } else {
+      localStorage.setItem('deviceStorageConnected', 'true');
+      console.log('📦 Directory permission needs re-confirmation — tap to reconnect');
+      return this.loadFromLocalStorage();
+    }
+
+  } catch (err) {
+    console.error('Device storage init error:', err);
+    return this.loadFromLocalStorage();
+  }
+}
 
   // =========================================================================
   //  RECONNECT — call from a button tap (user gesture required)
