@@ -766,13 +766,24 @@ async _doInit() {
   //  CLEANUP API
   // =========================================================================
 
-  async cleanupOldTransactions(daysToKeep) {
+ async cleanupOldTransactions(daysToKeep) {
     if (!this.isSupported || !this.dirHandle) return Promise.resolve(true);
     const days = typeof daysToKeep === 'number' ? daysToKeep : 1;
     const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // ✅ Snapshot ALL period totals before touching sales
+    const savedTotals = JSON.parse(JSON.stringify(this.data.periodTotals));
+
+    // Delete old transactions (for performance/storage only)
     this.data.sales = this.data.sales.filter(s => new Date(s.date) > cutoff);
-    this.updatePeriodTotals();
-    await this.saveToDevice('sales');
+
+    // ✅ Restore ALL period totals exactly as they were — nothing changes
+    this.data.periodTotals = savedTotals;
+
+    await Promise.all([
+      this.saveToDevice('sales'),
+      this.saveToDevice('periodTotals')
+    ]);
     return Promise.resolve(true);
   }
 

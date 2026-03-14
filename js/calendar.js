@@ -1,6 +1,6 @@
 /**
- * calendar.js — FIXED VERSION
- * 
+ * calendar.js
+ *
  * CHANGES:
  *  ✅ Added detailed console logging for debugging
  *  ✅ Improved date format handling
@@ -8,6 +8,9 @@
  *  ✅ Handles edge cases where summaries might be empty
  *  ✅ FIX: showDateDetails now uses debts_paid from API response (PaymentHistory)
  *          instead of querying live DB.getDebtors() — so deleted debtors still appear
+ *  ✅ FIX: clearMonthSales deletes sales_history + payment_history for the month
+ *          (calendar amounts + 💚 badges) without touching recent sales
+ *  ✅ FIX: Clear button is position:fixed so it never disappears
  */
 
 console.log('📅 Loading calendar module...');
@@ -16,18 +19,21 @@ console.log('📅 Loading calendar module...');
 //  1. GLOBAL STATE
 // =============================================================================
 
-let currentYear  = new Date().getFullYear();
-let currentMonth = new Date().getMonth(); // 0-11
-let calendarData = {};
+let currentYear   = new Date().getFullYear();
+let currentMonth  = new Date().getMonth(); // 0-11
+let calendarData  = {};
 let paidDebtDates = new Set(); // dates (YYYY-MM-DD) that have at least one paid debt
 
 // =============================================================================
-//  2. RENDER CALENDAR PAGE (IMPROVED)
+//  2. RENDER CALENDAR PAGE
 // =============================================================================
 
-/** Fetch the month's DailySummary data and render the header + grid. */
 async function renderCalendar() {
   const content = document.getElementById('calendarContent');
+
+  // Remove any leftover floating button from a previous render
+  const oldBtn = document.getElementById('floatingClearBtn');
+  if (oldBtn) oldBtn.remove();
 
   content.innerHTML = `
     <div style="text-align: center; padding: 40px;">
@@ -48,21 +54,21 @@ async function renderCalendar() {
 
     console.log('📅 Raw API response:', data);
 
-    // ✅ IMPROVED: Better data structure handling
-    calendarData = {};
+    calendarData  = {};
     paidDebtDates = new Set(data.paid_debt_dates || []);
+
     if (data.summaries && Array.isArray(data.summaries)) {
       data.summaries.forEach(summary => {
         let dateStr = summary.date || summary.date_str || '';
-        
+
         if (!dateStr) {
           console.warn('⚠️ Summary missing date field:', summary);
           return;
         }
 
         const revenue = parseFloat(summary.total_revenue || 0);
-        const profit = parseFloat(summary.total_profit || 0);
-        const count = parseInt(summary.transaction_count || 0);
+        const profit  = parseFloat(summary.total_profit  || 0);
+        const count   = parseInt(summary.transaction_count || 0);
 
         calendarData[dateStr] = {
           date:              dateStr,
@@ -83,14 +89,14 @@ async function renderCalendar() {
     console.log(`📊 Total dates with sales: ${datesWithSales.length}`);
 
     const html = `
-      <div class="calendar-container">
+      <div class="calendar-container" style="padding-bottom: 80px;">
 
         <!-- ── Retention Warning Banner ── -->
         <div class="calendar-retention-banner">
           <span class="retention-icon">⚠️</span>
           <span class="retention-text">
-          Calendar summaries are preserved here for <strong>1 year</strong>.
-            To free up space, use the <strong>Clear Month</strong> button below or the 
+            Calendar summaries are preserved here for <strong>1 year</strong>.
+            To free up space, use the <strong>Clear Month</strong> button below or the
             <strong>Clear Transaction History</strong> button on the 📊 Sales page.
           </span>
         </div>
@@ -147,22 +153,10 @@ async function renderCalendar() {
           </div>
         </div>
 
-        <!-- ── Clear Month Button ── -->
-        <div style="text-align:center; margin-top:20px;">
-          <button onclick="clearMonthSales()"
-            style="padding:10px 22px; background:var(--btn-red-bg); color:var(--btn-red-text);
-                   border:none; border-radius:12px; font-weight:700; font-size:13px; cursor:pointer;
-                   box-shadow:var(--btn-red-shadow); transition:all 0.2s ease;">
-            🗑️ Clear ${getMonthName(currentMonth)} ${currentYear} Sales Records
-          </button>
-        </div>
-
       </div>
 
       <style>
-        /* ────────────────────────────────────────────
-           Jump to date row
-        ──────────────────────────────────────────── */
+        /* ── Jump to date row ── */
         .calendar-jump-row {
           display: flex;
           align-items: center;
@@ -256,6 +250,21 @@ async function renderCalendar() {
 
     content.innerHTML = html;
 
+    // ── Inject fixed floating clear button into <body> ───────────────────────
+    const floatingBtn = document.createElement('div');
+    floatingBtn.id = 'floatingClearBtn';
+    floatingBtn.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999;';
+    floatingBtn.innerHTML = `
+      <button onclick="clearMonthSales()"
+        style="padding:12px 28px; background:var(--btn-red-bg); color:var(--btn-red-text);
+               border:none; border-radius:14px; font-weight:800; font-size:13px; cursor:pointer;
+               box-shadow:var(--btn-red-shadow), 0 8px 32px rgba(0,0,0,0.25);
+               backdrop-filter:blur(12px); white-space:nowrap;">
+        🗑️ Clear ${getMonthName(currentMonth)} ${currentYear} Sales Records
+      </button>
+    `;
+    document.body.appendChild(floatingBtn);
+
     // ── Wire up navigation & jump controls ──────────────────────────────────
     document.getElementById('prevMonth')?.addEventListener('click', () => changeMonth(-1));
     document.getElementById('nextMonth')?.addEventListener('click', () => changeMonth(1));
@@ -305,12 +314,9 @@ async function renderCalendar() {
 }
 
 // =============================================================================
-//  3. RENDER CALENDAR GRID (IMPROVED)
+//  3. RENDER CALENDAR GRID
 // =============================================================================
 
-/**
- * Build the 7-column grid. Each day cell is colour-coded by revenue.
- */
 function renderCalendarGrid() {
   const firstDay       = new Date(currentYear, currentMonth, 1);
   const lastDay        = new Date(currentYear, currentMonth + 1, 0);
@@ -348,13 +354,9 @@ function renderCalendarGrid() {
 
       if (revenue > 0) {
         cellClass += ' has-sales';
-        if (revenue < 500) {
-          colorClass = 'revenue-low';
-        } else if (revenue < 2000) {
-          colorClass = 'revenue-medium';
-        } else {
-          colorClass = 'revenue-high';
-        }
+        if      (revenue < 500)  colorClass = 'revenue-low';
+        else if (revenue < 2000) colorClass = 'revenue-medium';
+        else                     colorClass = 'revenue-high';
         cellClass += ` ${colorClass}`;
       }
     }
@@ -413,7 +415,8 @@ function renderCalendarGrid() {
       backdrop-filter: blur(14px) saturate(1.4);
       -webkit-backdrop-filter: blur(14px) saturate(1.4);
       border: 1.5px solid rgba(255,255,255,0.55);
-      box-shadow: 0 8px 32px rgba(80,140,75,0.12), 0 2px 8px rgba(80,140,75,0.08), 0 -1px 0 rgba(255,255,255,0.8) inset, 0 1px 0 rgba(80,140,75,0.1) inset;
+      box-shadow: 0 8px 32px rgba(80,140,75,0.12), 0 2px 8px rgba(80,140,75,0.08),
+                  0 -1px 0 rgba(255,255,255,0.8) inset, 0 1px 0 rgba(80,140,75,0.1) inset;
       color: #2d3748;
     }
     .calendar-date-cell::before {
@@ -437,55 +440,64 @@ function renderCalendarGrid() {
     .calendar-date-cell.revenue-low {
       background: linear-gradient(135deg, rgba(209,250,229,0.55), rgba(167,243,208,0.35));
       border-color: rgba(110,231,183,0.4);
-      box-shadow: 0 8px 32px rgba(52,211,153,0.18), 0 2px 8px rgba(52,211,153,0.1), 0 -1px 0 rgba(255,255,255,0.8) inset, 0 1px 0 rgba(52,211,153,0.12) inset;
+      box-shadow: 0 8px 32px rgba(52,211,153,0.18), 0 2px 8px rgba(52,211,153,0.1),
+                  0 -1px 0 rgba(255,255,255,0.8) inset, 0 1px 0 rgba(52,211,153,0.12) inset;
       color: #065f46;
     }
     .calendar-date-cell.revenue-medium {
       background: linear-gradient(135deg, rgba(167,243,208,0.55), rgba(110,231,183,0.35));
       border-color: rgba(52,211,153,0.4);
-      box-shadow: 0 8px 32px rgba(52,211,153,0.22), 0 2px 8px rgba(52,211,153,0.12), 0 -1px 0 rgba(255,255,255,0.8) inset, 0 1px 0 rgba(52,211,153,0.14) inset;
+      box-shadow: 0 8px 32px rgba(52,211,153,0.22), 0 2px 8px rgba(52,211,153,0.12),
+                  0 -1px 0 rgba(255,255,255,0.8) inset, 0 1px 0 rgba(52,211,153,0.14) inset;
       color: #065f46;
     }
     .calendar-date-cell.revenue-high {
       background: linear-gradient(135deg, rgba(110,231,183,0.55), rgba(52,211,153,0.35));
       border-color: rgba(16,185,129,0.45);
-      box-shadow: 0 8px 32px rgba(16,185,129,0.25), 0 2px 8px rgba(16,185,129,0.14), 0 -1px 0 rgba(255,255,255,0.85) inset, 0 1px 0 rgba(16,185,129,0.16) inset;
+      box-shadow: 0 8px 32px rgba(16,185,129,0.25), 0 2px 8px rgba(16,185,129,0.14),
+                  0 -1px 0 rgba(255,255,255,0.85) inset, 0 1px 0 rgba(16,185,129,0.16) inset;
       color: #022c22;
     }
     .calendar-date-cell.has-sales:hover {
       transform: translateY(-6px) scale(1.02);
       border-color: rgba(16,185,129,0.6);
     }
-    .calendar-date-cell.revenue-low:hover { box-shadow: 0 16px 48px rgba(52,211,153,0.28), 0 4px 14px rgba(52,211,153,0.16), 0 -1px 0 rgba(255,255,255,0.9) inset; }
-    .calendar-date-cell.revenue-medium:hover { box-shadow: 0 16px 48px rgba(52,211,153,0.32), 0 4px 14px rgba(52,211,153,0.18), 0 -1px 0 rgba(255,255,255,0.9) inset; }
-    .calendar-date-cell.revenue-high:hover { box-shadow: 0 16px 48px rgba(16,185,129,0.35), 0 4px 14px rgba(16,185,129,0.2), 0 -1px 0 rgba(255,255,255,0.9) inset; }
+    .calendar-date-cell.revenue-low:hover    { box-shadow: 0 16px 48px rgba(52,211,153,0.28),  0 4px 14px rgba(52,211,153,0.16),  0 -1px 0 rgba(255,255,255,0.9) inset; }
+    .calendar-date-cell.revenue-medium:hover { box-shadow: 0 16px 48px rgba(52,211,153,0.32),  0 4px 14px rgba(52,211,153,0.18),  0 -1px 0 rgba(255,255,255,0.9) inset; }
+    .calendar-date-cell.revenue-high:hover   { box-shadow: 0 16px 48px rgba(16,185,129,0.35),  0 4px 14px rgba(16,185,129,0.2),   0 -1px 0 rgba(255,255,255,0.9) inset; }
     .calendar-date-cell.has-sales:active { transform: translateY(-2px) scale(0.98); }
     .calendar-date-cell.today {
       border: 2.5px solid #f59e0b;
-      box-shadow: 0 0 0 3px rgba(245,158,11,0.2), 0 8px 32px rgba(245,158,11,0.25), 0 2px 8px rgba(245,158,11,0.12), 0 -1px 0 rgba(255,255,255,0.9) inset;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.2), 0 8px 32px rgba(245,158,11,0.25),
+                  0 2px 8px rgba(245,158,11,0.12), 0 -1px 0 rgba(255,255,255,0.9) inset;
     }
-    .calendar-date-cell.today .date-day-number::after { content: ' ●'; color: #f59e0b; font-size: 9px; margin-left: 2px; }
-    .date-day-number { font-size: 15px; font-weight: 700; color: inherit; margin-bottom: 3px; line-height: 1; letter-spacing: -0.3px; }
-    .date-revenue-amount { font-size: 18px; font-weight: 900; color: inherit; line-height: 1; margin: 4px 0 2px; text-shadow: 0 1px 3px rgba(255,255,255,0.6); letter-spacing: -0.5px; }
-    .date-transaction-count { font-size: 12px; font-weight: 700; color: inherit; opacity: 0.75; margin-top: 3px; }
-    .date-debt-badge { font-size: 11px; line-height: 1; margin-top: 3px; }
+    .calendar-date-cell.today .date-day-number::after {
+      content: ' ●'; color: #f59e0b; font-size: 9px; margin-left: 2px;
+    }
+    .date-day-number       { font-size: 15px; font-weight: 700; color: inherit; margin-bottom: 3px; line-height: 1; letter-spacing: -0.3px; }
+    .date-revenue-amount   { font-size: 18px; font-weight: 900; color: inherit; line-height: 1; margin: 4px 0 2px; text-shadow: 0 1px 3px rgba(255,255,255,0.6); letter-spacing: -0.5px; }
+    .date-transaction-count{ font-size: 12px; font-weight: 700; color: inherit; opacity: 0.75; margin-top: 3px; }
+    .date-debt-badge       { font-size: 11px; line-height: 1; margin-top: 3px; }
+
     body.dark-mode .calendar-date-cell {
       background: linear-gradient(135deg, rgba(30,50,40,0.55), rgba(20,40,30,0.35));
       backdrop-filter: blur(14px) saturate(1.2);
       -webkit-backdrop-filter: blur(14px) saturate(1.2);
       border-color: rgba(16,185,129,0.25);
-      box-shadow: 0 8px 32px rgba(16,185,129,0.15), 0 2px 8px rgba(16,185,129,0.08), 0 -1px 0 rgba(255,255,255,0.1) inset, 0 1px 0 rgba(16,185,129,0.08) inset;
+      box-shadow: 0 8px 32px rgba(16,185,129,0.15), 0 2px 8px rgba(16,185,129,0.08),
+                  0 -1px 0 rgba(255,255,255,0.1) inset, 0 1px 0 rgba(16,185,129,0.08) inset;
       color: #c8ecc4;
     }
-    body.dark-mode .calendar-date-cell.empty { background: transparent; backdrop-filter: none; border: none; }
-    body.dark-mode .calendar-date-cell.has-sales { border-color: rgba(16,185,129,0.35); }
+    body.dark-mode .calendar-date-cell.empty       { background: transparent; backdrop-filter: none; border: none; }
+    body.dark-mode .calendar-date-cell.has-sales   { border-color: rgba(16,185,129,0.35); }
     body.dark-mode .calendar-date-cell.has-sales:hover { border-color: rgba(74,222,128,0.5); }
-    body.dark-mode .calendar-day-header { color: #86efac; border-color: rgba(16,185,129,0.15); }
+    body.dark-mode .calendar-day-header            { color: #86efac; border-color: rgba(16,185,129,0.15); }
+
     @media (max-width: 900px) { .calendar-grid { gap: 10px; } .calendar-date-cell { border-radius: 16px; padding: 12px; } .date-day-number { font-size: 14px; } .date-revenue-amount { font-size: 16px; } .date-transaction-count { font-size: 11px; } }
-    @media (max-width: 768px) { .calendar-grid { gap: 8px; } .calendar-date-cell { border-radius: 14px; padding: 11px; } .date-day-number { font-size: 13px; } .date-revenue-amount { font-size: 15px; } .date-transaction-count { font-size: 10px; } }
-    @media (max-width: 480px) { .calendar-grid { gap: 6px; } .calendar-date-cell { border-radius: 12px; padding: 9px; } .date-day-number { font-size: 12px; } .date-revenue-amount { font-size: 14px; } .date-transaction-count { font-size: 9px; } }
+    @media (max-width: 768px) { .calendar-grid { gap: 8px;  } .calendar-date-cell { border-radius: 14px; padding: 11px; } .date-day-number { font-size: 13px; } .date-revenue-amount { font-size: 15px; } .date-transaction-count { font-size: 10px; } }
+    @media (max-width: 480px) { .calendar-grid { gap: 6px;  } .calendar-date-cell { border-radius: 12px; padding: 9px;  } .date-day-number { font-size: 12px; } .date-revenue-amount { font-size: 14px; } .date-transaction-count { font-size: 9px;  } }
   </style>`;
-  
+
   return html;
 }
 
@@ -501,22 +513,15 @@ async function changeMonth(direction) {
 }
 
 // =============================================================================
-//  5. SHOW DATE DETAILS (fetch)
+//  5. SHOW DATE DETAILS
 // =============================================================================
 
-/**
- * ✅ FIX: Now uses debts_paid from the API response (backed by PaymentHistory)
- * instead of querying live DB.getDebtors(). This means deleted debtors
- * still show up in the calendar popup correctly.
- */
 async function showDateDetails(dateStr) {
   console.log('📆 Showing details for:', dateStr);
 
   try {
-    // Show loading state immediately
     showDateModal(dateStr, null, [], true);
 
-    // ✅ Only fetch date details — PaymentHistory is already included in the response
     const details = await DB.getDateDetails(dateStr);
 
     if (!details) {
@@ -524,7 +529,6 @@ async function showDateDetails(dateStr) {
       return;
     }
 
-    // ✅ Use debts_paid from the API response (persists even after debtor deletion)
     const paidDebtors = details.debts_paid || [];
     console.log(`💚 Debts paid on ${dateStr}:`, paidDebtors.length);
 
@@ -551,7 +555,7 @@ function showDateModal(dateStr, details, paidDebtors, isLoading) {
   const overlay = document.createElement('div');
   overlay.id    = 'dateDetailsModal';
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────────────────
   if (isLoading) {
     overlay.innerHTML = `
       <div class="date-modal-overlay">
@@ -564,7 +568,7 @@ function showDateModal(dateStr, details, paidDebtors, isLoading) {
       </div>
     `;
 
-  // ── No sales on this date ──────────────────────────────────────────────────
+  // ── No sales ───────────────────────────────────────────────────────────────
   } else if (!details || details.transaction_count === 0) {
 
     const paidBlock = buildPaidDebtorsHTML(paidDebtors || []);
@@ -591,14 +595,14 @@ function showDateModal(dateStr, details, paidDebtors, isLoading) {
 
   // ── Full details ───────────────────────────────────────────────────────────
   } else {
-    const revenue            = parseFloat(details.total_revenue       || 0);
-    const profit             = parseFloat(details.total_profit        || 0);
-    const salesCount         = details.transaction_count              || 0;
-    const bestByQty          = details.best_seller_by_quantity        || 'N/A';
-    const bestByQtyCount     = details.best_seller_quantity           || 0;
-    const bestByProfit       = details.best_seller_by_profit          || 'N/A';
-    const bestByProfitAmount = parseFloat(details.best_seller_profit  || 0);
-    const productsList       = details.products_sold_list             || [];
+    const revenue            = parseFloat(details.total_revenue      || 0);
+    const profit             = parseFloat(details.total_profit       || 0);
+    const salesCount         = details.transaction_count             || 0;
+    const bestByQty          = details.best_seller_by_quantity       || 'N/A';
+    const bestByQtyCount     = details.best_seller_quantity          || 0;
+    const bestByProfit       = details.best_seller_by_profit         || 'N/A';
+    const bestByProfitAmount = parseFloat(details.best_seller_profit || 0);
+    const productsList       = details.products_sold_list            || [];
 
     const paidBlock = buildPaidDebtorsHTML(paidDebtors || []);
 
@@ -688,7 +692,6 @@ function showDateModal(dateStr, details, paidDebtors, isLoading) {
             ` : ''}
 
             ${paidBlock}
-
           </div>
         </div>
       </div>
@@ -704,11 +707,6 @@ function showDateModal(dateStr, details, paidDebtors, isLoading) {
 //  PAID DEBTORS BLOCK BUILDER
 // =============================================================================
 
-/**
- * Build the HTML for the "Debts Paid on This Day" section.
- * ✅ Now accepts debts_paid from PaymentHistory (works even after debtor deletion).
- * Each entry has: { id, customer_name, total_amount, items[] }
- */
 function buildPaidDebtorsHTML(paidDebtors) {
   if (!paidDebtors || paidDebtors.length === 0) return '';
 
@@ -717,15 +715,14 @@ function buildPaidDebtorsHTML(paidDebtors) {
   }, 0);
 
   const items = paidDebtors.map(d => {
-    const name   = d.customer_name || d.name || 'Unknown';
-    const amount = parseFloat(d.total_amount || d.total_debt || 0);
-    const initial = name.charAt(0).toUpperCase();
-    const originalTotal    = parseFloat(d.original_total || 0);
+    const name             = d.customer_name || d.name || 'Unknown';
+    const amount           = parseFloat(d.total_amount || d.total_debt || 0);
+    const initial          = name.charAt(0).toUpperCase();
+    const originalTotal    = parseFloat(d.original_total    || 0);
     const surchargePercent = parseFloat(d.surcharge_percent || 0);
-    const surchargeAmount  = parseFloat(d.surcharge_amount || 0);
+    const surchargeAmount  = parseFloat(d.surcharge_amount  || 0);
     const hasSurcharge     = surchargeAmount > 0;
 
-    // Format date_borrowed if available
     let borrowedDateStr = '';
     if (d.date_borrowed) {
       try {
@@ -734,7 +731,6 @@ function buildPaidDebtorsHTML(paidDebtors) {
       } catch (e) { /* ignore */ }
     }
 
-    // Items list
     let itemsList = '';
     try {
       const debtItems = d.items || [];
@@ -752,7 +748,7 @@ function buildPaidDebtorsHTML(paidDebtors) {
         <div class="mpd-info">
           <div class="mpd-name">${name}</div>
           ${borrowedDateStr ? `<div class="mpd-borrowed">📅 Borrowed: ${borrowedDateStr}</div>` : ''}
-          ${itemsList ? `<div class="mpd-items">${itemsList}</div>` : ''}
+          ${itemsList       ? `<div class="mpd-items">${itemsList}</div>` : ''}
           ${hasSurcharge ? `
             <div class="mpd-surcharge-details">
               <span class="mpd-original">Original: ₱${originalTotal.toFixed(2)}</span>
@@ -780,7 +776,9 @@ function buildPaidDebtorsHTML(paidDebtors) {
       <div class="mpd-receipt-divider"></div>
       <div class="mpd-total-row">
         <span class="mpd-total-label">Total Collected</span>
-        <span class="mpd-total-value">₱${totalPaid.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        <span class="mpd-total-value">
+          ₱${totalPaid.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </span>
       </div>
     </div>
   `;
@@ -862,7 +860,7 @@ function isTodayDate(year, month, day) {
 }
 
 // =============================================================================
-//  EXPORTS
+//  9. CLEAR MONTH
 // =============================================================================
 
 async function clearMonthSales() {
@@ -870,14 +868,8 @@ async function clearMonthSales() {
   const year  = currentYear;
   const month = currentMonth;
 
-  const sales       = await DB.getSales();
   const allHistory  = DB.data.sales_history;
   const allPayments = DB.data.payment_history;
-
-  const monthSales = sales.filter(s => {
-    const d = new Date(s.date);
-    return d.getFullYear() === year && d.getMonth() === month;
-  });
 
   const monthHistory = allHistory.filter(s => {
     const d = new Date(s.date);
@@ -889,37 +881,29 @@ async function clearMonthSales() {
     return d.getFullYear() === year && d.getMonth() === month;
   });
 
-  if (monthSales.length === 0 && monthHistory.length === 0 && monthPayments.length === 0) {
+  if (monthHistory.length === 0 && monthPayments.length === 0) {
     showModernAlert(`No records found for ${monthName} ${year}.`, 'ℹ️');
     return;
   }
 
   const ok = await showModernConfirm(
-    `Delete all data for <strong>${monthName} ${year}</strong>?<br><br>
-     🗑️ <strong>DELETED:</strong> ${monthSales.length} transaction record${monthSales.length !== 1 ? 's' : ''} from Recent Sales<br>
+    `Delete all calendar data for <strong>${monthName} ${year}</strong>?<br><br>
      🗑️ <strong>DELETED:</strong> ${monthHistory.length} record${monthHistory.length !== 1 ? 's' : ''} from Sales History (calendar amounts)<br>
      🗑️ <strong>DELETED:</strong> ${monthPayments.length} debt payment${monthPayments.length !== 1 ? 's' : ''} (💚 badges)<br><br>
+     ✅ <strong>KEPT:</strong> Recent Sales records are untouched.<br><br>
      This cannot be undone!`,
     '🗑️'
   );
   if (!ok) return;
 
-  // 1. Clear from active sales
-  DB.data.sales = sales.filter(s => {
-    const d = new Date(s.date);
-    return !(d.getFullYear() === year && d.getMonth() === month);
-  });
-  await DB.saveToDevice('sales');
-  DB.updatePeriodTotals();
-
-  // 2. Clear from sales_history (removes ₱ amounts on calendar cells)
+  // 1. Clear from sales_history (removes ₱ amounts on calendar cells)
   DB.data.sales_history = allHistory.filter(s => {
     const d = new Date(s.date);
     return !(d.getFullYear() === year && d.getMonth() === month);
   });
   await DB.saveToDevice('sales_history');
 
-  // 3. Clear from payment_history (removes 💚 badges on calendar cells)
+  // 2. Clear from payment_history (removes 💚 badges on calendar cells)
   DB.data.payment_history = allPayments.filter(p => {
     const d = new Date(p.date_paid);
     return !(d.getFullYear() === year && d.getMonth() === month);
@@ -928,17 +912,20 @@ async function clearMonthSales() {
 
   showModernAlert(
     `✅ Done!<br><br>
-     • ${monthSales.length} transaction${monthSales.length !== 1 ? 's' : ''} deleted<br>
      • ${monthHistory.length} calendar record${monthHistory.length !== 1 ? 's' : ''} cleared<br>
      • ${monthPayments.length} debt payment${monthPayments.length !== 1 ? 's' : ''} removed<br><br>
-     ${monthName} ${year} is now completely blank.`,
+     ${monthName} ${year} is now completely blank on the calendar.`,
     '✅'
   );
 
   await renderCalendar();
-  if (typeof renderProfit   === 'function') await renderProfit();
-  if (typeof renderDebtors  === 'function') await renderDebtors();
+  if (typeof renderProfit  === 'function') await renderProfit();
+  if (typeof renderDebtors === 'function') await renderDebtors();
 }
+
+// =============================================================================
+//  EXPORTS
+// =============================================================================
 
 window.renderCalendar  = renderCalendar;
 window.showDateDetails = showDateDetails;
