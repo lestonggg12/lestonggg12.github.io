@@ -867,43 +867,77 @@ function isTodayDate(year, month, day) {
 
 async function clearMonthSales() {
   const monthName = getMonthName(currentMonth);
-  const year = currentYear;
+  const year  = currentYear;
   const month = currentMonth;
 
-  const sales = await DB.getSales();
+  const sales       = await DB.getSales();
+  const allHistory  = DB.data.sales_history;
+  const allPayments = DB.data.payment_history;
+
   const monthSales = sales.filter(s => {
     const d = new Date(s.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
 
-  if (monthSales.length === 0) {
-    showModernAlert(`No sales records found for ${monthName} ${year}.`, 'ℹ️');
+  const monthHistory = allHistory.filter(s => {
+    const d = new Date(s.date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+
+  const monthPayments = allPayments.filter(p => {
+    const d = new Date(p.date_paid);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+
+  if (monthSales.length === 0 && monthHistory.length === 0 && monthPayments.length === 0) {
+    showModernAlert(`No records found for ${monthName} ${year}.`, 'ℹ️');
     return;
   }
 
   const ok = await showModernConfirm(
-    `Delete all <strong>${monthSales.length} sales record${monthSales.length !== 1 ? 's' : ''}</strong> for <strong>${monthName} ${year}</strong>?<br><br>
-     ✅ <strong>PRESERVED:</strong> Calendar summary data, payment history, debtor records<br><br>
-     🗑️ <strong>DELETED:</strong> ${monthSales.length} transaction record${monthSales.length !== 1 ? 's' : ''} from Recent Sales<br><br>
+    `Delete all data for <strong>${monthName} ${year}</strong>?<br><br>
+     🗑️ <strong>DELETED:</strong> ${monthSales.length} transaction record${monthSales.length !== 1 ? 's' : ''} from Recent Sales<br>
+     🗑️ <strong>DELETED:</strong> ${monthHistory.length} record${monthHistory.length !== 1 ? 's' : ''} from Sales History (calendar amounts)<br>
+     🗑️ <strong>DELETED:</strong> ${monthPayments.length} debt payment${monthPayments.length !== 1 ? 's' : ''} (💚 badges)<br><br>
      This cannot be undone!`,
     '🗑️'
   );
   if (!ok) return;
 
-  const filtered = sales.filter(s => {
+  // 1. Clear from active sales
+  DB.data.sales = sales.filter(s => {
     const d = new Date(s.date);
     return !(d.getFullYear() === year && d.getMonth() === month);
   });
+  await DB.saveToDevice('sales');
+  DB.updatePeriodTotals();
 
-  await DB.saveSales(filtered);
+  // 2. Clear from sales_history (removes ₱ amounts on calendar cells)
+  DB.data.sales_history = allHistory.filter(s => {
+    const d = new Date(s.date);
+    return !(d.getFullYear() === year && d.getMonth() === month);
+  });
+  await DB.saveToDevice('sales_history');
+
+  // 3. Clear from payment_history (removes 💚 badges on calendar cells)
+  DB.data.payment_history = allPayments.filter(p => {
+    const d = new Date(p.date_paid);
+    return !(d.getFullYear() === year && d.getMonth() === month);
+  });
+  await DB.saveToDevice('payment_history');
 
   showModernAlert(
-    `✅ Done!<br><br>• ${monthSales.length} record${monthSales.length !== 1 ? 's' : ''} from ${monthName} ${year} cleared<br>• Calendar summaries preserved`,
+    `✅ Done!<br><br>
+     • ${monthSales.length} transaction${monthSales.length !== 1 ? 's' : ''} deleted<br>
+     • ${monthHistory.length} calendar record${monthHistory.length !== 1 ? 's' : ''} cleared<br>
+     • ${monthPayments.length} debt payment${monthPayments.length !== 1 ? 's' : ''} removed<br><br>
+     ${monthName} ${year} is now completely blank.`,
     '✅'
   );
 
   await renderCalendar();
-  if (typeof renderProfit === 'function') await renderProfit();
+  if (typeof renderProfit   === 'function') await renderProfit();
+  if (typeof renderDebtors  === 'function') await renderDebtors();
 }
 
 window.renderCalendar  = renderCalendar;
