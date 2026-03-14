@@ -675,8 +675,29 @@ async function renderProfit() {
   content.innerHTML = `
     <div class="p-grid" id="profit-grid-main"></div>
     <div class="p-grid" id="profit-grid-sub" style="margin-top:20px;"></div>
-    <h3 class="p-section-title">🕑 Recent Sales</h3>
-
+<h3 class="p-section-title">🕑 Recent Sales
+  <span style="
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:700; letter-spacing:0.3px;
+    background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.1));
+    color:#b91c1c; border:1.5px solid rgba(239,68,68,0.35);
+    border-radius:20px; padding:4px 12px;
+    backdrop-filter:blur(8px);
+    box-shadow:0 2px 8px rgba(239,68,68,0.12);
+    animation:pulse-warn 2.5s ease-in-out infinite;
+  ">🧹 Clear recent transactions to avoid lagging — do this daily!</span>
+</h3>
+<style>
+  @keyframes pulse-warn {
+    0%,100%{ box-shadow:0 2px 8px rgba(239,68,68,0.12); }
+    50%    { box-shadow:0 2px 16px rgba(239,68,68,0.28); }
+  }
+  body.dark-mode #profitContent .p-section-title span {
+    background:linear-gradient(135deg,rgba(239,68,68,0.22),rgba(220,38,38,0.15)) !important;
+    color:#f87171 !important;
+    border-color:rgba(239,68,68,0.3) !important;
+  }
+</style>
     <div class="p-recent-header">
       <div class="p-recent-actions">
         <button id="btnToggleRecent">
@@ -909,26 +930,19 @@ async function clearTransactionHistory() {
     if (!Array.isArray(sales) || sales.length === 0) {
       showModernAlert('No transactions to clear.','ℹ️'); return;
     }
-    const now        = new Date();
-    const oneDayAgo  = new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
-    const oldSales   = sales.filter(s => new Date(s.date||s.created_at) < oneDayAgo);
-    if (oldSales.length === 0) {
-      showModernAlert('No old transactions to delete.<br><br>✅ Today is always protected!','ℹ️');
-      return;
-    }
     const ok1 = await showModernConfirm(
-      `Delete ${oldSales.length} transaction record${oldSales.length===1?'':'s'}?<br><br>✅ <strong>PROTECTED:</strong><br>• Today's transactions<br><br>⚠️ <strong>WILL BE DELETED:</strong><br>• ${oldSales.length} transaction(s) older than 24h<br><br>Historical totals preserved in summaries.`,
-      '🛡️'
+      `Delete all ${sales.length} recent transaction record${sales.length===1?'':'s'}?<br><br>⚠️ <strong>WILL BE DELETED:</strong><br>• All ${sales.length} visible transaction(s)<br><br>✅ <strong>PRESERVED:</strong><br>• Today, Yesterday, Week, Month &amp; Year performance<br>• All profit summaries &amp; totals<br><br>Only the visible transaction list is cleared.`,
+      '🗑️'
     );
     if (!ok1) return;
     const ok2 = await showModernConfirm(
-      `<strong>FINAL CONFIRMATION</strong><br><br>🛡️ <strong>PROTECTED:</strong><br>• Today's transactions<br><br>🗑️ <strong>WILL BE DELETED:</strong><br>• ${oldSales.length} old record(s)<br><br>✅ <strong>PRESERVED:</strong><br>• All period totals &amp; summaries<br><br>This cannot be undone!`,
+      `<strong>FINAL CONFIRMATION</strong><br><br>🗑️ <strong>WILL BE DELETED:</strong><br>• All ${sales.length} recent transaction record(s)<br><br>✅ <strong>PRESERVED:</strong><br>• All period totals &amp; summaries<br><br>This cannot be undone!`,
       '🚨'
     );
     if (!ok2) return;
-    await DB.cleanupOldTransactions(1);
-    showModernAlert(`✅ Done!<br><br>• ${oldSales.length} old transaction(s) removed<br>• Today preserved<br>• All sales totals preserved`,'✅');
-    await renderProfit();
+    await DB.updatePeriods();
+    await DB.cleanupOldTransactions(0);
+    showModernAlert(`✅ Done!<br><br>• All ${sales.length} recent transaction(s) cleared<br>• Today, Yesterday, Week, Month &amp; Year totals preserved`,'✅'); await renderProfit();
   } catch (error) {
     console.error('Error clearing transaction history:', error);
     showModernAlert('An error occurred while clearing transaction history.','❌');

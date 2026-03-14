@@ -487,7 +487,7 @@ async _doInit() {
   // =========================================================================
 
   updatePeriodTotals() {
-    const sales = this.data.sales;
+    const sales = this.data.sales_history;
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
@@ -507,18 +507,33 @@ async _doInit() {
       sales_count: list.length, has_data: list.length > 0
     });
 
+const stored = this.data.periodTotals || {};
+
+    const freshToday     = calculateStats(filterSalesByDate(today,          tomorrow));
+    const freshYesterday = calculateStats(filterSalesByDate(yesterday,      today));
+    const freshWeek      = calculateStats(filterSalesByDate(lastWeekSunday, thisWeekSunday));
+    const freshMonth     = calculateStats(filterSalesByDate(lastMonthStart, lastMonthEnd));
+    const freshYear      = calculateStats(filterSalesByDate(lastYearStart,  lastYearEnd));
+
     this.data.periodTotals = {
-      today: calculateStats(filterSalesByDate(today, tomorrow)),
-      yesterday: calculateStats(filterSalesByDate(yesterday, today)),
-      last_week: calculateStats(filterSalesByDate(lastWeekSunday, thisWeekSunday)),
-      last_month: calculateStats(filterSalesByDate(lastMonthStart, lastMonthEnd)),
-      last_year: calculateStats(filterSalesByDate(lastYearStart, lastYearEnd))
+      // Today & yesterday: always use fresh (these dates can't be calendar-cleared safely)
+      today:      freshToday,
+      yesterday:  freshYesterday,
+      // Older periods: if fresh is empty but stored has real data, keep stored
+      // This protects last_week/month/year from being wiped by calendar clears
+      last_week:  freshWeek.has_data  ? freshWeek  : (stored.last_week?.has_data  ? stored.last_week  : freshWeek),
+      last_month: freshMonth.has_data ? freshMonth : (stored.last_month?.has_data ? stored.last_month : freshMonth),
+      last_year:  freshYear.has_data  ? freshYear  : (stored.last_year?.has_data  ? stored.last_year  : freshYear),
     };
     this.saveToDevice('periodTotals');
   }
 
   async getPeriodTotals() {
     if (!this.initialized) await this.init();
+    if (this._skipRecalc) {
+      this._skipRecalc = false;
+      return Promise.resolve(this.data.periodTotals);
+    }
     this.updatePeriodTotals();
     return Promise.resolve(this.data.periodTotals);
   }

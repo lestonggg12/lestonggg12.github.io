@@ -10,8 +10,7 @@
  *          instead of querying live DB.getDebtors() — so deleted debtors still appear
  *  ✅ FIX: clearMonthSales deletes sales_history + payment_history for the month
  *          (calendar amounts + 💚 badges) without touching recent sales
- *  ✅ FIX: Clear button is position:fixed so it never disappears
- */
+*  ✅ FIX: Clear button is inside calendar content (no longer fixed/floating) */
 
 console.log('📅 Loading calendar module...');
 
@@ -31,9 +30,7 @@ let paidDebtDates = new Set(); // dates (YYYY-MM-DD) that have at least one paid
 async function renderCalendar() {
   const content = document.getElementById('calendarContent');
 
-  // Remove any leftover floating button from a previous render
-  const oldBtn = document.getElementById('floatingClearBtn');
-  if (oldBtn) oldBtn.remove();
+
 
   content.innerHTML = `
     <div style="text-align: center; padding: 40px;">
@@ -92,12 +89,17 @@ async function renderCalendar() {
       <div class="calendar-container" style="padding-bottom: 80px;">
 
         <!-- ── Retention Warning Banner ── -->
-        <div class="calendar-retention-banner">
+<div class="calendar-retention-banner">
           <span class="retention-icon">⚠️</span>
           <span class="retention-text">
-            Calendar summaries are preserved here for <strong>1 year</strong>.
-            To free up space, use the <strong>Clear Month</strong> button below or the
-            <strong>Clear Transaction History</strong> button on the 📊 Sales page.
+            📅 Calendar summaries are preserved here for <strong>1 year</strong>.<br><br>
+            🗑️ <strong>Clear Month</strong> removes the ₱ amounts and transaction counts visible on the calendar grid for that month.
+            This also affects the <strong>Sales Performance cards</strong> (Today, Yesterday, Last Week, Last Month, Last Year)
+            since they calculate from the same records.<br><br>
+            ✅ <strong>Only clear a month when you are experiencing lagging or slowness.</strong>
+            If the app is running fine, there is no need to clear anything — old records are automatically removed after 1 year.<br><br>
+            💡 The <strong>Clear Transaction History</strong> button on the 📊 Profit page only removes the
+            visible recent sales list and does <strong>not</strong> affect the calendar or performance cards.
           </span>
         </div>
 
@@ -151,6 +153,17 @@ async function renderCalendar() {
             <div style="font-size:14px; line-height:1;">💚</div>
             <span>Debt Paid</span>
           </div>
+        </div>
+
+     <!-- ── Clear Month Button ── -->
+        <div style="display:flex; justify-content:center; margin-top:24px; padding-bottom:12px;">
+          <button onclick="clearMonthSales()"
+            style="padding:12px 28px; background:var(--btn-red-bg); color:var(--btn-red-text);
+                   border:none; border-radius:14px; font-weight:800; font-size:13px; cursor:pointer;
+                   box-shadow:var(--btn-red-shadow); white-space:nowrap;
+                   transition:all .25s ease;">
+            🗑️ Clear ${getMonthName(currentMonth)} ${currentYear} Sales Records
+          </button>
         </div>
 
       </div>
@@ -250,20 +263,7 @@ async function renderCalendar() {
 
     content.innerHTML = html;
 
-    // ── Inject fixed floating clear button into <body> ───────────────────────
-    const floatingBtn = document.createElement('div');
-    floatingBtn.id = 'floatingClearBtn';
-    floatingBtn.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999;';
-    floatingBtn.innerHTML = `
-      <button onclick="clearMonthSales()"
-        style="padding:12px 28px; background:var(--btn-red-bg); color:var(--btn-red-text);
-               border:none; border-radius:14px; font-weight:800; font-size:13px; cursor:pointer;
-               box-shadow:var(--btn-red-shadow), 0 8px 32px rgba(0,0,0,0.25);
-               backdrop-filter:blur(12px); white-space:nowrap;">
-        🗑️ Clear ${getMonthName(currentMonth)} ${currentYear} Sales Records
-      </button>
-    `;
-    document.body.appendChild(floatingBtn);
+
 
     // ── Wire up navigation & jump controls ──────────────────────────────────
     document.getElementById('prevMonth')?.addEventListener('click', () => changeMonth(-1));
@@ -896,14 +896,21 @@ async function clearMonthSales() {
   );
   if (!ok) return;
 
-  // 1. Clear from sales_history (removes ₱ amounts on calendar cells)
+  // 1. Snapshot period totals BEFORE touching sales_history
+  const savedTotals = JSON.parse(JSON.stringify(DB.data.periodTotals));
+
+// 2. Clear from sales_history (removes ₱ amounts on calendar cells)
   DB.data.sales_history = allHistory.filter(s => {
     const d = new Date(s.date);
     return !(d.getFullYear() === year && d.getMonth() === month);
   });
   await DB.saveToDevice('sales_history');
 
-  // 2. Clear from payment_history (removes 💚 badges on calendar cells)
+  // 3. Restore period totals so performance cards are unaffected
+  DB.data.periodTotals = savedTotals;
+  await DB.saveToDevice('periodTotals');
+
+  // 4. Clear from payment_history (removes 💚 badges on calendar cells)
   DB.data.payment_history = allPayments.filter(p => {
     const d = new Date(p.date_paid);
     return !(d.getFullYear() === year && d.getMonth() === month);
@@ -918,8 +925,11 @@ async function clearMonthSales() {
     '✅'
   );
 
-  await renderCalendar();
-  if (typeof renderProfit  === 'function') await renderProfit();
+await renderCalendar();
+  if (typeof renderProfit === 'function') {
+    DB._skipRecalc = true;
+    await renderProfit();
+  }
   if (typeof renderDebtors === 'function') await renderDebtors();
 }
 
