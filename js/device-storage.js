@@ -794,8 +794,8 @@ async _doInit() {
     return Promise.resolve(true);
   }
 
-  scheduleAutoCleanup() {
-    setInterval(() => this.runAllCleanups(), 24 * 60 * 60 * 1000);
+   scheduleAutoCleanup() {
+    // Auto-cleanup disabled — all deletion is manual only
   }
 }
 

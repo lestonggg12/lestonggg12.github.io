@@ -16,8 +16,7 @@ window.renderDebtors = async function() {
   `;
 
   try {
-    await DB.autoCleanupPaidDebtors();
-    const debtors = await DB.getDebtors();
+   const debtors = await DB.getDebtors();
     if (!Array.isArray(debtors)) throw new Error('Debtors data is not available');
 
     const unpaidDebtors = debtors.filter(d => !d.paid);
@@ -127,13 +126,7 @@ window.renderDebtors = async function() {
             </button>
           ` : ''}
         </div>
-      ${paidDebtors.length > 0 ? `<div class="auto-delete-notice-banner">
-          <span class="adn-icon">⏱️</span>
-          <div class="adn-body">
-            <div class="adn-title">Auto-Delete Active</div>
-            <div class="adn-text">Paid debts are <strong>automatically deleted 7 days</strong> after being marked as paid from this page. They remain visible in the <strong>📅 Calendar</strong> for <strong>1 year</strong>.</div>
-          </div>
-        </div>` : ''}
+      
         <div id="paidDebtContainer" style="transition: max-height 0.35s ease, opacity 0.3s ease; overflow: hidden; max-height: none; opacity: 1;">
           ${renderDebtorsCards(paidDebtors, true)}
         </div>
@@ -245,18 +238,7 @@ function renderDebtorsCards(debtors, isPaid) {
             }
             <button class="action-btn btn-delete-debtor" data-debtor-id="${debtor.id}"><span>🗑️</span>Delete</button>
           </div>
-          ${isPaid && debtor.date_paid ? (() => {
-            const paidDate = new Date(debtor.date_paid);
-            const deleteDate = new Date(paidDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-            const now = new Date();
-            const msLeft = deleteDate.getTime() - now.getTime();
-            const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
-            const hoursLeft = Math.max(0, Math.ceil(msLeft / (60 * 60 * 1000)));
-            const isUrgent = daysLeft <= 2;
-            const countdownText = daysLeft === 0 ? `Deleting soon (${hoursLeft}h left)` : daysLeft === 1 ? '⏳ Auto-deletes in 1 day' : `⏳ Auto-deletes in ${daysLeft} days`;
-            const urgentClass = isUrgent ? 'countdown-urgent' : '';
-            return `<div class="auto-delete-countdown ${urgentClass}">${countdownText}</div>`;
-          })() : ''}
+          
         </div>
       </div>
     `;

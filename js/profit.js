@@ -675,11 +675,8 @@ async function renderProfit() {
   content.innerHTML = `
     <div class="p-grid" id="profit-grid-main"></div>
     <div class="p-grid" id="profit-grid-sub" style="margin-top:20px;"></div>
-    <h3 class="p-section-title">🕑 Recent Sales
-      <span id="cleanupIndicatorInline" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;background:linear-gradient(135deg,rgba(168,201,156,0.3),rgba(203,223,189,0.25));color:#5D7A50;border:1px solid rgba(168,201,156,0.35);margin-left:10px;vertical-align:middle;cursor:default;">
-        <span style="animation:clockPulse 2s ease-in-out infinite;">🔄</span> Daily reset <span id="cleanupTimeInline"></span>
-      </span>
-    </h3>
+    <h3 class="p-section-title">🕑 Recent Sales</h3>
+
     <div class="p-recent-header">
       <div class="p-recent-actions">
         <button id="btnToggleRecent">

@@ -89,8 +89,9 @@ async function renderCalendar() {
         <div class="calendar-retention-banner">
           <span class="retention-icon">⚠️</span>
           <span class="retention-text">
-            Sales records and paid debt details are preserved here for <strong>1 year</strong>. 
-            Detailed records in the Recent Sales section are cleared after <strong>1 day</strong> to free up space.
+          Calendar summaries are preserved here for <strong>1 year</strong>.
+            To free up space, use the <strong>Clear Month</strong> button below or the 
+            <strong>Clear Transaction History</strong> button on the 📊 Sales page.
           </span>
         </div>
 
@@ -144,6 +145,16 @@ async function renderCalendar() {
             <div style="font-size:14px; line-height:1;">💚</div>
             <span>Debt Paid</span>
           </div>
+        </div>
+
+        <!-- ── Clear Month Button ── -->
+        <div style="text-align:center; margin-top:20px;">
+          <button onclick="clearMonthSales()"
+            style="padding:10px 22px; background:var(--btn-red-bg); color:var(--btn-red-text);
+                   border:none; border-radius:12px; font-weight:700; font-size:13px; cursor:pointer;
+                   box-shadow:var(--btn-red-shadow); transition:all 0.2s ease;">
+            🗑️ Clear ${getMonthName(currentMonth)} ${currentYear} Sales Records
+          </button>
         </div>
 
       </div>
@@ -854,9 +865,51 @@ function isTodayDate(year, month, day) {
 //  EXPORTS
 // =============================================================================
 
+async function clearMonthSales() {
+  const monthName = getMonthName(currentMonth);
+  const year = currentYear;
+  const month = currentMonth;
+
+  const sales = await DB.getSales();
+  const monthSales = sales.filter(s => {
+    const d = new Date(s.date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+
+  if (monthSales.length === 0) {
+    showModernAlert(`No sales records found for ${monthName} ${year}.`, 'ℹ️');
+    return;
+  }
+
+  const ok = await showModernConfirm(
+    `Delete all <strong>${monthSales.length} sales record${monthSales.length !== 1 ? 's' : ''}</strong> for <strong>${monthName} ${year}</strong>?<br><br>
+     ✅ <strong>PRESERVED:</strong> Calendar summary data, payment history, debtor records<br><br>
+     🗑️ <strong>DELETED:</strong> ${monthSales.length} transaction record${monthSales.length !== 1 ? 's' : ''} from Recent Sales<br><br>
+     This cannot be undone!`,
+    '🗑️'
+  );
+  if (!ok) return;
+
+  const filtered = sales.filter(s => {
+    const d = new Date(s.date);
+    return !(d.getFullYear() === year && d.getMonth() === month);
+  });
+
+  await DB.saveSales(filtered);
+
+  showModernAlert(
+    `✅ Done!<br><br>• ${monthSales.length} record${monthSales.length !== 1 ? 's' : ''} from ${monthName} ${year} cleared<br>• Calendar summaries preserved`,
+    '✅'
+  );
+
+  await renderCalendar();
+  if (typeof renderProfit === 'function') await renderProfit();
+}
+
 window.renderCalendar  = renderCalendar;
 window.showDateDetails = showDateDetails;
 window.closeModal      = closeModal;
 window.changeMonth     = changeMonth;
+window.clearMonthSales = clearMonthSales;
 
 console.log('✅ Calendar module loaded!');
