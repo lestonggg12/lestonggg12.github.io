@@ -135,52 +135,63 @@ async _doInit() {
 }
 
 _scheduleAutoReconnect(dirHandle) {
-    // Silently reconnect on the very first user interaction
-    // No banner, no prompt — completely invisible to the user
-    const events = ['click', 'touchstart', 'keydown', 'pointerdown'];
-    
-    const reconnect = async (e) => {
-        // Remove all listeners immediately so this only fires once
+    const events = ['click', 'touchend', 'pointerup'];
+    let fired = false;
+
+    const reconnect = (e) => {
+        if (fired) return;
+        fired = true;
+
+        // Remove all listeners immediately
         events.forEach(evt => document.removeEventListener(evt, reconnect, true));
-        
-        try {
-            const permission = await dirHandle.requestPermission({ mode: 'readwrite' });
+
+        // Call requestPermission() SYNCHRONOUSLY inside the gesture handler
+        // — no awaits before this line or the browser rejects it on mobile
+        dirHandle.requestPermission({ mode: 'readwrite' }).then(async (permission) => {
             if (permission === 'granted') {
                 this.dirHandle = dirHandle;
                 this._savedHandle = dirHandle;
                 await this.loadAllFromDevice();
                 this.initialized = true;
-                console.log('✅ Device Storage silently reconnected on first gesture');
-                
-                // Update the badge silently
+                console.log('✅ Device Storage silently reconnected');
+
+                // Update badge
                 const badge = document.querySelector('.offline-badge');
                 if (badge) {
                     badge.textContent = '✓ Device Storage: ' + dirHandle.name;
                     badge.style.background = 'linear-gradient(135deg,#15803d,#166534)';
                 }
 
-                // Refresh whichever page is currently visible
+                // Refresh active page
                 const activePage = document.querySelector('.page.active-page');
                 if (activePage) {
                     const pageId = activePage.id;
-                    if (pageId === 'profitPage'    && typeof renderProfit    === 'function') await renderProfit();
-                    if (pageId === 'inventoryPage' && typeof window.renderInventory === 'function') await window.renderInventory();
-                    if (pageId === 'pricePage'     && typeof window.renderPriceList === 'function') await window.renderPriceList();
-                    if (pageId === 'debtPage'      && typeof window.renderDebtors   === 'function') await window.renderDebtors();
-                    if (pageId === 'calendarPage'  && typeof renderCalendar  === 'function') await renderCalendar();
-                    if (pageId === 'settingsPage'  && typeof window.renderSettings  === 'function') await window.renderSettings();
+                    if (pageId === 'profitPage'    && typeof renderProfit            === 'function') await renderProfit();
+                    if (pageId === 'inventoryPage' && typeof window.renderInventory  === 'function') await window.renderInventory();
+                    if (pageId === 'pricePage'     && typeof window.renderPriceList  === 'function') await window.renderPriceList();
+                    if (pageId === 'debtPage'      && typeof window.renderDebtors    === 'function') await window.renderDebtors();
+                    if (pageId === 'calendarPage'  && typeof renderCalendar          === 'function') await renderCalendar();
+                    if (pageId === 'settingsPage'  && typeof window.renderSettings   === 'function') await window.renderSettings();
                 }
             } else {
-                console.warn('⚠️ Permission denied on reconnect attempt');
+                // Permission denied — re-schedule for next tap
+                fired = false;
+                events.forEach(evt => document.addEventListener(evt, reconnect, true));
+                console.warn('⚠️ Permission denied, will retry on next tap');
             }
-        } catch (err) {
-            if (err.name !== 'AbortError') console.error('Silent reconnect error:', err);
-        }
+        }).catch(err => {
+            if (err.name !== 'AbortError') {
+                console.error('Reconnect error:', err);
+            }
+            // Re-schedule on error too
+            fired = false;
+            events.forEach(evt => document.addEventListener(evt, reconnect, true));
+        });
     };
 
-    // Use capture phase so it fires before anything else handles the event
+    // Use capture phase, touchend/pointerup are more reliable than touchstart on mobile
     events.forEach(evt => document.addEventListener(evt, reconnect, true));
-    console.log('⏳ Waiting for first user gesture to silently reconnect device storage...');
+    console.log('⏳ Waiting for first tap to silently reconnect device storage...');
 }
 
   // =========================================================================
