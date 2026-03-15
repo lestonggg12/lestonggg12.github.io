@@ -278,31 +278,60 @@ class FileSystemManager {
    * Export entire app state as JSON
    * @returns {Promise<string>} JSON backup
    */
-  async exportAppData() {
+ 
+ async exportAppData() {
     try {
-      const settings = await window.DB.getSettings();
-      const products = await window.DB.getProducts();
-      const sales = await window.DB.getSales();
-      const debtors = await window.DB.getDebtors();
+        // Ensure DB is fully initialized before reading
+        if (!window.DB.initialized) await window.DB.init();
 
-      const backup = {
-        version: '1.0',
-        exportedAt: new Date().toISOString(),
-        appName: 'Joram\'s Sari-Sari Store',
-        data: {
-          settings,
-          products,
-          sales,
-          debtors
-        }
-      };
+        // Read everything directly from DB.data (most reliable)
+        const products          = window.DB.data.products          || [];
+        const categories        = window.DB.data.categories        || [];
+        const sales             = window.DB.data.sales             || [];
+        const sales_history     = window.DB.data.sales_history     || [];
+        const debtors           = window.DB.data.debtors           || [];
+        const payment_history   = window.DB.data.payment_history   || [];
+        const settings          = window.DB.data.settings          || window.DB.defaultSettings();
+        const accumulatedTotals = window.DB.data.accumulatedTotals || { revenue: 0, profit: 0 };
 
-      return JSON.stringify(backup, null, 2);
+        // Recalculate periodTotals fresh before saving
+        window.DB.updatePeriodTotals();
+        const periodTotals = window.DB.data.periodTotals;
+
+        const backup = {
+            version:    '2.0',
+            exportedAt: new Date().toISOString(),
+            appName:    "Joram's Sari-Sari Store",
+            // ── Core data ──
+            settings,
+            categories,
+            products,
+            // ── Sales ──
+            sales,             // recent sales list (for Recent Sales panel)
+            sales_history,     // full history (for Calendar + Performance cards)
+            // ── Finance ──
+            periodTotals,      // Today/Yesterday/LastWeek/LastMonth/LastYear cards
+            accumulatedTotals, // all-time revenue & profit totals
+            // ── Debtors ──
+            debtors,
+            payment_history    // paid debt records (for Calendar debt markers)
+        };
+
+        console.log('📦 Full backup created:', {
+            categories:     categories.length,
+            products:       products.length,
+            sales:          sales.length,
+            sales_history:  sales_history.length,
+            debtors:        debtors.length,
+            payment_history:payment_history.length
+        });
+
+        return JSON.stringify(backup, null, 2);
     } catch (err) {
-      console.error('Export error:', err);
-      throw new Error('Failed to export app data: ' + err.message);
+        console.error('Export error:', err);
+        throw new Error('Failed to export app data: ' + err.message);
     }
-  }
+}
 
   /**
    * Import app data from JSON file

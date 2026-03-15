@@ -226,6 +226,31 @@ async function importAppBackup() {
         const btn = document.getElementById('btnImportBackup');
         if (btn) btn.disabled = true;
 
+        // ── Step 1: Connect device storage first ──────────────────────────
+        if (window.DB?.isSupported && !window.DB?.dirHandle) {
+            const connectFirst = window.confirm(
+                '📁 No device storage connected!\n\n' +
+                'For best results, connect your storage folder first so the\n' +
+                'backup is written directly to your device.\n\n' +
+                'OK = Choose folder now\n' +
+                'Cancel = Import to browser storage instead'
+            );
+            if (connectFirst) {
+                const granted = await window.DB.requestDirectoryAccess();
+                if (!granted) {
+                    alert('⚠️ Storage folder not selected. Import cancelled.');
+                    if (btn) btn.disabled = false;
+                    return;
+                }
+                const badge = document.querySelector('.offline-badge');
+                if (badge) {
+                    badge.textContent = '✓ Device Storage: ' + window.DB.dirHandle.name;
+                    badge.style.background = 'linear-gradient(135deg,#15803d,#166534)';
+                }
+            }
+        }
+
+        // ── Step 2: Open the backup file ──────────────────────────────────
         const result = await window.FileSystem.openFile();
         if (!result) { if (btn) btn.disabled = false; return; }
 
@@ -238,53 +263,155 @@ async function importAppBackup() {
             return;
         }
 
+        // ── Handle old v1 backup (data nested under "data:{}") ────────────
+        if (parsed.data && !parsed.products) {
+            console.log('📦 Old v1 backup detected — unwrapping');
+            Object.assign(parsed, parsed.data);
+        }
+
+        // ── Detect what's in the backup ───────────────────────────────────
+        const counts = {
+            categories:     (parsed.categories     || []).length,
+            products:       (parsed.products       || []).length,
+            sales:          (parsed.sales          || []).length,
+            sales_history:  (parsed.sales_history  || []).length,
+            debtors:        (parsed.debtors        || []).length,
+            payment_history:(parsed.payment_history|| []).length
+        };
+        console.log('📦 Backup contents:', counts);
+
+        const storageTarget = window.DB?.dirHandle
+            ? `📁 Device Storage: "${window.DB.dirHandle.name}"`
+            : '🌐 Browser Storage';
+
         const confirmed = window.confirm(
-            `Import backup from: ${result.name}?\n\n` +
-            'This will REPLACE all current data with the backup.\n\n' +
-            'Continue?'
+            `Restore backup from: ${result.name}?\n\n` +
+            `Writing to: ${storageTarget}\n\n` +
+            `📦 Categories: ${counts.categories}\n` +
+            `📦 Products: ${counts.products}\n` +
+            `💰 Sales history: ${counts.sales_history || counts.sales}\n` +
+            `🧾 Debtors: ${counts.debtors}\n\n` +
+            '⚠️ This will REPLACE all current data.\n\nContinue?'
         );
         if (!confirmed) { if (btn) btn.disabled = false; return; }
 
-        const importResult = await window.FileSystem.importAppData(result.content);
+        showSuccessDialog('⏳ Restoring backup...', '⏳');
 
-        // Re-apply settings from backup immediately
+        // ── Step 3: Write ALL data directly into DB.data ──────────────────
+        // Bypass all add/update methods to avoid duplicate checks & ID issues
+
+        // Settings
+        if (parsed.settings) {
+            window.DB.data.settings = parsed.settings;
+        }
+
+        // Categories — always restore (needed for inventory & prices)
+        if (parsed.categories?.length) {
+            window.DB.data.categories = parsed.categories;
+        }
+
+        // Products — always restore (needed for inventory, prices, cart)
+        if (parsed.products?.length) {
+            window.DB.data.products = parsed.products;
+        }
+
+        // Debtors
+        if (parsed.debtors?.length) {
+            window.DB.data.debtors = parsed.debtors;
+        }
+
+        // Payment history (debt paid markers on calendar)
+        if (parsed.payment_history?.length) {
+            window.DB.data.payment_history = parsed.payment_history;
+        }
+
+        // Accumulated totals (all-time revenue/profit)
+        if (parsed.accumulatedTotals) {
+            window.DB.data.accumulatedTotals = parsed.accumulatedTotals;
+        }
+
+        // ── Sales: handle both new and old backup formats ─────────────────
+        const hasSalesHistory = (parsed.sales_history?.length || 0) > 0;
+        const hasSales        = (parsed.sales?.length || 0) > 0;
+
+        if (hasSalesHistory) {
+            // New format — full history available
+            window.DB.data.sales         = parsed.sales || [];
+            window.DB.data.sales_history = parsed.sales_history;
+            console.log(`✅ sales_history restored: ${parsed.sales_history.length} records`);
+        } else if (hasSales) {
+            // Old format — use sales as history so calendar & cards work
+            window.DB.data.sales         = parsed.sales;
+            window.DB.data.sales_history = parsed.sales;
+            console.log(`⚠️ Old backup — using ${parsed.sales.length} sales as history`);
+        } else {
+            window.DB.data.sales         = [];
+            window.DB.data.sales_history = [];
+        }
+
+        // ── Rebuild periodTotals (Sales Performance cards) ────────────────
+        if (parsed.periodTotals && hasSalesHistory) {
+            // New backup — use saved totals directly
+            window.DB.data.periodTotals = parsed.periodTotals;
+            console.log('✅ periodTotals restored from backup');
+        } else {
+            // Old backup or missing — recalculate from history
+            console.log('🔄 Recalculating periodTotals...');
+            window.DB.updatePeriodTotals();
+            console.log('✅ periodTotals recalculated:', window.DB.data.periodTotals);
+        }
+
+        // ── Rebuild accumulatedTotals if missing ──────────────────────────
+        if (!parsed.accumulatedTotals && window.DB.data.sales_history.length > 0) {
+            const all = window.DB.data.sales_history;
+            window.DB.data.accumulatedTotals = {
+                revenue: all.reduce((s, x) => s + parseFloat(x.total  || 0), 0),
+                profit:  all.reduce((s, x) => s + parseFloat(x.profit || 0), 0)
+            };
+            console.log('✅ accumulatedTotals rebuilt:', window.DB.data.accumulatedTotals);
+        }
+
+        // ── Step 4: Flush everything to device files / localStorage ───────
+        if (window.DB?.dirHandle) {
+            await window.DB.saveAllToDevice();
+            console.log('✅ All data written to device files');
+        } else {
+            window.DB.saveToLocalStorage();
+            console.log('✅ All data written to localStorage');
+        }
+
+        // ── Step 5: Also mirror to localStorage as safety net ─────────────
+        window.DB.saveToLocalStorage();
+
+        // ── Step 6: Apply settings immediately ───────────────────────────
         if (parsed.settings) {
             window.storeSettings = parsed.settings;
-            await DB.saveSettings(parsed.settings);
+            await window.DB.saveSettings(parsed.settings);
             applyThemeFromSettings();
         }
 
-        // Re-merge categories so inventory/prices show correctly
-        if (window._INV_DEFAULT_CATS && typeof DB.getCategories === 'function') {
-            const storedCats = await DB.getCategories();
-            if (storedCats) {
-                const defaultIds = new Set(window._INV_DEFAULT_CATS.map(c => c.id));
-                const storedMap  = new Map(storedCats.map(c => [c.id, c]));
-                const merged = [
-                    ...window._INV_DEFAULT_CATS.map(d => storedMap.has(d.id) ? storedMap.get(d.id) : d),
-                    ...storedCats.filter(c => !defaultIds.has(c.id))
-                ];
-                window.CATEGORIES = merged;
-            }
-        }
+        // ── Done ──────────────────────────────────────────────────────────
+        document.getElementById('successDialogOverlay')?.remove();
 
-        let message = `✅ Backup restored successfully!<br><br>
-            <strong>File:</strong> ${result.name}<br>
-            <strong>Imported:</strong> ${importResult.imported} records<br>
-            <strong>Skipped:</strong> ${importResult.skipped} (duplicates)<br>
-            <br><small>The page will reload in 3 seconds to apply all changes.</small>`;
+        const salesCount = (parsed.sales_history || parsed.sales || []).length;
+        showSuccessDialog(
+            `✅ Backup fully restored!<br><br>
+            <strong>Written to:</strong> ${storageTarget}<br>
+            <strong>File:</strong> ${result.name}<br><br>
+            <strong>📦 Categories:</strong> ${counts.categories}<br>
+            <strong>📦 Products:</strong> ${counts.products}<br>
+            <strong>💰 Sales records:</strong> ${salesCount}<br>
+            <strong>🧾 Debtors:</strong> ${counts.debtors}<br><br>
+            <small>✅ Sales Performance, Calendar, Prices &amp; Inventory will all be restored.<br><br>
+            Reloading in 3 seconds...</small>`,
+            '📥'
+        );
 
-        if (importResult.errors?.length > 0) {
-            message += `<br><strong>Errors:</strong> ${importResult.errors.length}`;
-        }
-
-        showSuccessDialog(message, '📥');
-
-        // Full page reload is the most reliable way to reinitialize everything
         setTimeout(() => location.reload(), 3000);
 
     } catch (err) {
         console.error('Import error:', err);
+        document.getElementById('successDialogOverlay')?.remove();
         alert(`❌ Failed to import backup: ${err.message}`);
     } finally {
         const btn = document.getElementById('btnImportBackup');
