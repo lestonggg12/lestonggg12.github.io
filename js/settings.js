@@ -227,94 +227,67 @@ async function importAppBackup() {
         if (btn) btn.disabled = true;
 
         const result = await window.FileSystem.openFile();
-        if (!result) {
-            if (btn) btn.disabled = false;
-            return;
-        }
+        if (!result) { if (btn) btn.disabled = false; return; }
 
+        let parsed;
         try {
-            JSON.parse(result.content);
+            parsed = JSON.parse(result.content);
         } catch {
-            if (window.DialogSystem) {
-                await DialogSystem.alert('Invalid JSON file. Please select a valid backup file.', '⚠️');
-            } else {
-                alert('⚠️ Invalid JSON file.');
-            }
+            alert('⚠️ Invalid JSON file. Please select a valid backup file.');
             if (btn) btn.disabled = false;
             return;
         }
 
-        const confirm = window.confirm(
+        const confirmed = window.confirm(
             `Import backup from: ${result.name}?\n\n` +
-            'This will merge settings and data. Existing products with the same ID will be skipped.\n\n' +
+            'This will REPLACE all current data with the backup.\n\n' +
             'Continue?'
         );
-
-        if (!confirm) {
-            if (btn) btn.disabled = false;
-            return;
-        }
+        if (!confirmed) { if (btn) btn.disabled = false; return; }
 
         const importResult = await window.FileSystem.importAppData(result.content);
 
-        let message = `✅ Import successful!<br><br>
+        // Re-apply settings from backup immediately
+        if (parsed.settings) {
+            window.storeSettings = parsed.settings;
+            await DB.saveSettings(parsed.settings);
+            applyThemeFromSettings();
+        }
+
+        // Re-merge categories so inventory/prices show correctly
+        if (window._INV_DEFAULT_CATS && typeof DB.getCategories === 'function') {
+            const storedCats = await DB.getCategories();
+            if (storedCats) {
+                const defaultIds = new Set(window._INV_DEFAULT_CATS.map(c => c.id));
+                const storedMap  = new Map(storedCats.map(c => [c.id, c]));
+                const merged = [
+                    ...window._INV_DEFAULT_CATS.map(d => storedMap.has(d.id) ? storedMap.get(d.id) : d),
+                    ...storedCats.filter(c => !defaultIds.has(c.id))
+                ];
+                window.CATEGORIES = merged;
+            }
+        }
+
+        let message = `✅ Backup restored successfully!<br><br>
             <strong>File:</strong> ${result.name}<br>
             <strong>Imported:</strong> ${importResult.imported} records<br>
-            <strong>Skipped:</strong> ${importResult.skipped} (duplicates)<br>`;
+            <strong>Skipped:</strong> ${importResult.skipped} (duplicates)<br>
+            <br><small>The page will reload in 3 seconds to apply all changes.</small>`;
 
-        if (importResult.errors.length > 0) {
-            message += `<strong>Errors:</strong> ${importResult.errors.length}<br>
-                <small>${importResult.errors.slice(0, 3).join('<br>')}</small>`;
+        if (importResult.errors?.length > 0) {
+            message += `<br><strong>Errors:</strong> ${importResult.errors.length}`;
         }
 
         showSuccessDialog(message, '📥');
 
-        setTimeout(() => {
-            if (typeof renderSettings === 'function') renderSettings();
-        }, 2500);
+        // Full page reload is the most reliable way to reinitialize everything
+        setTimeout(() => location.reload(), 3000);
 
     } catch (err) {
         console.error('Import error:', err);
-        if (window.DialogSystem) {
-            await DialogSystem.alert(`Failed to import backup: ${err.message}`, '❌');
-        } else {
-            alert(`❌ Failed to import backup: ${err.message}`);
-        }
+        alert(`❌ Failed to import backup: ${err.message}`);
     } finally {
         const btn = document.getElementById('btnImportBackup');
-        if (btn) btn.disabled = false;
-    }
-}
-
-async function exportInventoryCSV() {
-    try {
-        const btn = document.getElementById('btnExportInventory');
-        if (btn) btn.disabled = true;
-
-        const csvData = await window.FileSystem.exportInventoryCSV();
-        const timestamp = new Date().toISOString().split('T')[0];
-        const result = await window.FileSystem.saveFile(
-            csvData,
-            `inventory-${timestamp}.csv`
-        );
-
-        if (result) {
-            showSuccessDialog(
-                `Inventory exported as CSV!<br><br>
-                <strong>File:</strong> ${result.name}<br>
-                <strong>Size:</strong> ${(result.written / 1024).toFixed(2)} KB`,
-                '📊'
-            );
-        }
-    } catch (err) {
-        console.error('CSV export error:', err);
-        if (window.DialogSystem) {
-            await DialogSystem.alert(`Failed to export CSV: ${err.message}`, '❌');
-        } else {
-            alert(`❌ Failed to export CSV: ${err.message}`);
-        }
-    } finally {
-        const btn = document.getElementById('btnExportInventory');
         if (btn) btn.disabled = false;
     }
 }

@@ -11,32 +11,33 @@ let selectedPriceCategory = null;
 async function getCategories() {
     try {
         if (typeof DB !== 'undefined' && typeof DB.getCategories === 'function') {
-            const cats = await DB.getCategories();
-            if (cats && cats.length) {
-                window.CATEGORIES = cats;
-                return cats;
+            const stored = await DB.getCategories();
+            if (stored) {
+                const defaults = [
+                    { id:'beverages',           name:'Beverages',                    icon:'🥤', color:'linear-gradient(135deg,#e3b04b 0%,#d19a3d 100%)' },
+                    { id:'school',              name:'School Supplies',               icon:'📚', color:'linear-gradient(135deg,#d48c2e 0%,#ba7a26 100%)' },
+                    { id:'snacks',              name:'Snacks',                        icon:'🍿', color:'linear-gradient(135deg,#a44a3f 0%,#934635 100%)' },
+                    { id:'foods',               name:'Whole Foods',                   icon:'🍚', color:'linear-gradient(135deg,#967751 0%,#92784f 100%)' },
+                    { id:'bath',                name:'Bath, Hygiene & Laundry Soaps', icon:'🧼', color:'linear-gradient(135deg,#f3c291 0%,#e5b382 100%)' },
+                    { id:'wholesale_beverages', name:'Wholesale Beverages',           icon:'📦', color:'linear-gradient(135deg,#cc8451 0%,#b87545 100%)' },
+                    { id:'liquor',              name:'Hard Liquors',                  icon:'🍺', color:'linear-gradient(135deg,#e2e8b0 0%,#ced49d 100%)' },
+                ];
+                const defaultIds = new Set(defaults.map(c => c.id));
+                const storedMap  = new Map(stored.map(c => [c.id, c]));
+                const merged = [
+                    ...defaults.map(d => storedMap.has(d.id) ? storedMap.get(d.id) : d),
+                    ...stored.filter(c => !defaultIds.has(c.id))
+                ];
+                window.CATEGORIES = merged;
+                return merged;
             }
         }
     } catch (e) {
-        console.warn('⚠️ DB.getCategories() failed, using window.CATEGORIES fallback:', e);
+        console.warn('⚠️ DB.getCategories() failed:', e);
     }
-
     if (window.CATEGORIES && Array.isArray(window.CATEGORIES)) return window.CATEGORIES;
-
-    console.warn('⚠️ No categories found, using hardcoded defaults');
-    const defaults = [
-        { id:'beverages',           name:'Beverages',                    icon:'🥤', color:'linear-gradient(135deg,#e3b04b 0%,#d19a3d 100%)' },
-        { id:'school',              name:'School Supplies',               icon:'📚', color:'linear-gradient(135deg,#d48c2e 0%,#ba7a26 100%)' },
-        { id:'snacks',              name:'Snacks',                        icon:'🍿', color:'linear-gradient(135deg,#a44a3f 0%,#934635 100%)' },
-        { id:'foods',               name:'Whole Foods',                   icon:'🍚', color:'linear-gradient(135deg,#967751 0%,#92784f 100%)' },
-        { id:'bath',                name:'Bath, Hygiene & Laundry Soaps', icon:'🧼', color:'linear-gradient(135deg,#f3c291 0%,#e5b382 100%)' },
-        { id:'wholesale_beverages', name:'Wholesale Beverages',           icon:'📦', color:'linear-gradient(135deg,#cc8451 0%,#b87545 100%)' },
-        { id:'liquor',              name:'Hard Liquors',                  icon:'🍺', color:'linear-gradient(135deg,#e2e8b0 0%,#ced49d 100%)' },
-    ];
-    window.CATEGORIES = defaults;
-    return defaults;
+    return [];
 }
-
 // =============================================================================
 //  2. INJECT GLOBAL GLASSMORPHIC STYLES
 // =============================================================================

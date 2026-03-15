@@ -514,16 +514,19 @@ console.log('📦 Loading inventory module...');
 // =============================================================================
 let selectedCategory = null;
 
+const _INV_DEFAULT_CATS = [
+    { id:'beverages',           name:'Beverages',                    icon:'🥤', color:'linear-gradient(135deg,#e3b04b 0%,#d19a3d 100%)' },
+    { id:'school',              name:'School Supplies',               icon:'📚', color:'linear-gradient(135deg,#d48c2e 0%,#ba7a26 100%)' },
+    { id:'snacks',              name:'Snacks',                        icon:'🍿', color:'linear-gradient(135deg,#a44a3f 0%,#934635 100%)' },
+    { id:'foods',               name:'Whole Foods',                   icon:'🍚', color:'linear-gradient(135deg,#967751 0%,#92784f 100%)' },
+    { id:'bath',                name:'Bath, Hygiene & Laundry Soaps', icon:'🧼', color:'linear-gradient(135deg,#f3c291 0%,#e5b382 100%)' },
+    { id:'wholesale_beverages', name:'Wholesale Beverages',           icon:'📦', color:'linear-gradient(135deg,#cc8451 0%,#b87545 100%)' },
+    { id:'liquor',              name:'Hard Liquors',                  icon:'🍺', color:'linear-gradient(135deg,#e2e8b0 0%,#ced49d 100%)' },
+];
+const _INV_DEFAULT_IDS = new Set(_INV_DEFAULT_CATS.map(c => c.id));
+
 if (typeof window.CATEGORIES === 'undefined') {
-    window.CATEGORIES = [
-        { id:'beverages',           name:'Beverages',                    icon:'🥤', color:'linear-gradient(135deg,#e3b04b 0%,#d19a3d 100%)' },
-        { id:'school',              name:'School Supplies',               icon:'📚', color:'linear-gradient(135deg,#d48c2e 0%,#ba7a26 100%)' },
-        { id:'snacks',              name:'Snacks',                        icon:'🍿', color:'linear-gradient(135deg,#a44a3f 0%,#934635 100%)' },
-        { id:'foods',               name:'Whole Foods',                   icon:'🍚', color:'linear-gradient(135deg,#967751 0%,#92784f 100%)' },
-        { id:'bath',                name:'Bath, Hygiene & Laundry Soaps', icon:'🧼', color:'linear-gradient(135deg,#f3c291 0%,#e5b382 100%)' },
-        { id:'wholesale_beverages', name:'Wholesale Beverages',           icon:'📦', color:'linear-gradient(135deg,#cc8451 0%,#b87545 100%)' },
-        { id:'liquor',              name:'Hard Liquors',                  icon:'🍺', color:'linear-gradient(135deg,#e2e8b0 0%,#ced49d 100%)' },
-    ];
+    window.CATEGORIES = [..._INV_DEFAULT_CATS];
 }
 var CATEGORIES = window.CATEGORIES;
 
@@ -577,10 +580,20 @@ window.renderInventory = async function () {
     `;
 
     try {
-        if (typeof DB.getCategories === 'function') {
-            const freshCats = await DB.getCategories();
-            if (freshCats && freshCats.length) { window.CATEGORIES = freshCats; CATEGORIES = freshCats; }
-        }
+if (typeof DB.getCategories === 'function') {
+    const storedCats = await DB.getCategories();
+    if (storedCats) {
+        const storedMap = new Map(storedCats.map(c => [c.id, c]));
+        const merged = [
+            // Hardcoded defaults — updated if stored version exists (e.g. renamed)
+            ..._INV_DEFAULT_CATS.map(d => storedMap.has(d.id) ? storedMap.get(d.id) : d),
+            // Custom categories added by the user
+            ...storedCats.filter(c => !_INV_DEFAULT_IDS.has(c.id))
+        ];
+        window.CATEGORIES = merged;
+        CATEGORIES = merged;
+    }
+}
         if (!selectedCategory) {
             await renderCategorySelection(content);
         } else {
