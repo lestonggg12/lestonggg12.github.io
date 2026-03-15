@@ -583,11 +583,13 @@
             var dismissed          = localStorage.getItem('storagePromptDismissed');
 
             if (hasConnectedBefore) {
-                // Had a folder before — show reconnect button
-                // But skip if already reconnected this session
+                // Had a folder before — but skip if using OPFS (no reconnect needed)
+                // or already reconnected this session
+                if (localStorage.getItem('useOPFS') === 'true') return;
                 if (!sessionStorage.getItem('storageReconnectedThisSession')) {
                     showReconnectButton();
                 }
+                
             } else if (!dismissed) {
                 // First time ever — show choose folder modal
                 showFirstTimeModal();
@@ -605,21 +607,38 @@
 
     // ── First-time modal (full-screen overlay, impossible to miss on any device) ──
     function showFirstTimeModal() {
+        var isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        var opfsSupported = 'storage' in navigator && 'getDirectory' in navigator.storage;
+
         var modal = document.createElement('div');
         modal.id  = 'storageModal';
         modal.innerHTML = `
             <div class="sm-box">
                 <div class="sm-icon">📁</div>
-                <div class="sm-title">Enable Device Storage?</div>
+                <div class="sm-title">Enable Persistent Storage?</div>
                 <div class="sm-desc">
-                    Save your data directly to your device for unlimited space,
-                    faster performance, and data that survives browser cache clears.
+                    Save your data permanently so it survives browser cache clears
+                    and works fully offline.
                     <br><br>
-                    <strong>Recommended</strong> for daily use.
+                    ${opfsSupported && !isDesktop
+                        ? '<strong>✅ App Storage</strong> is available on this device — no permissions needed, ever.'
+                        : '<strong>📂 Device Folder</strong> lets you choose where to save your data.'}
                 </div>
+                ${opfsSupported && !isDesktop ? `
+                <button class="sm-btn-primary" id="btnEnableOPFS">
+                    ✅ Enable App Storage (Recommended)
+                </button>
+                ` : ''}
+                ${isDesktop || !opfsSupported ? `
                 <button class="sm-btn-primary" id="btnChooseFolder">
                     📂 Choose Storage Folder
                 </button>
+                ` : ''}
+                ${opfsSupported && !isDesktop ? `
+                <button class="sm-btn-secondary" id="btnChooseFolderInstead" style="display:block;margin:8px auto 12px;color:#5a7a5e;font-size:12px;text-decoration:underline;cursor:pointer;border:none;background:none;">
+                    Or choose a folder instead
+                </button>
+                ` : ''}
                 <button class="sm-btn-secondary" id="btnDismissStorage">
                     No thanks, use browser storage
                 </button>
@@ -627,14 +646,46 @@
         `;
         document.body.appendChild(modal);
 
-        document.getElementById('btnChooseFolder').addEventListener('click', async function () {
-            modal.remove();
-            var granted = await window.DB.requestDirectoryAccess();
-            if (granted) {
-                updateStorageBadge(window.DB.dirHandle.name);
-                if (typeof window.renderSettings === 'function') window.renderSettings();
-            }
-        });
+        // OPFS button (tablet/mobile)
+        var opfsBtn = document.getElementById('btnEnableOPFS');
+        if (opfsBtn) {
+            opfsBtn.addEventListener('click', async function () {
+                opfsBtn.textContent = '⏳ Setting up...';
+                opfsBtn.disabled    = true;
+                var ok = await window.DB.enableOPFS();
+                modal.remove();
+                if (ok) {
+                    updateStorageBadge('App Storage');
+                    if (typeof window.renderSettings === 'function') window.renderSettings();
+                }
+            });
+        }
+
+        // Folder button (desktop or fallback)
+        var folderBtn = document.getElementById('btnChooseFolder');
+        if (folderBtn) {
+            folderBtn.addEventListener('click', async function () {
+                modal.remove();
+                var granted = await window.DB.requestDirectoryAccess();
+                if (granted) {
+                    updateStorageBadge(window.DB.dirHandle.name);
+                    if (typeof window.renderSettings === 'function') window.renderSettings();
+                }
+            });
+        }
+
+        // "Or choose a folder instead" link
+        var folderInsteadBtn = document.getElementById('btnChooseFolderInstead');
+        if (folderInsteadBtn) {
+            folderInsteadBtn.addEventListener('click', async function () {
+                modal.remove();
+                var granted = await window.DB.requestDirectoryAccess();
+                if (granted) {
+                    updateStorageBadge(window.DB.dirHandle.name);
+                    if (typeof window.renderSettings === 'function') window.renderSettings();
+                }
+            });
+        }
 
         document.getElementById('btnDismissStorage').addEventListener('click', function () {
             modal.remove();
