@@ -1,36 +1,97 @@
 /**
- * service-worker.js — PWA Service Worker for Sari-Sari Store
+ * service-worker.js — PWA Service Worker for Joram's Sari-Sari Store
+ * Static site version (GitHub Pages / local file server)
  *
  * Strategy:
- *  - Static assets (CSS, JS, icons): Cache as requested, serve cache-first
- *  - Dashboard page: Network-first, cache fallback (so it works offline)
- *  - API GET calls: Network-first, cache fallback (offline reads from cache)
- *
- * NOTE: No pre-caching — WhiteNoise uses hashed filenames in production,
- * so we cache assets at runtime as the browser actually requests them.
- * After one online visit, everything is cached for offline use.
+ *  - On install: pre-cache all essential app shell files
+ *  - All requests: cache-first, network-fallback
+ *  - After one online visit, the entire app works offline
  */
 
-const CACHE_VERSION = 'v2';
-const CACHE_NAME = `sarisari-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v5';
+const CACHE_NAME    = `jorams-${CACHE_VERSION}`;
+
+// ─── FILES TO PRE-CACHE ON INSTALL ───────────────────────────────────────────
+// These are fetched and cached the moment the SW installs.
+// After this, the app works fully offline.
+const PRECACHE_URLS = [
+  './',
+  './index.html',
+  './manifest.json',
+
+  // ── CSS ──
+  './css/reset.css',
+  './css/variables.css',
+  './css/badges.css',
+  './css/cards.css',
+  './css/darkmode.css',
+  './css/navigations.css',
+  './css/pages.css',
+  './css/calendar.css',
+  './css/product.css',
+  './css/cart-system.css',
+  './css/mobile-responsiveness.css',
+  './css/cash-payment-modal.css',
+  './css/glassmorphic-icons.css',
+  './css/nav-fix.css',
+
+  // ── JS ──
+  './js/device-storage.js',
+  './js/file-system.js',
+  './js/notifications.js',
+  './js/dark-mode.js',
+  './js/settings.js',
+  './js/dashboard.js',
+  './js/emoji-to-svg.js',
+  './js/dialog-systems.js',
+  './js/cart.js',
+  './js/inventory.js',
+  './js/profit.js',
+  './js/calendar.js',
+  './js/price_list.js',
+  './js/debtors.js',
+  './js/loading.js',
+  './js/page-backgrounds.js',
+  './js/pull-to-refresh.js',
+
+  // ── Icons ──
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+];
 
 // ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing v2…');
-  // Skip waiting so the new SW activates immediately
-  self.skipWaiting();
+  console.log(`[SW] Installing ${CACHE_NAME}…`);
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SW] Pre-caching app shell…');
+      // Use individual adds so one missing file doesn't block everything
+      return Promise.allSettled(
+        PRECACHE_URLS.map(url =>
+          cache.add(url).catch(err =>
+            console.warn(`[SW] Could not cache ${url}:`, err)
+          )
+        )
+      );
+    }).then(() => {
+      console.log('[SW] Pre-cache complete');
+      return self.skipWaiting();
+    })
+  );
 });
 
 // ─── ACTIVATE ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating v2…');
+  console.log(`[SW] Activating ${CACHE_NAME}…`);
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => {
-          console.log('[SW] Deleting old cache:', k);
-          return caches.delete(k);
-        })
+        keys
+          .filter((k) => k !== CACHE_NAME)
+          .map((k) => {
+            console.log('[SW] Deleting old cache:', k);
+            return caches.delete(k);
+          })
       )
     ).then(() => self.clients.claim())
   );
@@ -39,44 +100,24 @@ self.addEventListener('activate', (event) => {
 // ─── FETCH ───────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
+  // Only handle GET requests
   if (request.method !== 'GET') return;
 
-  // Don't cache the login page, admin, or the SW itself
-  if (url.pathname.startsWith('/admin/') ||
-    url.pathname === '/service-worker.js') return;
+  // Skip cross-origin requests (CDNs, external APIs etc.)
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
 
-   if (url.pathname === '/') {
-  event.respondWith(networkFirst(request));
-  return;
-} 
+  // Skip the service worker file itself
+  if (url.pathname.endsWith('service-worker.js')) return;
 
-  // API requests → network-first, cache-fallback
- if (url.pathname === '/') {
-  event.respondWith(networkFirst(request));
-  return;
-}
-
-  // Dashboard page → network-first, cache-fallback
-  if (url.pathname === '/dashboard/' || url.pathname === '/dashboard') {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  // Static assets (CSS, JS, images, manifest) → cache-first, network-fallback
-  if (url.pathname.startsWith('/static/')) {
-    event.respondWith(cacheFirst(request));
-    return;
-  }
+  event.respondWith(cacheFirst(request));
 });
 
-// ─── STRATEGIES ──────────────────────────────────────────────────────────────
-
-/**
- * Cache-first: Return from cache if available, otherwise fetch and cache.
- * Best for static assets that rarely change.
- */
+// ─── CACHE-FIRST STRATEGY ────────────────────────────────────────────────────
+// Serve from cache if available.
+// If not cached yet, fetch from network, cache it, then return it.
+// If offline and not cached, return offline fallback.
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -89,106 +130,14 @@ async function cacheFirst(request) {
     }
     return response;
   } catch {
+    // Offline and nothing in cache
+    // Return the cached index.html as fallback for navigation requests
+    if (request.destination === 'document') {
+      const fallback = await caches.match('./index.html');
+      if (fallback) return fallback;
+    }
     return new Response('', { status: 503, statusText: 'Offline' });
   }
-}
-
-/**
- * Network-first: Try network, fall back to cache.
- * Best for HTML pages and API data that should be fresh when possible.
- */
-async function networkFirst(request) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    // Offline — try cache
-    const cached = await caches.match(request);
-    if (cached) return cached;
-
-    // No cache available
-    const url = new URL(request.url);
-    if (url.pathname.startsWith('/api/')) {
-      return new Response(JSON.stringify([]), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // For the dashboard page, show a friendly offline message
-    if (request.destination === 'document') {
-      return new Response(
-        '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-        '<title>Offline</title></head>' +
-        '<body style="font-family:sans-serif;text-align:center;padding:80px 20px;background:#f5f6fa;">' +
-        '<div style="font-size:72px;margin-bottom:20px;">📴</div>' +
-        '<h1 style="color:#303952;">Welcome!</h1>' +
-        '<p style="color:#5D534A;margin:16px 0;">Open the app once while connected to load your data, then it works offline.</p>' +
-        '<button onclick="location.reload()" style="padding:12px 32px;border:none;border-radius:12px;' +
-        'background:#63cdda;color:white;font-size:1rem;font-weight:700;cursor:pointer;">Retry</button>' +
-        '</body></html>',
-        { headers: { 'Content-Type': 'text/html' } }
-      );
-    }
-    return new Response('', { status: 503 });
-  }
-}
-
-// ─── OFFLINE QUEUE SYNC ─────────────────────────────────────────────────────
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'replay-offline-queue') {
-    event.waitUntil(replayOfflineQueue());
-  }
-});
-
-async function replayOfflineQueue() {
-  const db = await openOfflineDB();
-  const tx = db.transaction('queue', 'readonly');
-  const store = tx.objectStore('queue');
-  const allRequests = await idbGetAll(store);
-
-  for (const entry of allRequests) {
-    try {
-      const response = await fetch(entry.url, {
-        method: entry.method,
-        headers: entry.headers,
-        body: entry.body,
-        credentials: 'include',
-      });
-      if (response.ok || response.status < 500) {
-        const delTx = db.transaction('queue', 'readwrite');
-        delTx.objectStore('queue').delete(entry.id);
-      }
-    } catch {
-      break; // Still offline
-    }
-  }
-}
-
-function openOfflineDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('sarisari-offline', 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('queue')) {
-        db.createObjectStore('queue', { keyPath: 'id', autoIncrement: true });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
-  });
-}
-
-function idbGetAll(store) {
-  return new Promise((resolve, reject) => {
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
-  });
 }
 
 // ─── MESSAGE HANDLER ─────────────────────────────────────────────────────────
