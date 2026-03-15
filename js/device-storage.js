@@ -29,8 +29,7 @@ class DeviceStorageManager {
       console.warn('⚠️ File System Access API not supported. Using localStorage fallback.');
     } else {
       console.log('✅ Device Storage API supported. Will use device file system.');
-      // Register reconnect listener IMMEDIATELY — before any async work
-      // so we never miss a tap that happens during init
+      // Register listener IMMEDIATELY in constructor — before any async work
       this._setupEarlyReconnectListener();
     }
   }
@@ -111,10 +110,10 @@ class DeviceStorageManager {
       }
 
       this._savedHandle = dirHandle;
-      const permission = await dirHandle.queryPermission({ mode: 'readwrite' });
+      const permission  = await dirHandle.queryPermission({ mode: 'readwrite' });
 
       if (permission === 'granted') {
-        // Already permitted — cancel the gesture listener, load immediately
+        // Already permitted — cancel gesture listener, load immediately
         if (this._cancelReconnect) this._cancelReconnect();
         this.dirHandle = dirHandle;
         await this.loadAllFromDevice();
@@ -122,7 +121,8 @@ class DeviceStorageManager {
         console.log('✅ Device Storage initialized');
         return true;
       } else {
-        // Load localStorage so app isn't blank, then activate pre-registered listener
+        // Need re-grant — load localStorage so app isn't blank,
+        // then activate the listener pre-registered at startup
         await this.loadFromLocalStorage();
         if (this._activateReconnect) this._activateReconnect(dirHandle);
         return true;
@@ -136,55 +136,43 @@ class DeviceStorageManager {
 
   // =========================================================================
   //  EARLY RECONNECT LISTENER
-  //  Called from constructor so the listener is registered BEFORE any async
-  //  work. This eliminates the race condition where a tap during init is
-  //  missed because the listener wasn't registered yet.
-  //  requestPermission() is the absolute first call inside the handler.
+  //
+  //  Registered in the constructor (synchronously) so it's ready before any
+  //  async work. This handles two cases:
+  //
+  //  Case A — user taps AFTER _activateReconnect() is called:
+  //    handler fires → activeHandle is set → requestPermission() immediately
+  //
+  //  Case B — user taps BEFORE _activateReconnect() is called (during IDB load):
+  //    handler fires → gestureAvailable = true → _activateReconnect() is called
+  //    ~50ms later → calls requestPermission() immediately (gesture still fresh)
   // =========================================================================
 
   _setupEarlyReconnectListener() {
     const events = ['touchend', 'pointerup', 'click'];
-    let fired        = false;
-    let active       = false; // true once _activateReconnect() is called
-    let activeHandle = null;
+    let fired            = false;
+    let activeHandle     = null;
+    let gestureAvailable = false; // user tapped before handle was ready
 
-    // Called by _doInit() once we have the handle and know we need reconnect
-    this._activateReconnect = (dirHandle) => {
-      activeHandle = dirHandle;
-      active       = true;
-      console.log('⏳ Reconnect listener active — tap anywhere to connect storage');
-    };
-
-    // Called by _doInit() if permission was already granted
-    this._cancelReconnect = () => {
-      active       = false;
-      activeHandle = null;
-      events.forEach(evt => document.removeEventListener(evt, handler, true));
-    };
-
-    const handler = (e) => {
-      // Not yet activated or already fired
-      if (!active || !activeHandle || fired) return;
-
-      // ── requestPermission MUST be the absolute first line ─────────────
-      const permPromise = activeHandle.requestPermission({ mode: 'readwrite' });
+    const doPermission = (handle) => {
+      // ── requestPermission MUST be the absolute first call ─────────────
+      const permPromise = handle.requestPermission({ mode: 'readwrite' });
       // ──────────────────────────────────────────────────────────────────
 
-      fired  = true;
-      active = false;
+      fired = true;
       events.forEach(evt => document.removeEventListener(evt, handler, true));
 
       permPromise.then(async (permission) => {
         if (permission === 'granted') {
-          this.dirHandle    = activeHandle;
-          this._savedHandle = activeHandle;
+          this.dirHandle    = handle;
+          this._savedHandle = handle;
           await this.loadAllFromDevice();
           this.initialized  = true;
           console.log('✅ Device Storage silently reconnected');
 
           const badge = document.querySelector('.offline-badge');
           if (badge) {
-            badge.textContent      = '✓ Device Storage: ' + activeHandle.name;
+            badge.textContent      = '✓ Device Storage: ' + handle.name;
             badge.style.background = 'linear-gradient(135deg,#15803d,#166534)';
           }
 
@@ -201,19 +189,53 @@ class DeviceStorageManager {
         } else {
           // Denied — re-arm for next tap
           console.warn('⚠️ Permission denied, will retry on next tap');
-          fired  = false;
-          active = true;
+          fired = false;
           events.forEach(evt => document.addEventListener(evt, handler, true));
         }
       }).catch(err => {
         if (err.name !== 'AbortError') console.error('Silent reconnect error:', err);
-        fired  = false;
-        active = true;
+        fired = false;
         events.forEach(evt => document.addEventListener(evt, handler, true));
       });
     };
 
-    // Register immediately in capture phase — catches taps even before init finishes
+    // Called by _doInit() once we have the handle and need reconnect
+    this._activateReconnect = (handle) => {
+      activeHandle = handle;
+      if (gestureAvailable && !fired) {
+        // User already tapped during init — fire permission now
+        // Gesture context is still valid (IDB lookup is only ~50ms)
+        console.log('⚡ Tap was pending — triggering permission immediately');
+        gestureAvailable = false;
+        doPermission(handle);
+      } else {
+        console.log('⏳ Reconnect listener active — tap anywhere to connect storage');
+      }
+    };
+
+    // Called by _doInit() if permission was already granted
+    this._cancelReconnect = () => {
+      activeHandle     = null;
+      gestureAvailable = false;
+      events.forEach(evt => document.removeEventListener(evt, handler, true));
+    };
+
+    const handler = (e) => {
+      if (fired) return;
+
+      if (!activeHandle) {
+        // Handle not ready yet — record that a gesture happened
+        // _activateReconnect() will call doPermission() when it arrives
+        gestureAvailable = true;
+        console.log('⏳ Tap captured before handle ready — will fire on activate');
+        return;
+      }
+
+      // Handle is ready — fire immediately
+      doPermission(activeHandle);
+    };
+
+    // Register in capture phase immediately
     events.forEach(evt => document.addEventListener(evt, handler, true));
   }
 
@@ -576,11 +598,11 @@ class DeviceStorageManager {
     const now   = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const tomorrow      = new Date(today); tomorrow.setDate(today.getDate() + 1);
-    const yesterday     = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const dayOfWeek     = today.getDay();
-    const thisWeekSun   = new Date(today); thisWeekSun.setDate(today.getDate() - dayOfWeek);
-    const lastWeekSun   = new Date(thisWeekSun); lastWeekSun.setDate(thisWeekSun.getDate() - 7);
+    const tomorrow       = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const yesterday      = new Date(today); yesterday.setDate(today.getDate() - 1);
+    const dayOfWeek      = today.getDay();
+    const thisWeekSun    = new Date(today); thisWeekSun.setDate(today.getDate() - dayOfWeek);
+    const lastWeekSun    = new Date(thisWeekSun); lastWeekSun.setDate(thisWeekSun.getDate() - 7);
     const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const lastMonthEnd   = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastYearStart  = new Date(today.getFullYear() - 1, 0, 1);
@@ -594,12 +616,12 @@ class DeviceStorageManager {
       has_data:    list.length > 0
     });
 
-    const stored       = this.data.periodTotals || {};
-    const freshToday   = stats(filter(today,        tomorrow));
-    const freshYest    = stats(filter(yesterday,    today));
-    const freshWeek    = stats(filter(lastWeekSun,  thisWeekSun));
-    const freshMonth   = stats(filter(lastMonthStart, lastMonthEnd));
-    const freshYear    = stats(filter(lastYearStart,  lastYearEnd));
+    const stored     = this.data.periodTotals || {};
+    const freshToday = stats(filter(today,          tomorrow));
+    const freshYest  = stats(filter(yesterday,      today));
+    const freshWeek  = stats(filter(lastWeekSun,    thisWeekSun));
+    const freshMonth = stats(filter(lastMonthStart, lastMonthEnd));
+    const freshYear  = stats(filter(lastYearStart,  lastYearEnd));
 
     this.data.periodTotals = {
       today:      freshToday,
@@ -691,24 +713,24 @@ class DeviceStorageManager {
     const bestByProfit = productsSoldList.length > 0 ? [...productsSoldList].sort((a, b) => b.profit - a.profit)[0] : null;
 
     const debtsPaid = datePayments.map(d => ({
-      id:               d.id,
-      customer_name:    d.customer_name || d.name || 'Unknown',
-      total_amount:     parseFloat(d.total_amount    || 0),
-      original_total:   parseFloat(d.original_total  || 0),
-      surcharge_percent:parseFloat(d.surcharge_percent || 0),
-      surcharge_amount: parseFloat(d.surcharge_amount  || 0),
-      date_borrowed:    d.date || d.date_borrowed || '',
-      items:            Array.isArray(d.items) ? d.items : []
+      id:                d.id,
+      customer_name:     d.customer_name || d.name || 'Unknown',
+      total_amount:      parseFloat(d.total_amount     || 0),
+      original_total:    parseFloat(d.original_total   || 0),
+      surcharge_percent: parseFloat(d.surcharge_percent || 0),
+      surcharge_amount:  parseFloat(d.surcharge_amount  || 0),
+      date_borrowed:     d.date || d.date_borrowed || '',
+      items:             Array.isArray(d.items) ? d.items : []
     }));
 
     return Promise.resolve({
       date: dateStr, sales: dateSales, payments: datePayments,
       total_revenue: totalRevenue, total_profit: totalProfit,
-      transaction_count:        dateSales.length,
-      best_seller_by_quantity:  bestByQty    ? bestByQty.name    : 'N/A',
-      best_seller_quantity:     bestByQty    ? bestByQty.quantity : 0,
-      best_seller_by_profit:    bestByProfit ? bestByProfit.name  : 'N/A',
-      best_seller_profit:       bestByProfit ? bestByProfit.profit : 0,
+      transaction_count:       dateSales.length,
+      best_seller_by_quantity: bestByQty    ? bestByQty.name     : 'N/A',
+      best_seller_quantity:    bestByQty    ? bestByQty.quantity  : 0,
+      best_seller_by_profit:   bestByProfit ? bestByProfit.name   : 'N/A',
+      best_seller_profit:      bestByProfit ? bestByProfit.profit  : 0,
       products_sold_list: productsSoldList,
       debts_paid: debtsPaid
     });
@@ -743,13 +765,13 @@ class DeviceStorageManager {
       return Promise.resolve({ debtor: mergedDebtor, merged: true });
     }
     const newDebtor = {
-      id:               Date.now().toString(),
+      id:                Date.now().toString(),
       ...debtorData,
-      date:             new Date().toISOString(),
-      total_debt:       parseFloat(debtorData.total_debt      || debtorData.original_total || 0),
-      original_total:   parseFloat(debtorData.original_total  || debtorData.total_debt     || 0),
-      surcharge_percent:parseFloat(debtorData.surcharge_percent || 0),
-      surcharge_amount: parseFloat(debtorData.surcharge_amount  || 0),
+      date:              new Date().toISOString(),
+      total_debt:        parseFloat(debtorData.total_debt      || debtorData.original_total || 0),
+      original_total:    parseFloat(debtorData.original_total  || debtorData.total_debt     || 0),
+      surcharge_percent: parseFloat(debtorData.surcharge_percent || 0),
+      surcharge_amount:  parseFloat(debtorData.surcharge_amount  || 0),
       paid:  false,
       items: Array.isArray(debtorData.items) ? debtorData.items : []
     };
@@ -793,15 +815,15 @@ class DeviceStorageManager {
   archivePayment(debtor) {
     if (!debtor.paid) return;
     const entry = {
-      id:               debtor.id,
-      customer_name:    debtor.name || 'Unknown',
-      total_amount:     parseFloat(debtor.total_debt      || 0),
-      original_total:   parseFloat(debtor.original_total  || 0),
-      surcharge_percent:parseFloat(debtor.surcharge_percent || 0),
-      surcharge_amount: parseFloat(debtor.surcharge_amount  || 0),
-      date_borrowed:    debtor.date || debtor.date_borrowed || '',
-      date_paid:        debtor.date_paid || new Date().toISOString(),
-      items:            debtor.items || []
+      id:                debtor.id,
+      customer_name:     debtor.name || 'Unknown',
+      total_amount:      parseFloat(debtor.total_debt      || 0),
+      original_total:    parseFloat(debtor.original_total  || 0),
+      surcharge_percent: parseFloat(debtor.surcharge_percent || 0),
+      surcharge_amount:  parseFloat(debtor.surcharge_amount  || 0),
+      date_borrowed:     debtor.date || debtor.date_borrowed || '',
+      date_paid:         debtor.date_paid || new Date().toISOString(),
+      items:             debtor.items || []
     };
     if (!this.data.payment_history.find(h => h.id === entry.id)) {
       this.data.payment_history.push(entry);
@@ -884,10 +906,10 @@ class DeviceStorageManager {
 
   async cleanupOldTransactions(daysToKeep) {
     if (!this.isSupported || !this.dirHandle) return Promise.resolve(true);
-    const days   = typeof daysToKeep === 'number' ? daysToKeep : 1;
-    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const days        = typeof daysToKeep === 'number' ? daysToKeep : 1;
+    const cutoff      = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const savedTotals = JSON.parse(JSON.stringify(this.data.periodTotals));
-    this.data.sales   = this.data.sales.filter(s => new Date(s.date) > cutoff);
+    this.data.sales        = this.data.sales.filter(s => new Date(s.date) > cutoff);
     this.data.periodTotals = savedTotals;
     await Promise.all([this.saveToDevice('sales'), this.saveToDevice('periodTotals')]);
     return Promise.resolve(true);
@@ -896,7 +918,7 @@ class DeviceStorageManager {
   async cleanupCalendarHistory() {
     if (!this.isSupported || !this.dirHandle) return Promise.resolve(true);
     const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-    this.data.sales_history   = this.data.sales_history.filter(s => new Date(s.date)     > oneYearAgo);
+    this.data.sales_history   = this.data.sales_history.filter(s => new Date(s.date)      > oneYearAgo);
     this.data.payment_history = this.data.payment_history.filter(p => new Date(p.date_paid) > oneYearAgo);
     await Promise.all([this.saveToDevice('sales_history'), this.saveToDevice('payment_history')]);
     return Promise.resolve(true);
