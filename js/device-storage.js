@@ -97,38 +97,90 @@ class DeviceStorageManager {
 }
 
 async _doInit() {
-  if (!this.isSupported) {
-    console.warn('⚠️ Using localStorage fallback (File System API not supported)');
-    return this.loadFromLocalStorage();
-  }
-
-  try {
-    const dirHandle = await this.getHandleFromIDB();
-
-    if (!dirHandle) {
-      console.log('📦 No saved directory handle — using localStorage fallback');
-      return this.loadFromLocalStorage();
+    if (!this.isSupported) {
+        console.warn('⚠️ Using localStorage fallback');
+        return this.loadFromLocalStorage();
     }
 
-    this._savedHandle = dirHandle;
-    const permission = await dirHandle.queryPermission({ mode: 'readwrite' });
+    try {
+        const dirHandle = await this.getHandleFromIDB();
 
-    if (permission === 'granted') {
-      this.dirHandle = dirHandle;
-      await this.loadAllFromDevice();
-      this.initialized = true;
-      console.log('✅ Device Storage initialized from saved handle');
-      return true;
-    } else {
-      localStorage.setItem('deviceStorageConnected', 'true');
-      console.log('📦 Directory permission needs re-confirmation — tap to reconnect');
-      return this.loadFromLocalStorage();
+        if (!dirHandle) {
+            console.log('📦 No saved directory — using localStorage fallback');
+            return this.loadFromLocalStorage();
+        }
+
+        this._savedHandle = dirHandle;
+        const permission = await dirHandle.queryPermission({ mode: 'readwrite' });
+
+        if (permission === 'granted') {
+            // Already have permission — load immediately
+            this.dirHandle = dirHandle;
+            await this.loadAllFromDevice();
+            this.initialized = true;
+            console.log('✅ Device Storage initialized');
+            return true;
+        } else {
+            // Permission needs re-grant — load from localStorage first
+            // then silently reconnect on first user gesture
+            await this.loadFromLocalStorage();
+            this._scheduleAutoReconnect(dirHandle);
+            return true;
+        }
+
+    } catch (err) {
+        console.error('Device storage init error:', err);
+        return this.loadFromLocalStorage();
     }
+}
 
-  } catch (err) {
-    console.error('Device storage init error:', err);
-    return this.loadFromLocalStorage();
-  }
+_scheduleAutoReconnect(dirHandle) {
+    // Silently reconnect on the very first user interaction
+    // No banner, no prompt — completely invisible to the user
+    const events = ['click', 'touchstart', 'keydown', 'pointerdown'];
+    
+    const reconnect = async (e) => {
+        // Remove all listeners immediately so this only fires once
+        events.forEach(evt => document.removeEventListener(evt, reconnect, true));
+        
+        try {
+            const permission = await dirHandle.requestPermission({ mode: 'readwrite' });
+            if (permission === 'granted') {
+                this.dirHandle = dirHandle;
+                this._savedHandle = dirHandle;
+                await this.loadAllFromDevice();
+                this.initialized = true;
+                console.log('✅ Device Storage silently reconnected on first gesture');
+                
+                // Update the badge silently
+                const badge = document.querySelector('.offline-badge');
+                if (badge) {
+                    badge.textContent = '✓ Device Storage: ' + dirHandle.name;
+                    badge.style.background = 'linear-gradient(135deg,#15803d,#166534)';
+                }
+
+                // Refresh whichever page is currently visible
+                const activePage = document.querySelector('.page.active-page');
+                if (activePage) {
+                    const pageId = activePage.id;
+                    if (pageId === 'profitPage'    && typeof renderProfit    === 'function') await renderProfit();
+                    if (pageId === 'inventoryPage' && typeof window.renderInventory === 'function') await window.renderInventory();
+                    if (pageId === 'pricePage'     && typeof window.renderPriceList === 'function') await window.renderPriceList();
+                    if (pageId === 'debtPage'      && typeof window.renderDebtors   === 'function') await window.renderDebtors();
+                    if (pageId === 'calendarPage'  && typeof renderCalendar  === 'function') await renderCalendar();
+                    if (pageId === 'settingsPage'  && typeof window.renderSettings  === 'function') await window.renderSettings();
+                }
+            } else {
+                console.warn('⚠️ Permission denied on reconnect attempt');
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') console.error('Silent reconnect error:', err);
+        }
+    };
+
+    // Use capture phase so it fires before anything else handles the event
+    events.forEach(evt => document.addEventListener(evt, reconnect, true));
+    console.log('⏳ Waiting for first user gesture to silently reconnect device storage...');
 }
 
   // =========================================================================
